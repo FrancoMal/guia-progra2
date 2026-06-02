@@ -53,7 +53,7 @@
   --tok-num: #ef9a5c;
   --tok-ann: #c6a4f0;
   --sidebar: 264px;
-  --maxw: 64rem;
+  --maxw: 74rem;
   --radio: 14px;
   --radio-sm: 9px;
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
@@ -214,9 +214,15 @@ body.menu-open .hamburguesa span:nth-child(3) { transform: translateY(-6px) rota
 .nav-bloque a.activo.leido::after { color: var(--accent-ink); }
 
 /* ===== Main ===== */
-main { grid-area: main; padding: clamp(1.4rem, 1rem + 3vw, 3.4rem) clamp(1.2rem, 1rem + 3vw, 4rem); }
-main > * { max-width: var(--maxw); }
-article { max-width: var(--maxw); }
+main {
+  grid-area: main; min-width: 0;
+  padding: clamp(1.4rem, 1rem + 3vw, 3.4rem) clamp(1.2rem, 1rem + 3vw, 4rem);
+  display: flex; flex-direction: column; align-items: center;
+}
+main > * { width: 100%; max-width: var(--maxw); }
+article { width: 100%; max-width: var(--maxw); }
+/* prosa a un ancho cómodo de lectura; el código y las tablas usan toda la columna */
+article > p, article > ul, article > ol { max-width: 66rem; }
 
 /* ===== Portada ===== */
 .kicker {
