@@ -4,3 +4,7 @@ ejemplos codigo/
 # Binarios y artefactos de compilación Java
 *.class
 bin/
+
+# Artefactos de verificación con navegador (Playwright)
+.playwright-mcp/
+verify-*.png

@@ -6,6 +6,14 @@
   const base = enTemas ? '../' : '';
   const slugActual = document.body.dataset.tema || null;
 
+  // Favicon vacío: evita el 404 de favicon.ico y mantiene la consola limpia (sigue siendo offline).
+  if (!document.querySelector('link[rel="icon"]')) {
+    const fav = document.createElement('link');
+    fav.rel = 'icon';
+    fav.href = 'data:,';
+    document.head.appendChild(fav);
+  }
+
   // ---- Progreso y tema en localStorage ----
   const LS_PROG = 'progra2:progreso', LS_TEMA = 'progra2:tema';
   const getProg = () => { try { return JSON.parse(localStorage.getItem(LS_PROG)) || {}; } catch (e) { return {}; } };
