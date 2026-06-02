@@ -123,6 +123,13 @@ boolean buscar(Nodo nodo, int x) {
     buscar e insertar sean O(log n) <em>siempre</em>, incluso en el peor caso. Es la diferencia entre
     descartar la mitad del árbol en cada paso o tener que recorrerlo entero.</div>
 
+  <h2>🌳 Laboratorio: ABB interactivo</h2>
+  <p>Insertá valores y mirá cómo el árbol se arma respetando la propiedad de orden. Después ejecutá los
+     <strong>recorridos animados</strong> para ver el orden de visita nodo por nodo, o probá una
+     <strong>búsqueda</strong> (mirá cómo baja por un solo lado). Cargá el <em>ejemplo degenerado</em>
+     para ver cómo un ABB se convierte en una lista &mdash; y por qué ahí buscar cuesta O(n).</p>
+  <div id="arbol-visual" class="arbol-lab"></div>
+
   <h2>4. Costo</h2>
   <table class="costo">
     <thead><tr><th>Operación</th><th>ABB balanceado / AVL</th><th>ABB peor caso (degenerado)</th></tr></thead>
@@ -167,5 +174,6 @@ boolean buscar(Nodo nodo, int x) {
 </main>
 <script src="../assets/data.js"></script>
 <script src="../assets/app.js"></script>
+<script src="../assets/visual-arbol.js"></script>
 </body>
 </html>
