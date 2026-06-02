@@ -1,0 +1,6 @@
+# Código de ejemplo del curso (no se publica en la guía)
+ejemplos codigo/
+
+# Binarios y artefactos de compilación Java
+*.class
+bin/
