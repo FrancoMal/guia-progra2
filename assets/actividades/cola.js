@@ -218,5 +218,45 @@ c.desacolar();
       'ultimo = nuevo;'
     ],
     explicacion: 'Se crea el nodo y se carga; si la cola estaba vacía el nuevo es el frente, si no, el viejo final lo engancha; y en cualquier caso el nuevo termina siendo ultimo.'
+  },
+  {
+    tipo: 'mapear',
+    enunciado: 'Emparejá cada operación de la cola en español (Wehbe, esta guía) con su equivalente en inglés (Monzón, tu examen). Son el mismo TDA FIFO, solo cambia el nombre.',
+    pares: [
+      ['acolar(x)', 'add(x)'],
+      ['desacolar()', 'remove()'],
+      ['primero()', 'getFirst()'],
+      ['colaVacía()', 'isEmpty()']
+    ],
+    explicacion: 'Misma semántica FIFO en ambos idiomas: add acola por el final, remove desacola por el frente, getFirst devuelve el primero sin sacarlo e isEmpty indica si la cola está vacía.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Cola circular sobre un arreglo de tamaño N = 4 (ini, fin y cant arrancan en 0). Tras esta secuencia, ¿cuál es el estado (ini, fin, cant)?',
+    codigo:
+`c.inicializarCola();   // ini=0, fin=0, cant=0
+c.acolar(7);           // fin=(0+1)%4
+c.acolar(3);
+c.acolar(9);
+c.desacolar();         // ini=(0+1)%4
+c.acolar(5);
+c.desacolar();
+// estado: (ini, fin, cant)`,
+    opciones: ['(ini=2, fin=0, cant=2)', '(ini=2, fin=4, cant=2)', '(ini=1, fin=3, cant=3)'],
+    correcta: 0,
+    explicacion: 'acolar tres veces lleva fin de 0→1→2→3 y cant a 3. El primer desacolar mueve ini a 1 (cant=2). El cuarto acolar pone fin=(3+1)%4=0 y cant=3. El último desacolar mueve ini a 2 y cant=2. Queda ini=2, fin=0, cant=2: fin "dio la vuelta" al 0 gracias al módulo.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'TDA modificado tipo VariableQueue: se agrega un método acolarVarias(x, n) que acola n veces el valor x, y desacolarVarias(n) que desacola n veces. Sobre una cola vacía se ejecuta lo siguiente. ¿Qué devuelve primero() al final?',
+    codigo:
+`c.inicializarCola();
+c.acolarVarias(5, 3);   // acola 5, tres veces  -> [5,5,5]
+c.acolar(8);            // -> [5,5,5,8]
+c.desacolarVarias(2);   // desacola dos veces (saca del frente)
+// primero()`,
+    opciones: ['5', '8', '2'],
+    correcta: 0,
+    explicacion: 'acolarVarias(5,3) deja [5,5,5]; acolar(8) deja [5,5,5,8]; desacolarVarias(2) saca dos veces por el frente (FIFO): se van dos cincos y queda [5,8]. El frente es 5. acolarVarias/desacolarVarias son solo n llamadas a acolar/desacolar; no cambian el TDA, lo envuelven.'
   }
 ];

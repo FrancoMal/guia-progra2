@@ -35,6 +35,19 @@
     boolean colaVacia();      // Cola inicializada.
 }</code></pre>
 
+  <div class="equiv"><span class="et">Equivalencia con Monzón (inglés)</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>acolar(x)</code></td><td><code>add(x)</code></td></tr>
+        <tr><td class="es"><code>desacolar()</code></td><td><code>remove()</code></td></tr>
+        <tr><td class="es"><code>primero()</code></td><td><code>getFirst()</code></td></tr>
+        <tr><td class="es"><code>colaVacía()</code></td><td><code>isEmpty()</code></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Cambia el idioma, no el TDA: ambas son <strong>FIFO</strong> con la misma semántica. Se acola por el final y se desacola por el frente en las dos.</p>
+  </div>
+
   <h2>3. Implementaciones</h2>
   <h3>Con lista dinámica (LD)</h3>
   <p>Se guardan <strong>dos referencias</strong>: <code>primero</code> (el frente, de donde se saca) y
@@ -78,6 +91,45 @@
      se "agota" por un extremo. Se suele llevar también un contador de elementos para distinguir
      cola vacía de cola llena.</p>
 
+  <h3>Cola circular sobre arreglo</h3>
+  <p>La clave para que <code>acolar</code> y <code>desacolar</code> cuesten <strong>O(1)</strong> sobre
+     un arreglo es no mover los datos: en vez de correr todo el arreglo, movemos los <em>índices</em>.
+     Llevamos tres datos: <code>ini</code> (dónde está el primero), <code>fin</code> (próxima posición
+     libre) y <code>cant</code> (cuántos elementos hay). Al acolar avanzamos <code>fin</code>; al
+     desacolar avanzamos <code>ini</code>; y los dos avanzan <strong>en círculo</strong> con módulo,
+     así que cuando llegan al borde vuelven a la posición 0 y reutilizan las celdas liberadas.</p>
+  <pre><code class="java">public class ColaCircular implements ColaTDA {
+    int[] datos;
+    int ini;    // Índice del frente (de aquí se desacola).
+    int fin;    // Próxima posición libre (aquí se acola).
+    int cant;   // Cantidad de elementos: distingue vacía (0) de llena (N).
+
+    public void inicializarCola() {
+        datos = new int[100];
+        ini = 0; fin = 0; cant = 0;
+    }
+
+    public void acolar(int x) {
+        datos[fin] = x;                 // Escribimos en la próxima libre...
+        fin = (fin + 1) % datos.length; // ...y el índice avanza en círculo.
+        cant++;
+    }
+
+    public void desacolar() {
+        ini = (ini + 1) % datos.length; // El frente avanza en círculo; no movemos datos.
+        cant--;
+    }
+
+    public int primero() { return datos[ini]; }
+    public boolean colaVacia() { return cant == 0; }
+}</code></pre>
+  <p>Sin la aritmética módulo, un arreglo lineal se queda sin lugar por el extremo del final aunque
+     haya celdas libres adelante (las que dejó <code>desacolar</code>). La alternativa lineal sería
+     <strong>correr todos los elementos una posición hacia el frente</strong> en cada desacolar: eso
+     recorre el arreglo y cuesta <strong>O(n)</strong>. La versión circular evita ese corrimiento
+     reusando las celdas con <code>(idx + 1) % N</code>, y por eso ambas operaciones quedan en
+     <strong>O(1)</strong>.</p>
+
   <h2>4. Costo</h2>
   <table class="costo">
     <thead><tr><th>Operación</th><th>Lista dinámica (LD)</th><th>Arreglo circular (A)</th></tr></thead>
@@ -91,6 +143,22 @@
   </table>
   <p>La cola es eficiente porque trabaja sobre dos extremos fijos (frente y final): teniendo las
      referencias <code>primero</code> y <code>ultimo</code> no hay que recorrer nada.</p>
+
+  <div class="callout"><span class="et">📐 Qué vs cómo (costo)</span>
+    El TDA define <strong>qué</strong> hace la cola (acolar, desacolar, primero, colaVacia) y es
+    independiente de <strong>cómo</strong> se implementa. El costo, en cambio, depende del cómo: en un
+    <strong>arreglo lineal</strong> sin índices circulares, <code>desacolar</code> puede costar
+    <strong>O(n)</strong> porque hay que correr todos los elementos hacia el frente. Con una
+    <strong>lista enlazada</strong> que guarda un puntero al <strong>último</strong> nodo (o con el
+    arreglo circular), <code>acolar</code> y <code>desacolar</code> son <strong>O(1)</strong>. Mismo
+    TDA, distinto costo: lo que cambia es la estructura interna, no el contrato.</div>
+
+  <div class="callout error"><span class="et">⚠️ Estructura destructiva</span>
+    Recorrer una cola la <strong>vacía</strong>: para mirar todos los elementos hay que desacolarlos,
+    y al terminar la cola queda vacía. Si necesitás conservarla, trabajá sobre una <strong>copia</strong>.
+    Detalle clave: copiar una cola necesita <strong>un solo vuelco</strong> — desacolás de la original
+    y acolás en la copia, y el orden se preserva tal cual (a diferencia de la pila, que se invierte y
+    necesita un vuelco extra para volver a quedar en orden).</div>
 
   <h2>5. Errores comunes</h2>
   <div class="callout error"><span class="et">⚠️ Violar la precondición</span>

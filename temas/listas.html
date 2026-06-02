@@ -108,6 +108,65 @@
     <code>sig</code> para que saltee al borrado. Por eso el <code>while</code> avanza mientras
     <code>turista.sig.valor != x</code>, no <code>turista.valor</code>.</div>
 
+  <h3>Recorrer: ¿mirar el actual o el siguiente?</h3>
+  <p>Hay <strong>dos idiomas</strong> distintos para recorrer una lista, y elegir mal es la causa
+     número uno de bugs al insertar o eliminar. La pregunta clave es: <em>¿qué nodo necesito tener
+     en la mano cuando el <code>while</code> corte</em>? Comparalos lado a lado:</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">(A) mirar el actual</span><span class="flecha">→</span>
+    <span class="nodo">leer / buscar</span>
+  </div>
+  <pre><code class="java">// (A) BUSCAR / LEER: el turista se planta SOBRE el nodo buscado.
+Nodo turista = origen;
+while (turista != null &amp;&amp; turista.valor != x)
+    turista = turista.sig;
+// Al salir: turista ES el nodo con x (o null si no está).</code></pre>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">(B) mirar el siguiente</span><span class="flecha">→</span>
+    <span class="nodo">insertar / eliminar</span>
+  </div>
+  <pre><code class="java">// (B) INSERTAR / ELIMINAR: el turista se planta sobre el ANTERIOR al buscado.
+Nodo turista = origen;
+while (turista.sig != null &amp;&amp; turista.sig.valor != x)
+    turista = turista.sig;
+// Al salir: turista es el nodo ANTERIOR a x; el buscado es turista.sig.</code></pre>
+  <p>¿Por qué la diferencia? Para <strong>leer o buscar</strong> me alcanza con plantarme encima del
+     nodo (idioma A): miro <code>turista.valor</code> y listo. Pero para <strong>insertar o
+     eliminar</strong> tengo que <em>modificar el enlace del nodo de atrás</em>, así que necesito
+     quedarme <strong>un paso antes</strong> (idioma B): por eso la condición mira
+     <code>turista.sig.valor</code>, no <code>turista.valor</code>.</p>
+
+  <h4>Circunvalar: desenganchar el nodo</h4>
+  <p>Una vez que el turista quedó parado en el anterior, eliminar es <strong>circunvalar</strong> el
+     nodo del medio: hacer que el anterior apunte directamente al que está dos lugares más
+     adelante.</p>
+  <pre><code class="java">// turista.sig es el nodo a borrar. Lo salteamos:
+turista.sig = turista.sig.sig;   // circunvalar: el anterior apunta al "siguiente del siguiente".</code></pre>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">turista</span><span class="flecha">→</span>
+    <span class="nodo">borrado</span><span class="flecha">→</span>
+    <span class="nodo">sig.sig</span>
+  </div>
+  <p>El nodo desenganchado <strong>queda inaccesible</strong>: ya nadie lo apunta, así que no se
+     puede llegar a él desde <code>origen</code>. No hace falta liberarlo a mano (no hay
+     <code>free</code> ni <code>delete</code> como en C): el <strong>recolector de basura</strong>
+     (<em>garbage collector</em>, GC) de Java detecta que no quedan referencias y recupera esa
+     memoria solo.</p>
+  <div class="callout error"><span class="et">⚠️ El primer nodo (<code>origen</code>) es caso especial</span>
+    El idioma B arranca en <code>origen</code> y avanza con <code>turista.sig</code>, así que
+    <strong>nunca puede borrar el primer nodo</strong>: no hay ningún nodo "anterior" a
+    <code>origen</code> sobre el cual pararse. Por eso <code>eliminar</code> trata el primero
+    aparte, con <code>origen = origen.sig</code>, <em>antes</em> de entrar al recorrido. Si arrancás
+    el <code>while</code> directamente sobre <code>origen.sig</code> sin contemplar este caso, el
+    valor del primer nodo nunca se chequea.</div>
+  <div class="callout error"><span class="et">⚠️ El <code>NullPointerException</code> clásico del idioma B</span>
+    Ojo con el orden y con la lista vacía: en el idioma B la condición debe ser
+    <code>turista.sig != null &amp;&amp; turista.sig.valor != x</code>, <strong>en ese orden</strong>.
+    Si invertís los términos, o si entrás al <code>while</code> con <code>origen == null</code> (lista
+    vacía) sin chequearlo, vas a desreferenciar <code>turista.sig.valor</code> sobre algo que es
+    <code>null</code> y salta el <code>NullPointerException</code>. El idioma A tiene la misma
+    trampa con <code>turista</code>: por eso el <code>turista != null</code> va siempre primero.</div>
+
   <h2>4. Costo</h2>
   <table class="costo">
     <thead><tr><th>Operación</th><th>Lista enlazada</th></tr></thead>

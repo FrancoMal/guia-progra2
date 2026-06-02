@@ -38,10 +38,31 @@
     boolean pertenece(int x);     // Conjunto inicializado.
     boolean conjuntoVacío();      // Conjunto inicializado.
 }</code></pre>
+  <div class="equiv"><span class="et">Equivalencia con Monzón (inglés)</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>agregar(x)</code></td><td><code>add(x)</code></td></tr>
+        <tr><td class="es"><code>sacar(x)</code></td><td><code>remove(x)</code></td></tr>
+        <tr><td class="es"><code>pertenece(x)</code></td><td><code>— (no existe)</code></td></tr>
+        <tr><td class="es"><code>elegir()</code></td><td><code>choose()</code></td></tr>
+        <tr><td class="es"><code>conjuntoVacío()</code></td><td><code>isEmpty()</code></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">El <code>Set</code> de Monzón es minimalista: <strong>no tiene</strong> <code>pertenece</code>
+       (ni un <code>contains</code>), y <code>choose()</code> es <strong>aleatorio</strong> igual que
+       <code>elegir()</code>. Para saber si un elemento está, hay que recorrer con <code>choose</code>/<code>remove</code>
+       sobre una <strong>copia</strong> del conjunto y fijarse si aparece.</p>
+  </div>
   <div class="callout tip"><span class="et">💡 Sobre <code>elegir()</code></span>
     Como no hay orden, no tiene sentido pedir "el primero". <code>elegir()</code> devuelve
-    <strong>algún</strong> elemento del conjunto (cuál, depende de la implementación), pero
-    <strong>no lo saca</strong>. Su precondición es que el conjunto <strong>no esté vacío</strong>.</div>
+    <strong>algún</strong> elemento <em>cualquiera</em> del conjunto, y <strong>no es determinista</strong>:
+    dos llamadas seguidas sobre el mismo conjunto pueden devolver elementos <strong>distintos</strong>.
+    Pensalo como un <strong>bolillero</strong>: metés la mano y sacás una bolilla al azar. Eso sí,
+    <code>elegir()</code> <strong>mira pero no saca</strong>: el elemento sigue adentro del conjunto
+    (para quitarlo hay que llamar <code>sacar(x)</code>). Su única precondición es que el conjunto
+    <strong>no esté vacío</strong>. Por eso nunca escribas código que dependa de que <code>elegir()</code>
+    devuelva "el primero", "el último" o un valor fijo: no hay garantía de cuál te toca.</div>
 
   <h2>3. Implementaciones</h2>
   <p>En ambas implementaciones la clave es la misma: para no tener repetidos, <strong>antes de agregar
@@ -82,7 +103,20 @@
         }
     }
 
-    public int elegir() { return origen.valor; }   // Devuelve algún elemento (el primero). No lo saca.
+    public int elegir() {                           // Devuelve algún elemento, elegido al azar. No lo saca.
+        int paso = (int) (Math.random() * this.contar());   // ¿Cuántos nodos avanzo? Un número al azar.
+        Nodo turista = origen;
+        for (int i = 0; i &lt; paso; i++)               // Avanzo "paso" nodos desde el origen.
+            turista = turista.sig;
+        return turista.valor;                        // Devuelvo el valor del nodo donde caí.
+    }
+
+    private int contar() {                           // Cuántos elementos hay (auxiliar para elegir al azar).
+        int n = 0;
+        Nodo turista = origen;
+        while (turista != null) { n++; turista = turista.sig; }
+        return n;
+    }
 
     public boolean pertenece(int x) {
         Nodo turista = origen;
@@ -147,6 +181,76 @@
     En las dos implementaciones, <code>agregar(x)</code> empieza con
     <code>if (!pertenece(x))</code>. Esa verificación es lo único que garantiza la regla
     "sin repetidos" del conjunto. Si la sacaras, el TDA dejaría de ser un conjunto.</div>
+
+  <h3>Recorrer un conjunto (patrón destructivo)</h3>
+  <p>El TDA Conjunto <strong>no tiene iterador</strong>: no hay un <code>for</code> que recorra los
+     elementos uno por uno como en una lista. Lo único que tenés para "sacar" elementos es
+     <code>elegir()</code> (que devuelve uno cualquiera) y <code>sacar(x)</code> (que lo quita). Por eso,
+     para recorrer <em>todo</em> el conjunto, el patrón es <strong>vaciarlo</strong>: elegís un elemento,
+     lo usás y lo sacás, hasta que quede vacío.</p>
+  <pre><code class="java">while (!c.conjuntoVacío()) {   // Mientras queden elementos...
+    int x = c.elegir();        // ...elijo uno cualquiera...
+    // ...acá uso x (imprimirlo, sumarlo, lo que sea)...
+    c.sacar(x);                // ...y lo saco, para no volver a tomarlo.
+}
+// Al terminar, c quedó VACÍO.</code></pre>
+  <div class="callout error"><span class="et">⚠️ Este patrón <em>destruye</em> el conjunto</span>
+    Al terminar el <code>while</code>, el conjunto quedó <strong>vacío</strong>: lo recorriste sacándole
+    todo. Si <strong>no querés destruir</strong> el conjunto que recibiste (porque lo vas a seguir usando),
+    trabajá sobre una <strong>copia</strong> y recorré la copia. Lo mismo aplica a lo que devuelven
+    operaciones como <code>claves()</code> de un diccionario o <code>vertices()</code> de un grafo:
+    te entregan un <em>conjunto</em>, y si lo recorrés con este patrón lo vaciás. Si lo necesitás de
+    nuevo, copialo antes.</div>
+
+  <h3>Operaciones entre conjuntos</h3>
+  <p>Las operaciones clásicas <strong>unión</strong>, <strong>intersección</strong> y
+     <strong>diferencia</strong> no son parte del TDA: se programan <strong>por fuera</strong>, usando solo
+     las operaciones públicas (<code>elegir</code>, <code>sacar</code>, <code>pertenece</code>,
+     <code>agregar</code>, <code>conjuntoVacío</code>). La técnica es siempre la misma: recorrer una
+     <strong>copia</strong> de cada conjunto con el patrón destructivo, para no romper los originales.</p>
+  <pre><code class="java">// A ∪ B: todos los elementos que están en A o en B (sin repetidos).
+public ConjuntoTDA union(ConjuntoTDA a, ConjuntoTDA b) {
+    ConjuntoTDA r = new ConjuntoLD();
+    r.inicializarConjunto();              // Arranco del VACÍO (neutro de la unión).
+    ConjuntoTDA ca = copia(a);            // Trabajo sobre copias para no destruir A ni B.
+    while (!ca.conjuntoVacío()) { int x = ca.elegir(); r.agregar(x); ca.sacar(x); }
+    ConjuntoTDA cb = copia(b);
+    while (!cb.conjuntoVacío()) { int x = cb.elegir(); r.agregar(x); cb.sacar(x); }
+    return r;   // agregar() ya evita los repetidos: lo que está en ambos entra una sola vez.
+}
+
+// A ∩ B: los elementos que están en A Y en B.
+public ConjuntoTDA interseccion(ConjuntoTDA a, ConjuntoTDA b) {
+    ConjuntoTDA r = new ConjuntoLD();
+    r.inicializarConjunto();
+    ConjuntoTDA ca = copia(a);            // NO arranco del vacío "puro": recorro A.
+    while (!ca.conjuntoVacío()) {
+        int x = ca.elegir();
+        if (b.pertenece(x)) r.agregar(x); // Lo guardo solo si TAMBIÉN está en B.
+        ca.sacar(x);
+    }
+    return r;
+}
+
+// A − B: los elementos de A que NO están en B.
+public ConjuntoTDA diferencia(ConjuntoTDA a, ConjuntoTDA b) {
+    ConjuntoTDA r = new ConjuntoLD();
+    r.inicializarConjunto();
+    ConjuntoTDA ca = copia(a);            // Recorro A (no el vacío).
+    while (!ca.conjuntoVacío()) {
+        int x = ca.elegir();
+        if (!b.pertenece(x)) r.agregar(x); // Lo guardo solo si NO está en B.
+        ca.sacar(x);
+    }
+    return r;
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Elemento neutro: ¿de dónde "arranco"?</span>
+    La <strong>unión</strong> parte del conjunto <strong>vacío</strong> y le agrega todo lo de A y todo lo
+    de B: el vacío es su elemento neutro (unir con vacío no cambia nada). La <strong>intersección</strong>
+    y la <strong>diferencia</strong>, en cambio, <strong>no</strong> arrancan del vacío como base de
+    recorrido: recorren el <strong>primer conjunto</strong> (A) y deciden, elemento por elemento, si lo
+    conservan según el segundo (B). El resultado <code>r</code> sí empieza vacío en los tres casos, pero
+    lo que se <em>recorre</em> es distinto.</div>
 
   <h2>4. Costo</h2>
   <table class="costo">

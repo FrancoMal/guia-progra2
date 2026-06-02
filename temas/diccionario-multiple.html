@@ -38,6 +38,23 @@
     ConjuntoTDA recuperar(int clave);           // Diccionario inicializado.
     ConjuntoTDA claves();                       // Diccionario inicializado.
 }</code></pre>
+  <div class="equiv"><span class="et">Equivalencia con Monzón (inglés)</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>agregar(clave, valor)</code></td><td><code>add(key, value)</code></td></tr>
+        <tr><td class="es"><code>eliminarValor(clave, valor)</code></td><td><code>remove(key, value)</code></td></tr>
+        <tr><td class="es"><code>recuperar(clave)</code></td><td><code>getValues(key): Set</code></td></tr>
+        <tr><td class="es"><code>claves()</code></td><td><code>getKeys(): Set</code></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Ojo: <code>recuperar(clave)</code> / <code>getValues(key)</code> devuelven un <strong>conjunto</strong>
+       de valores (sin repetidos). En la mayoría de los apuntes <code>getValues</code> devuelve <code>Set</code>,
+       pero en algún examen aparece devolviendo <code>List</code> en vez de <code>Set</code>: verificá el apéndice de
+       tu enunciado antes de asumir el tipo de retorno. En Monzón <code>remove</code> hace de
+       <code>eliminarValor</code> (saca un solo valor); el borrado de la clave entera lo cubre el invariante que
+       vemos abajo, no un método aparte.</p>
+  </div>
   <p>Cosas importantes para el parcial:</p>
   <ul>
     <li><code>agregar(clave, valor)</code> agrega <strong>un</strong> valor al conjunto de esa clave.
@@ -48,6 +65,22 @@
         devuelve un conjunto <strong>vacío</strong> (no rompe).</li>
     <li><code>claves()</code> devuelve el conjunto de todas las claves del diccionario.</li>
   </ul>
+
+  <h3>El invariante de oro: nunca una clave sin valores</h3>
+  <p>La regla que rige toda la estructura: <strong>una clave existe si y solo si tiene al menos un valor</strong>.
+     No hay claves "vacías". Esto separa con claridad dos operaciones que es fácil confundir:</p>
+  <ul>
+    <li><code>eliminar(clave)</code>: borra la clave <strong>entera</strong>, con <strong>todos</strong> sus valores
+        de una. Es el "borrá toda esta fila".</li>
+    <li><code>eliminarValor(clave, valor)</code>: saca <strong>un solo</strong> valor del conjunto de esa clave.
+        Si después de sacarlo la clave queda con el conjunto <strong>vacío</strong>, hay que borrar la clave entera
+        (justamente para no violar el invariante). En ese caso límite, <code>eliminarValor</code> termina llamando
+        a <code>eliminar(clave)</code>.</li>
+  </ul>
+  <div class="callout tip"><span class="et">💡 Regla práctica</span>
+    Después de cada <code>eliminarValor</code>, preguntate: "¿la clave quedó con cero valores?". Si la respuesta es
+    sí, la clave <strong>debe</strong> desaparecer. Una clave sin valores no tiene sentido y rompe el invariante:
+    a partir de ahí <code>claves()</code> devolvería una clave que <code>recuperar</code> contesta como vacía.</div>
 
   <h2>3. Implementaciones</h2>
   <h3>Con lista dinámica (LD)</h3>
@@ -176,6 +209,57 @@
         cantClaves--;
     }
 }</code></pre>
+
+  <h3>Ejemplo estrella: armar el diccionario de sinónimos</h3>
+  <p>Este ejercicio cae literal en los finales (apareció textual en el final de mayo de 2026). Es el ejemplo
+     perfecto de <strong>composición</strong>: combina un Diccionario Simple, un Diccionario Múltiple y un
+     recorrido destructivo de un conjunto.</p>
+  <p><strong>Enunciado.</strong> Tenemos un <strong>Diccionario Simple</strong> <code>D</code> que modela el
+     diccionario clásico: la clave es una <strong>palabra</strong> y su valor es su <strong>significado</strong>
+     (palabra → significado). Queremos generar un <strong>Diccionario Múltiple</strong> <code>DS</code> que, dado un
+     significado <code>s</code>, devuelva <strong>todas las palabras que comparten ese significado</strong> (sus
+     sinónimos). O sea: en <code>DS</code> la clave es el significado y los valores son las palabras
+     (significado → {palabras}). Lo que en <code>D</code> era el valor pasa a ser la clave de <code>DS</code>, y al
+     revés.</p>
+  <p>La idea: recorrer <strong>todas las claves de <code>D</code></strong> (las palabras). Para cada palabra,
+     pedimos su significado a <code>D</code> y hacemos <code>agregar(significado, palabra)</code> en <code>DS</code>.
+     Como recorremos un conjunto, usamos el patrón <strong>copia + iteración destructiva</strong>: pedimos
+     <code>claves()</code> (un <code>ConjuntoTDA</code>), y mientras no esté vacío <code>elegimos</code> un elemento
+     y lo <code>sacamos</code> de la copia, así no modificamos <code>D</code>:</p>
+  <pre><code class="java">public DiccionarioMúltipleTDA sinónimos(DiccionarioSimpleTDA d) {
+    DiccionarioMúltipleTDA ds = new DicMúltipleLD();
+    ds.inicializarDiccionario();
+
+    ConjuntoTDA palabras = d.claves();        // Copia de las claves de D (las palabras).
+    while (!palabras.conjuntoVacío()) {        // Iteración destructiva sobre la COPIA.
+        int palabra = palabras.elegir();      // Elijo una palabra cualquiera...
+        palabras.sacar(palabra);              // ...y la saco de la copia (D no se toca).
+
+        int significado = d.recuperar(palabra);   // En D, la palabra → su significado.
+        ds.agregar(significado, palabra);         // En DS, el significado → esa palabra.
+    }
+    return ds;
+}</code></pre>
+  <p>Por qué funciona, paso a paso:</p>
+  <ul>
+    <li>Recorremos el <code>ConjuntoTDA</code> de claves con el patrón clásico
+        <code>while (!conjuntoVacío()) { elegir / sacar }</code>. Trabajamos sobre la <strong>copia</strong> que
+        devuelve <code>claves()</code>, no sobre <code>D</code>, así que <code>D</code> queda intacto.</li>
+    <li>El <strong>valor</strong> de <code>D</code> (el significado) se vuelve la <strong>clave</strong> de
+        <code>DS</code>; la <strong>clave</strong> de <code>D</code> (la palabra) se vuelve un <strong>valor</strong>
+        de <code>DS</code>. Es la inversión clave↔valor.</li>
+    <li><code>agregar</code> en <code>DS</code> se encarga del resto: si el significado todavía no era clave de
+        <code>DS</code>, la crea; si ya existía, suma la palabra a su conjunto sin repetir. Dos palabras con el mismo
+        significado terminan juntas bajo la misma clave: son sinónimas.</li>
+  </ul>
+  <p>Ejemplo: si <code>D</code> tiene <code>"auto"→3</code>, <code>"coche"→3</code>, <code>"can"→7</code>
+     (con <code>3</code> = "vehículo" y <code>7</code> = "perro"), el resultado es
+     <code>DS</code> con <code>3→{auto, coche}</code> y <code>7→{can}</code>.</p>
+  <div class="callout tip"><span class="et">💡 Patrón a memorizar</span>
+    Este ejercicio ilustra la composición <strong>Diccionario → Conjunto → iteración destructiva</strong>.
+    Casi todos los ejercicios de "transformar un diccionario en otro" salen con el mismo esqueleto: pedí las
+    <code>claves()</code>, recorrelas con <code>elegir</code>/<code>sacar</code> sobre la copia, y por cada una
+    consultá el original y volcá en el resultado.</div>
 
   <h2>4. Costo</h2>
   <p>Con <strong>n</strong> claves y <strong>m</strong> valores por clave. Ubicar la clave es siempre

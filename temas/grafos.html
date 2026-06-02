@@ -48,6 +48,25 @@
   <p><code>vertices()</code> devuelve un <code>ConjuntoTDA</code> con las etiquetas de todos los vértices del
      grafo: es la puerta de entrada para recorrerlo, porque te dice qué nodos existen.</p>
 
+  <div class="equiv"><span class="et">Equivalencia con Monzón (inglés)</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>agregarVertice(v)</code></td><td><code>addNode(int)</code></td></tr>
+        <tr><td class="es"><code>eliminarVertice(v)</code></td><td><code>removeNode(int)</code></td></tr>
+        <tr><td class="es"><code>vertices()</code></td><td><code>getNodes(): Set</code></td></tr>
+        <tr><td class="es"><code>agregarArista(o, d, p)</code></td><td><code>addEdge(from, to, weight)</code></td></tr>
+        <tr><td class="es"><code>eliminarArista(o, d)</code></td><td><code>removeEdge(from, to)</code></td></tr>
+        <tr><td class="es"><code>existeArista(o, d)</code></td><td><code>edgeExists(from, to)</code></td></tr>
+        <tr><td class="es"><code>pesoArista(o, d)</code></td><td><code>weight(from, to)</code></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">El grafo del curso (Monzón) es <strong>dirigido y ponderado</strong>. Internamente se implementa
+      con una <strong>matriz de adyacencia</strong> más un <code>Dictionary</code> que mapea
+      <em>valor del nodo → índice de la matriz</em> (lo que acá hace <code>vertice2indice</code>). Igual que en
+      esta guía, un peso <code>0</code> significa "sin arista".</p>
+  </div>
+
   <h2>3. Representaciones y recorridos (Java)</h2>
   <h3>Matriz de adyacencia (MA)</h3>
   <p>Se usa una matriz <code>mAdy</code> de tamaño <em>n×n</em> (donde <em>n</em> es la cantidad de vértices).
@@ -164,6 +183,109 @@
         }
     }
 }</code></pre>
+
+  <h3>Grafo dirigido y ponderado</h3>
+  <p>El grafo que se usa en el curso es <strong>dirigido</strong> (cada arista tiene un sentido) y
+     <strong>ponderado</strong> (cada arista lleva un peso, un entero positivo). Por convención no hay
+     <strong>aristas paralelas</strong> (a lo sumo una arista por par origen→destino, lo cual es automático con
+     matriz: cada celda guarda un único peso) ni <strong>bucles</strong> (aristas de un vértice a sí mismo,
+     o sea <code>mAdy[i][i] = 0</code>). El diseño es el mismo que vimos: una <strong>matriz de adyacencia</strong>
+     más un <code>Dictionary</code> que mapea <em>valor del vértice → índice de la matriz</em>. Ese diccionario
+     es exactamente lo que reemplaza al arreglo <code>etiquetas</code> y al método <code>vertice2indice</code>.</p>
+  <p>En un grafo dirigido cada vértice tiene <strong>dos grados</strong>:</p>
+  <ul>
+    <li><strong>Grado de salida</strong> de <em>v</em>: cuántas aristas <em>salen</em> de <em>v</em>
+        (cuántas celdas <code>≠ 0</code> hay en la <strong>fila</strong> de <em>v</em>).</li>
+    <li><strong>Grado de entrada</strong> de <em>v</em>: cuántas aristas <em>llegan</em> a <em>v</em>
+        (cuántas celdas <code>≠ 0</code> hay en la <strong>columna</strong> de <em>v</em>).</li>
+  </ul>
+  <p>Un vértice es <strong>aislado</strong> cuando su grado de salida y su grado de entrada son ambos
+     <code>0</code>: no participa en ninguna arista. Calcular el grado de salida es recorrer
+     <code>vertices()</code> y contar a cuántos hay arista desde <em>v</em>:</p>
+  <pre><code class="java">int gradoSalida(GrafoTDA g, int v) {
+    int grado = 0;
+    ConjuntoTDA vs = g.vertices();        // Recorro todos los vértices del grafo.
+    while (!vs.conjuntoVacio()) {
+        int w = vs.elegir();
+        vs.sacar(w);
+        if (g.existeArista(v, w))         // Cuento solo las aristas que SALEN de v.
+            grado++;
+    }
+    return grado;                         // Grado de entrada: idéntico, pero con existeArista(w, v).
+}</code></pre>
+  <p>Dos grafos son <strong>iguales</strong> cuando tienen el mismo conjunto de vértices y, entre cada par,
+     exactamente las mismas aristas con el mismo peso. Un caso particular es la <strong>simetría</strong>: un
+     grafo dirigido es simétrico cuando su matriz cumple <code>M = Mᵀ</code> (la traspuesta), es decir,
+     <code>mAdy[o][d] == mAdy[d][o]</code> para todo par. Un grafo simétrico equivale, en la práctica, a uno
+     <strong>no dirigido</strong>: toda arista <em>o→d</em> tiene su espejo <em>d→o</em> con el mismo peso.</p>
+  <pre><code class="java">boolean esSimetrico(GrafoTDA g) {
+    ConjuntoTDA vs = g.vertices();
+    while (!vs.conjuntoVacio()) {
+        int o = vs.elegir();
+        vs.sacar(o);
+        ConjuntoTDA vs2 = g.vertices();   // Para cada o, comparo contra todos los d.
+        while (!vs2.conjuntoVacio()) {
+            int d = vs2.elegir();
+            vs2.sacar(d);
+            // La arista o→d y su espejo d→o deben coincidir (existencia y peso).
+            if (g.existeArista(o, d) != g.existeArista(d, o))
+                return false;
+            if (g.existeArista(o, d) &amp;&amp; g.pesoArista(o, d) != g.pesoArista(d, o))
+                return false;
+        }
+    }
+    return true;                          // M = Mᵀ ⇒ el grafo es, de hecho, no dirigido.
+}</code></pre>
+
+  <h3>Operaciones y propiedades</h3>
+  <p>Como un grafo dirigido modela una <strong>relación</strong> entre los vértices, se pueden combinar dos
+     grafos sobre el mismo conjunto de vértices con operaciones de conjuntos:</p>
+  <ul>
+    <li><strong>Unión</strong> (<em>g1 ∪ g2</em>): el grafo resultante tiene la arista <em>o→d</em> si está en
+        <em>g1</em> <strong>o</strong> en <em>g2</em>. Si está en ambos hay que decidir el peso (típicamente el
+        <strong>mínimo</strong>, pensando en caminos más cortos; aclará siempre el criterio).</li>
+    <li><strong>Intersección</strong> (<em>g1 ∩ g2</em>): solo conserva las aristas <em>o→d</em> que están en
+        <strong>los dos</strong> grafos (y de nuevo hay que fijar el peso del resultado).</li>
+  </ul>
+  <pre><code class="java">// Unión: copia todas las aristas de g1 y g2 a g3. Con peso repetido, gana el menor.
+void union(GrafoTDA g1, GrafoTDA g2, GrafoTDA g3) {
+    ConjuntoTDA vs = g1.vertices();       // (g1 y g2 comparten el conjunto de vértices)
+    while (!vs.conjuntoVacio()) {
+        int o = vs.elegir();
+        vs.sacar(o);
+        g3.agregarVertice(o);
+    }
+    copiarAristas(g1, g3);                // Vuelca las aristas de g1 en g3.
+    copiarAristas(g2, g3);                // Y las de g2 (si chocan, podés quedarte con el mínimo).
+}</code></pre>
+  <p>Una relación (y por lo tanto un grafo dirigido) puede cumplir tres propiedades clásicas:</p>
+  <ul>
+    <li><strong>Reflexiva</strong>: hay arista de cada vértice a sí mismo (<em>v→v</em> para todo <em>v</em>).</li>
+    <li><strong>Simétrica</strong>: si existe <em>o→d</em>, también existe <em>d→o</em> (es la
+        <code>esSimetrico</code> de arriba, mirando solo la existencia).</li>
+    <li><strong>Transitiva</strong>: si existen <em>o→x</em> y <em>x→d</em>, entonces existe <em>o→d</em>.</li>
+  </ul>
+  <p>Un grafo que es reflexivo, simétrico y transitivo a la vez representa una
+     <strong>relación de equivalencia</strong> (parte a los vértices en clases de elementos "equivalentes").</p>
+  <div class="callout tip"><span class="et">💡 eliminarVertice (no estaba en la matriz de arriba)</span>
+    Borrar un vértice no es solo sacarlo de <code>vertices()</code>: hay que <strong>limpiar su fila y su columna</strong>
+    en la matriz (todas las aristas que entran y salen de él) y achicar la estructura.
+    <pre><code class="java">public void eliminarVertice(int v) {
+    int idx = vertice2indice(v);          // Índice del vértice a borrar.
+    for (int i = 0; i &lt; cantidad; i++) {  // Lo desconecto: limpio su fila y su columna.
+        mAdy[idx][i] = 0;
+        mAdy[i][idx] = 0;
+    }
+    int ult = cantidad - 1;               // Traigo el último vértice al hueco (no quedan huecos).
+    for (int i = 0; i &lt; cantidad; i++) {
+        mAdy[idx][i] = mAdy[ult][i];      // Copio la fila del último.
+        mAdy[i][idx] = mAdy[i][ult];      // Copio su columna.
+    }
+    etiquetas[idx] = etiquetas[ult];      // Y su etiqueta pasa a ocupar el índice liberado.
+    cantidad--;
+}</code></pre>
+    En el diseño con <code>Dictionary</code> (Monzón) el cierre es el mismo, pero en vez de mover
+    <code>etiquetas</code> se reasigna en el diccionario el índice del último vértice.</div>
 
   <h2>🕸️ Laboratorio: grafos, recorridos y matriz</h2>
   <p>Construí un grafo haciendo <strong>clic en dos vértices para conectarlos</strong> (o cargá un ejemplo),

@@ -42,6 +42,23 @@
     <code>recuperar</code> exige que la <strong>clave exista</strong>. Para saber qué claves hay (y
     así recorrer el diccionario o validar antes de recuperar) se usa <code>claves()</code>, que
     devuelve el conjunto de todas las claves cargadas.</div>
+  <div class="equiv"><span class="et">Equivalencia con Monzón (inglés)</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>agregar(c, v)</code></td><td><code>add(k, v)</code></td></tr>
+        <tr><td class="es"><code>eliminar(c)</code></td><td><code>remove(k, v)</code></td></tr>
+        <tr><td class="es"><code>recuperar(c)</code></td><td><code>getValue(k)</code></td></tr>
+        <tr><td class="es"><code>claves()</code></td><td><code>getKeys(): Set</code></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">¡OJO con dos divergencias del examen! (1) El <code>remove</code> de Monzón pide
+      <strong>clave Y valor</strong> (<code>remove(k, v)</code>), no solo la clave. (2) Para recuperar
+      hay versiones que usan <code>getValue(k)</code> y otras que usan <code>get(k)</code>: verificá
+      siempre el <strong>apéndice</strong> que te entregan en tu examen. Además, el <code>Dictionary</code>
+      <strong>no tiene</strong> <code>containsKey</code>: para saber si una clave existe hay que recorrer
+      <code>getKeys(): Set</code> (acá, <code>claves()</code>).</p>
+  </div>
 
   <h2>3. Implementaciones</h2>
   <h3>Con lista dinámica (LD)</h3>
@@ -121,6 +138,47 @@
     En las dos implementaciones <code>agregar</code> primero <strong>busca</strong> la clave y recién
     después decide: si la encuentra actualiza el valor, si no la encuentra crea el par. Por eso una
     clave nunca queda duplicada.</div>
+
+  <h3>eliminar(clave) y claves() (lista dinámica)</h3>
+  <p><code>eliminar</code> recorre la lista buscando la clave para desenganchar su nodo. Si la clave
+     <strong>no está</strong>, no pasa nada: el método termina sin tocar la estructura (eliminar una
+     clave inexistente <strong>no es un error</strong>). <code>claves</code> recorre el diccionario
+     armando un <code>ConjuntoTDA</code> con cada clave cargada:</p>
+  <pre><code class="java">    public void eliminar(int clave) {
+        if (inicio != null) {
+            if (inicio.clave == clave) {          // Caso 1: la clave está en el primer nodo.
+                inicio = inicio.sig;              // Se saltea el inicio: lo desengancha.
+            } else {                              // Caso 2: se busca el nodo PREVIO al que hay que borrar.
+                Nodo turista = inicio;
+                while (turista.sig != null &amp;&amp; turista.sig.clave != clave)
+                    turista = turista.sig;
+                if (turista.sig != null)          // Si la clave existe, se la saltea.
+                    turista.sig = turista.sig.sig;
+                // Si turista.sig == null la clave no estaba: no se hace nada (no es error).
+            }
+        }
+    }
+
+    public ConjuntoTDA claves() {
+        ConjuntoTDA c = new ConjuntoLD();   // Conjunto vacío donde junto las claves.
+        c.inicializarConjunto();
+        Nodo turista = inicio;
+        while (turista != null) {           // Recorro toda la lista...
+            c.agregar(turista.clave);       // ...y voy agregando cada clave al conjunto.
+            turista = turista.sig;
+        }
+        return c;
+    }</code></pre>
+  <div class="callout tip"><span class="et">💡 agregar es un UPSERT</span>
+    <code>agregar(clave, x)</code> hace <strong>update-or-insert</strong>: si la clave ya existe
+    <strong>sobreescribe</strong> su valor (no la duplica), y si no existe la inserta. Por eso
+    <strong>"modificar"</strong> el valor de una clave es simplemente volver a llamar a
+    <code>agregar</code> con el nuevo valor; equivale a <code>eliminar</code> + <code>agregar</code>,
+    pero en un solo paso.</div>
+  <div class="callout tip"><span class="et">💡 eliminar tolera la clave inexistente</span>
+    <code>eliminar(clave)</code> sobre una clave que <strong>no está</strong> termina sin hacer nada y
+    <strong>sin romper</strong> (no tiene como precondición que la clave exista). Esto lo diferencia de
+    <code>recuperar(clave)</code>, que <strong>sí</strong> exige que la clave exista y explota si no.</div>
 
   <h2>4. Costo</h2>
   <table class="costo">

@@ -202,5 +202,50 @@ public int prioridad() { return primero.prioridad; }`,
       'turista.sig = nuevo;'
     ],
     explicacion: 'El turista arranca en primero y avanza mientras el siguiente exista y tenga prioridad mayor o igual. Cuando se detiene, el nuevo se engancha entre turista y su siguiente: primero nuevo.sig = turista.sig y recién después turista.sig = nuevo, para no perder el resto.'
+  },
+
+  // ---------------------------------------------------------------- MAPEAR
+  {
+    tipo: 'mapear',
+    enunciado: 'Relacioná cada operación de la cola de prioridad (español, Wehbe) con su equivalente en inglés (Monzón, PriorityQueue).',
+    pares: [
+      ['acolarPrioridad(x, p)', 'add(x, priority)'],
+      ['desacolar()', 'remove()'],
+      ['primero()', 'getFirst()'],
+      ['prioridad()', 'getPriority()'],
+      ['colaVacia()', 'isEmpty()']
+    ],
+    explicacion: 'Mismo TDA, distintos nombres: acolarPrioridad↔add, desacolar↔remove, primero↔getFirst, prioridad↔getPriority y colaVacia↔isEmpty. En ambas variantes sale primero el de MAYOR prioridad.'
+  },
+
+  // ---------------------------------------------------------------- TRAZAR (ordenar con PQ)
+  {
+    tipo: 'trazar',
+    enunciado: 'Ordenar con una cola de prioridad: se encola cada número usando su PROPIO valor como prioridad. ¿En qué orden imprime este código? (número más grande = más prioridad)',
+    codigo:
+`c.inicializarCola();
+c.acolarPrioridad(4, 4);
+c.acolarPrioridad(9, 9);
+c.acolarPrioridad(1, 1);
+c.acolarPrioridad(7, 7);
+while (!c.colaVacia()) {
+    System.out.println(c.primero());
+    c.desacolar();
+}`,
+    opciones: ['9, 7, 4, 1', '1, 4, 7, 9', '4, 9, 1, 7'],
+    correcta: 0,
+    explicacion: 'Al usar prioridad = valor, la cola queda ordenada por valor y sale primero el de mayor prioridad. Por eso los números salen de mayor a menor: 9, 7, 4, 1. La cola de prioridad funciona acá como un ordenamiento por inserción.'
+  },
+
+  // ---------------------------------------------------------------- QUIZ (empates)
+  {
+    tipo: 'quiz',
+    enunciado: 'Dos elementos se acolan con la MISMA prioridad. Según el TDA PURO de cola de prioridad, ¿qué se garantiza sobre el orden entre ellos?',
+    opciones: ['Siempre sale primero el que llegó antes (FIFO), en cualquier implementación',
+               'El TDA puro NO define el orden entre prioridades iguales; depende de la implementación (p. ej. el > o >= que use al insertar)',
+               'Siempre sale primero el de menor valor',
+               'Es imposible acolar dos elementos con la misma prioridad'],
+    correcta: 1,
+    explicacion: 'El TDA puro solo garantiza que sale alguno de los de mayor prioridad; el orden entre empatados no está definido. La regla "a igual prioridad, FIFO" es la convención de esta guía y la logra la comparación >= al insertar; con > estricto el desempate puede cambiar.'
   }
 ];

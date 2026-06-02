@@ -188,5 +188,48 @@ dfs(g, inicio, visitados);`,
       'mAdy[d][o] = peso;'
     ],
     explicacion: 'Primero se traducen las etiquetas origen y destino a sus índices. Luego se cargan las DOS celdas con el peso: mAdy[o][d] y su simétrica mAdy[d][o], porque en un grafo no dirigido la arista vale en ambos sentidos.'
+  },
+  // ───────────────────────────── MAPEAR (Español ↔ Inglés) ─────────────────────────────
+  {
+    tipo: 'mapear',
+    enunciado: 'Asociá cada operación del TDA Grafo (esta guía, en español) con su equivalente en el TDA Graph de Monzón (en inglés, el de tu examen).',
+    pares: [
+      ['agregarVertice(v)', 'addNode(int)'],
+      ['eliminarVertice(v)', 'removeNode(int)'],
+      ['vertices()', 'getNodes(): Set'],
+      ['agregarArista(o, d, p)', 'addEdge(from, to, weight)'],
+      ['eliminarArista(o, d)', 'removeEdge(from, to)'],
+      ['existeArista(o, d)', 'edgeExists(from, to)'],
+      ['pesoArista(o, d)', 'weight(from, to)']
+    ],
+    explicacion: 'Solo cambian los nombres: la semántica es idéntica. El grafo de Monzón es dirigido y ponderado, y se implementa con una matriz de adyacencia más un Dictionary que mapea valor del nodo → índice de la matriz (lo que acá hace vertice2indice). Un peso 0 sigue significando "sin arista".'
+  },
+  // ───────────────────────────── TRAZAR (grados / simetría) ─────────────────────────────
+  {
+    tipo: 'trazar',
+    enunciado: 'Grafo DIRIGIDO con esta matriz de adyacencia (filas y columnas son los vértices 1, 2, 3; la celda es el peso, 0 = sin arista). ¿Cuál es el grado de SALIDA del vértice 1?',
+    codigo:
+`//      a 1   a 2   a 3
+// 1:    0     5     2
+// 2:    0     0     3
+// 3:    0     0     0
+// El grado de salida de v = cantidad de celdas != 0 en la FILA de v.`,
+    opciones: ['1', '2', '3'],
+    correcta: 1,
+    explicacion: 'La fila del vértice 1 es [0, 5, 2]: tiene dos celdas distintas de 0 (aristas 1→2 con peso 5 y 1→3 con peso 2). Su grado de salida es 2. Ojo: el grado de ENTRADA de 1 sería 0, porque su columna [0, 0, 0] está vacía.'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: 'Misma matriz dirigida del ejercicio anterior (aristas 1→2 peso 5, 1→3 peso 2, 2→3 peso 3). ¿Es simétrica (M = Mᵀ) y qué implica eso?',
+    codigo:
+`//      a 1   a 2   a 3
+// 1:    0     5     2
+// 2:    0     0     3
+// 3:    0     0     0`,
+    opciones: ['Sí es simétrica, así que equivale a un grafo no dirigido',
+               'No es simétrica: por ejemplo mAdy[1][2]=5 pero mAdy[2][1]=0, así que es un grafo dirigido genuino',
+               'No se puede saber sin conocer los pesos de las aristas que faltan'],
+    correcta: 1,
+    explicacion: 'Para ser simétrica tendría que cumplirse mAdy[o][d] == mAdy[d][o] en todos los pares. Acá mAdy[1][2]=5 pero mAdy[2][1]=0 (no hay arista 2→1), así que M != Mᵀ. Es un grafo dirigido genuino; si fuera simétrico equivaldría a uno no dirigido.'
   }
 ];

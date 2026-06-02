@@ -23,6 +23,26 @@
     <span class="nodo">1 2 4 5 8</span>
   </div>
 
+  <h3>Ordenar apoyándose en TDAs</h3>
+  <p>En el parcial muchas veces no te piden programar un algoritmo de ordenamiento desde cero, sino
+     <strong>ordenar usando una estructura</strong> que ya tenés. Tres recursos clásicos:</p>
+  <ul>
+    <li><strong>Cola de prioridad</strong>: volcás todos los datos a una <code>ColaPrioridadTDA</code>
+        usando como prioridad el propio valor, y después <strong>desencolás</strong> de a uno. Salen
+        ya ordenados (la cola te da siempre el de mayor prioridad). Es la idea detrás del
+        <em>heapsort</em>: cargar n elementos y vaciarla cuesta <strong>O(n log n)</strong>.</li>
+    <li><strong>Árbol Binario de Búsqueda (ABB)</strong>: insertás cada valor en el ABB y después lo
+        recorrés <strong>in-orden</strong> (izquierda, raíz, derecha). El recorrido in-orden de un
+        ABB visita las claves <strong>de menor a mayor</strong>, así que el resultado sale ordenado.</li>
+    <li><strong>Precondición que acota el desorden</strong>: si el enunciado te garantiza algo sobre
+        el rango o la distribución de los datos (por ejemplo, "valores enteros entre 0 y k"), podés
+        ordenar en <strong>O(n)</strong> con <em>counting sort</em> o <em>bucket sort</em> (sección 7).</li>
+  </ul>
+  <div class="callout tip"><span class="et">💡 Para qué ordenar</span>
+    Tener el arreglo ordenado habilita la <strong>búsqueda binaria</strong> en
+    <strong>O(log n)</strong> (sección 8). Esa búsqueda tiene como <strong>precondición</strong> que
+    el arreglo esté ordenado: si no lo está, el resultado no es confiable.</div>
+
   <h2>2. Ideas clave</h2>
   <p>Casi todos los algoritmos se apoyan en dos operaciones básicas:</p>
   <ul>
@@ -196,7 +216,109 @@ static void combinar(int[] a, int desde, int medio, int hasta) {
     <li>O(n log n) por <em>dividir y vencer</em>: <code>quicksort</code> (promedio O(n log n), peor
         O(n²)) y <code>mergesort</code> (O(n log n) siempre, pero no in-place).</li>
     <li>Los recursivos necesitan <strong>caso base</strong>; cuidá los <strong>límites de índices</strong>.</li>
+    <li>Podés ordenar apoyándote en TDAs (cola de prioridad, ABB in-orden) y, con una precondición
+        sobre el rango, en <strong>O(n)</strong> (counting/bucket). Ordenar habilita la
+        <strong>búsqueda binaria O(log n)</strong>.</li>
   </ul>
+
+  <h2>7. Ordenar en O(n): counting sort y bucket sort</h2>
+  <p>Los O(n log n) son el techo para algoritmos <strong>basados en comparar</strong>. Pero si una
+     <strong>precondición</strong> nos dice algo sobre el rango de los datos, podemos ordenar
+     <strong>sin comparar</strong> y bajar a <strong>O(n)</strong>. Estos algoritmos no son mágicos:
+     pagan el precio en memoria extra y solo sirven bajo su condición.</p>
+
+  <h3>Counting Sort</h3>
+  <p>Sirve cuando los valores son <strong>enteros en un rango chico y conocido</strong> (0 a k).
+     La idea: <strong>contar</strong> cuántas veces aparece cada valor y después reconstruir el
+     arreglo en orden a partir de esos conteos. No compara elementos entre sí.</p>
+  <pre><code class="java">// Precondición: todos los valores están en el rango [0, k].
+static void countingSort(int[] a, int k) {
+    int[] conteo = new int[k + 1];            // conteo[v] = cuántas veces aparece v.
+    for (int v : a) {
+        conteo[v]++;                          // Contamos las apariciones de cada valor.
+    }
+    int idx = 0;
+    for (int v = 0; v &lt;= k; v++) {            // Recorremos los valores en orden creciente.
+        while (conteo[v] &gt; 0) {               // Escribimos v tantas veces como aparezca.
+            a[idx++] = v;
+            conteo[v]--;
+        }
+    }
+}</code></pre>
+  <p>Costo: recorrer <em>a</em> es O(n) y recorrer los conteos es O(k). Si <em>k</em> es comparable a
+     <em>n</em>, el total es <strong>O(n + k) ≈ O(n)</strong>. Si <em>k</em> fuera enorme (por
+     ejemplo, valores hasta 10⁹), el arreglo de conteo no entraría en memoria y dejaría de convenir.</p>
+
+  <h3>Bucket Sort</h3>
+  <p>Generaliza la idea cuando los valores están <strong>distribuidos parejo en un rango continuo</strong>
+     (por ejemplo, reales en [0, 1)). Reparte los datos en <em>baldes</em> (buckets) según su valor,
+     ordena cada balde por separado (con inserción, que es rápida en tramos chicos) y concatena.</p>
+  <pre><code class="java">// Precondición: valores en [0, 1), distribuidos de forma pareja.
+static void bucketSort(double[] a) {
+    int n = a.length;
+    List&lt;List&lt;Double&gt;&gt; baldes = new ArrayList&lt;&gt;();
+    for (int i = 0; i &lt; n; i++) baldes.add(new ArrayList&lt;&gt;());
+
+    for (double x : a) {
+        int b = (int) (x * n);                // El balde sale del propio valor: O(1).
+        baldes.get(b).add(x);
+    }
+    for (List&lt;Double&gt; balde : baldes) {
+        Collections.sort(balde);              // Cada balde queda chico: ordenarlo es barato.
+    }
+    int idx = 0;
+    for (List&lt;Double&gt; balde : baldes) {        // Concatenamos los baldes en orden.
+        for (double x : balde) a[idx++] = x;
+    }
+}</code></pre>
+  <p>Con una distribución pareja, cada balde queda con pocos elementos y el promedio es
+     <strong>O(n)</strong>. Si todos cayeran en el mismo balde, degenera al costo de ordenar ese
+     balde (peor caso O(n²) con inserción).</p>
+  <div class="callout"><span class="et">Cuándo usarlos</span>
+    Counting y bucket <strong>no comparan</strong>, por eso esquivan el techo O(n log n). El truco es
+    que aprovechan una <strong>precondición sobre los datos</strong>: rango entero chico (counting) o
+    distribución pareja en un intervalo (bucket). Sin esa precondición, volvé a un O(n log n).</div>
+
+  <h2>8. Búsqueda binaria (sobre arreglo ordenado)</h2>
+  <p>Ordenar no es un fin en sí mismo: su gran pago es habilitar la <strong>búsqueda binaria</strong>.
+     En vez de mirar uno por uno (búsqueda lineal O(n)), comparamos contra el <strong>elemento del
+     medio</strong> y, según sea mayor o menor, <strong>descartamos media mitad</strong> del arreglo
+     en cada paso.</p>
+  <div class="callout error"><span class="et">⚠️ Precondición</span>
+    La búsqueda binaria <strong>solo funciona si el arreglo está ordenado</strong>. Sobre un arreglo
+    desordenado puede decir que un elemento no está cuando sí está. Por eso primero se ordena y
+    después se busca.</div>
+  <pre><code class="java">// Precondición: 'a' está ordenado de menor a mayor.
+// Devuelve el índice de 'clave', o -1 si no está.
+static int busquedaBinaria(int[] a, int clave) {
+    int desde = 0;
+    int hasta = a.length - 1;
+    while (desde &lt;= hasta) {
+        int medio = (desde + hasta) / 2;      // Posición del medio del tramo vivo.
+        if (a[medio] == clave) {
+            return medio;                     // Lo encontramos.
+        } else if (a[medio] &lt; clave) {
+            desde = medio + 1;                // La clave está en la mitad derecha.
+        } else {
+            hasta = medio - 1;                // La clave está en la mitad izquierda.
+        }
+    }
+    return -1;                                // El tramo se vació: no está.
+}</code></pre>
+  <p>En cada vuelta el tramo a revisar se <strong>parte a la mitad</strong>, así que como mucho hacemos
+     log₂(n) comparaciones: el costo es <strong>O(log n)</strong>. Sobre un millón de elementos son
+     unas 20 comparaciones, contra hasta un millón de la búsqueda lineal.</p>
+  <table class="costo">
+    <thead><tr><th>Búsqueda</th><th>Precondición</th><th>Costo</th></tr></thead>
+    <tbody>
+      <tr><td>Lineal</td><td>ninguna</td><td>O(n)</td></tr>
+      <tr><td>Binaria</td><td>arreglo ordenado</td><td>O(log n)</td></tr>
+    </tbody>
+  </table>
+  <div class="callout tip"><span class="et">💡 Cuándo conviene ordenar para buscar</span>
+    Si vas a buscar <strong>muchas veces</strong> sobre los mismos datos, conviene ordenar una vez
+    (O(n log n)) y después cada búsqueda cuesta O(log n). Si buscás una sola vez, la lineal O(n)
+    puede salir más barata que ordenar.</div>
 
   <section class="actividades" data-actividades>
     <h2>Actividades</h2>

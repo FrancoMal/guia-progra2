@@ -15,7 +15,8 @@
   <p>Una <strong>cola de prioridad</strong> es como una cola común, pero cada elemento entra
      con una <strong>prioridad</strong> asociada. La diferencia es que no sale primero el que
      llegó primero (FIFO), sino el de <strong>mayor prioridad</strong>. Si dos tienen la misma
-     prioridad, entre ellos se respeta el orden de llegada.</p>
+     prioridad, en esta guía respetamos entre ellos el orden de llegada (ver la aclaración sobre
+     empates más abajo).</p>
   <p>Analogía: la guardia de un hospital. No te atienden por orden de llegada, sino por gravedad —
      el caso más urgente pasa primero, aunque haya llegado último.</p>
   <p>Se usa para: planificación de tareas (scheduling), algoritmos de grafos como Dijkstra,
@@ -43,6 +44,21 @@
      <code>primero()</code> devuelve el valor del elemento de mayor prioridad y
      <code>prioridad()</code> devuelve su prioridad; ninguno de los dos lo saca de la cola
      (para eso está <code>desacolar()</code>).</p>
+  <div class="equiv"><span class="et">Equivalencia con Monzón (inglés)</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>acolarPrioridad(x, p)</code></td><td><code>add(x, priority)</code></td></tr>
+        <tr><td class="es"><code>desacolar()</code></td><td><code>remove()</code></td></tr>
+        <tr><td class="es"><code>primero()</code></td><td><code>getFirst()</code></td></tr>
+        <tr><td class="es"><code>prioridad()</code></td><td><code>getPriority()</code></td></tr>
+        <tr><td class="es"><code>colaVacia()</code></td><td><code>isEmpty()</code></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">En ambas variantes sale primero el elemento de <strong>mayor prioridad</strong>.
+       <code>getPriority()</code>, igual que <code>prioridad()</code>, devuelve la prioridad de ese
+       primero sin sacarlo de la cola.</p>
+  </div>
 
   <h2>3. Implementaciones</h2>
   <h3>Con lista dinámica ordenada por prioridad (LD)</h3>
@@ -106,6 +122,16 @@
     prioridad mayor o igual a la del nuevo; cuando se detiene, el nuevo se engancha justo
     después del turista. La condición <code>&gt;=</code> (mayor o igual) hace que, ante empate de
     prioridad, el nuevo quede <em>detrás</em> de los que ya estaban: respeta el orden de llegada.</div>
+  <div class="callout"><span class="et">📌 Empates: qué define el TDA y qué no</span>
+    El TDA <em>puro</em> de cola de prioridad <strong>no define</strong> el orden entre elementos de
+    <strong>igual</strong> prioridad: solo garantiza que sale alguno de los de mayor prioridad. La
+    regla "a igual prioridad, FIFO (gana el que llegó antes)" es la convención de esta guía (Wehbe),
+    <em>no</em> es universal. Lo que decide el desempate es la comparación del <code>acolarPrioridad</code>:
+    con <code>&gt;=</code> el nuevo se mete <em>detrás</em> de los empatados (FIFO entre iguales);
+    con <code>&gt;</code> <strong>estricto</strong>, al no desplazar a quienes ya tenían esa prioridad,
+    el nuevo se inserta <em>delante</em> de ellos y el orden de los empatados puede variar. Moraleja:
+    si un ejercicio depende del orden entre prioridades iguales, fijate qué comparación usa la
+    implementación.</div>
 
   <h3>Con dos arreglos en tándem (DA)</h3>
   <p>Otra opción es usar <strong>dos arreglos paralelos</strong>: uno de <code>valores</code> y
@@ -209,6 +235,38 @@
     <em>al final</em> (posición <code>cant-1</code>). En ambos casos sale en O(1), solo cambia de
     qué punta lo sacás. Estas implementaciones con arreglo ordenado son simples pero ineficientes
     al insertar; lo ideal para una cola de prioridad de verdad sería un <em>heap</em>.</div>
+
+  <h3>Ordenar con una cola de prioridad</h3>
+  <p>Una cola de prioridad es, en el fondo, un <strong>ordenamiento por inserción</strong>: cada
+     <code>acolarPrioridad</code> mete el elemento en su lugar dentro de la estructura ya ordenada.
+     Eso da un truco simple para <strong>ordenar</strong> un conjunto de números: encolá cada número
+     usando <em>su propio valor como prioridad</em> y después desacolá todo. Como sale primero el de
+     mayor prioridad, los valores salen ordenados de mayor a menor.</p>
+  <pre><code class="java">// Ordena el arreglo "nums" de mayor a menor usando una cola de prioridad.
+ColaPrioridadTDA c = new ColaPrioridadLD();
+c.inicializarCola();
+for (int i = 0; i &lt; nums.length; i++)
+    c.acolarPrioridad(nums[i], nums[i]);   // prioridad = el propio valor
+while (!c.colaVacia()) {
+    System.out.println(c.primero());       // van saliendo de mayor a menor
+    c.desacolar();
+}</code></pre>
+  <p>El mismo truco sirve para <strong>ordenar una pila</strong>: vaciás la pila (con
+     <code>desapilar</code>) y vas <em>volcando</em> cada elemento a una cola de prioridad usando su
+     valor como prioridad; cuando la pila quedó vacía, desacolás todo y obtenés los elementos
+     ordenados. Es una forma cómoda de ordenar sin tocar la pila original.</p>
+  <div class="callout tip"><span class="et">💡 ¿Y por qué no es el mejor ordenamiento?</span>
+    Como cada <code>acolarPrioridad</code> es O(n), encolar n elementos cuesta O(n²): este
+    "ordenamiento por cola de prioridad" es, en costo, un ordenamiento por inserción común. Sirve
+    para entender la idea, pero no es el método más rápido para ordenar.</div>
+  <div class="callout"><span class="et">📌 La versión eficiente: con HEAP (montículo)</span>
+    Las implementaciones de esta guía mantienen la estructura ordenada, así que insertar cuesta
+    <strong>O(n)</strong>. Existe otra implementación, con un <strong>heap</strong> (montículo: un
+    árbol binario casi completo con una condición de orden entre padre e hijos), que consigue
+    <code>acolarPrioridad</code> y <code>desacolar</code> en <strong>O(log n)</strong> en lugar de
+    O(n), sin tener que mantener todo totalmente ordenado. Es la forma "de verdad" de implementar
+    una cola de prioridad; no la desarrollamos acá, pero conviene saber que existe y por qué es más
+    eficiente.</div>
 
   <h2>4. Costo</h2>
   <table class="costo">

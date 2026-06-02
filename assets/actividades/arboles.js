@@ -211,5 +211,44 @@ buscar(raiz, 5);`,
       'return nodo;'
     ],
     explicacion: 'Primero el caso base: si el lugar está vacío, ahí va el nodo nuevo. Después se compara: si x es menor baja por la izquierda, si es mayor por la derecha (y si es igual no hace nada). Al final devuelve el nodo para reenganchar el subárbol actualizado.'
+  },
+
+  // ---------------- MAPEAR (vocabulario ES ↔ EN del TDA de Monzón) ----------------
+  {
+    tipo: 'mapear',
+    enunciado: 'Relacioná cada término de árboles de esta guía (español) con su equivalente del TDA BinaryTree de Monzón (inglés).',
+    pares: [
+      ['raiz() (valor de la raíz)', 'getRoot() : int'],
+      ['hijoIzq() (subárbol izquierdo)', 'getLeft() : BinaryTree'],
+      ['hijoDer() (subárbol derecho)', 'getRight() : BinaryTree'],
+      ['insertar(x) en un ABB', 'SearchBinaryTree.add(int)'],
+      ['podar la rama izquierda', 'removeLeft()']
+    ],
+    explicacion: 'En el modelo recursivo de Monzón, getRoot() devuelve el VALOR de la raíz, pero getLeft()/getRight() devuelven otro BinaryTree (el subárbol completo, o null), no un valor. add(int) inserta respetando el orden en un SearchBinaryTree (el ABB), y removeLeft()/removeRight() podan toda la rama.'
+  },
+
+  // ---------------- QUIZ (conteo: números de Catalan) ----------------
+  {
+    tipo: 'quiz',
+    enunciado: 'Tenés 4 valores distintos α < β < γ < δ. ¿Cuántos ABB distintos (con distinta forma) se pueden armar con esos 4 valores, y cuántos de ellos son AVL (de altura mínima)?',
+    opciones: ['14 ABB distintos, y 4 de ellos son AVL',
+               '24 ABB distintos, y 14 de ellos son AVL',
+               '4 ABB distintos, y 1 de ellos es AVL',
+               '8 ABB distintos, y 2 de ellos son AVL'],
+    correcta: 0,
+    explicacion: 'La cantidad de formas de ABB con n valores distintos es el n-ésimo número de Catalan; para n=4 es 14 (no 24: el orden de inserción no importa, solo la forma final). De esas 14 formas, las que tienen altura mínima (las balanceadas estilo AVL) son 4: las que dejan como raíz a β o a γ con sus subárboles bien repartidos.'
+  },
+
+  // ---------------- TRAZAR (recorrido por niveles / BFS) ----------------
+  {
+    tipo: 'trazar',
+    enunciado: 'Se insertan 50, 30, 70, 20, 40, 60, 80 en un ABB vacío. ¿Qué imprime el recorrido POR NIVELES (BFS, con una Cola)?',
+    codigo:
+`int[] datos = {50, 30, 70, 20, 40, 60, 80};
+for (int x : datos) raiz = insertar(raiz, x);
+porNiveles(raiz);`,
+    opciones: ['50 30 70 20 40 60 80', '20 30 40 50 60 70 80', '50 30 20 40 70 60 80', '20 40 30 60 80 70 50'],
+    correcta: 0,
+    explicacion: 'El árbol queda: raíz 50; nivel 1: 30 y 70; nivel 2: 20, 40 (hijos de 30) y 60, 80 (hijos de 70). El BFS con cola los visita nivel por nivel, de izquierda a derecha: 50 / 30 70 / 20 40 60 80. No es ninguno de los recorridos en profundidad.'
   }
 ];

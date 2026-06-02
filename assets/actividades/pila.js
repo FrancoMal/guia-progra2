@@ -198,5 +198,63 @@ while (!a.pilaVacia()) {
       'p.apilar(7);'
     ],
     explicacion: 'inicializar → []; apilar(5) → [5]; apilar(2) → [2,5]; desapilar() saca el 2 → [5]; apilar(7) → [7,5]. El 2 se apila y se desapila enseguida; quedan el 5 de base y el 7 en el tope.'
+  },
+  {
+    tipo: 'mapear',
+    enunciado: 'Asociá cada operación de la Pila (español, esta guía) con su equivalente en el TDA Stack de Monzón (inglés). Misma semántica LIFO, solo cambia el nombre.',
+    pares: [
+      ['apilar(x)', 'add(x)'],
+      ['desapilar()', 'remove()'],
+      ['tope()', 'getTop()'],
+      ['pilaVacía()', 'isEmpty()']
+    ],
+    explicacion: 'Son la misma operación con distinto nombre: apilar/agregar al tope es add, desapilar/quitar el tope es remove, leer el tope es getTop y preguntar si está vacía es isEmpty. En Monzón la inicialización la hace el constructor, no un método aparte.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Se invierte una pila usando solo recursión (helper insertarAlFondo). Partiendo de la pila [3,2,1] (con el 3 en el tope), ¿qué devuelve tope() después de invertir(p)?',
+    codigo:
+`// p == [3,2,1]  (3 en el tope, 1 en el fondo)
+invertir(p);
+// tope()
+
+static void invertir(PilaTDA p) {
+    if (p.pilaVacia()) return;
+    int x = p.tope();
+    p.desapilar();
+    invertir(p);
+    insertarAlFondo(p, x);
+}`,
+    opciones: ['3', '1', '2'],
+    correcta: 1,
+    explicacion: 'invertir da vuelta la pila: cada tope se reinserta en el fondo. La pila [3,2,1] (3 en el tope) queda [1,2,3] (1 en el tope). Por eso tope() devuelve 1, que antes era el fondo.'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: 'Un MaximumRestrictedStack es una pila modificada: al apilar(x), si x es mayor que el tope actual, x se manda al FONDO en vez de quedar arriba (los demás casos apilan normal en el tope). Partiendo de pila vacía se hace apilar(5), apilar(2), apilar(8). ¿Qué devuelve tope()?',
+    codigo:
+`s.apilar(5);   // pila vacía: 5 va al tope -> [5]
+s.apilar(2);   // 2 NO es mayor que 5: va al tope -> [2,5]
+s.apilar(8);   // 8 ES mayor que el tope (2): va al FONDO
+// tope()`,
+    opciones: ['8', '2', '5'],
+    correcta: 1,
+    explicacion: 'Como 8 es mayor que el tope (2), no se apila arriba sino que va al fondo: la pila queda [2,5,8] con el 2 todavía en el tope. tope() devuelve 2.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Un PairStack apila de a pares: apilarPar(a,b) mete en la pila la suma a+b. Se imprime sacando y mostrando el tope hasta vaciar. ¿Qué imprime?',
+    codigo:
+`p.inicializarPila();
+p.apilarPar(1, 2);   // apila 1+2 = 3
+p.apilarPar(4, 5);   // apila 4+5 = 9
+p.apilarPar(0, 7);   // apila 0+7 = 7
+while (!p.pilaVacia()) {
+    System.out.print(p.tope() + " ");
+    p.desapilar();
+}`,
+    opciones: ['3 9 7', '7 9 3', '6 18 14'],
+    correcta: 1,
+    explicacion: 'Cada par apila su suma: 3, luego 9, luego 7. La pila queda [7,9,3] con el 7 en el tope. Al sacar el tope cada vez salen 7, 9 y 3 en ese orden (LIFO), por eso imprime "7 9 3".'
   }
 ];

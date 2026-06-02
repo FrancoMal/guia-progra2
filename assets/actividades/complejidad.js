@@ -186,5 +186,111 @@ for (int i = 0; i < n; i++) {
     opciones: ['4', '5', '6', '10'],
     correcta: 1,
     explicacion: 'El bucle va con i = 0, 1, 2, 3, 4 (mientras i < 5): son 5 iteraciones. La línea se ejecuta n veces, por eso el costo es O(n).'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: 'En el vocabulario C / L / P de la cátedra, ¿qué clasificación le corresponde a este bucle?',
+    codigo:
+`for (int i = 0; i < 5; i++) {
+    System.out.println(i);
+}`,
+    opciones: ['L (lineal), porque hay un for que recorre',
+               'C (constante), porque el tope es fijo y no depende de n',
+               'P (polinómico), porque imprime varias veces',
+               'L (lineal), porque hace 5 vueltas'],
+    correcta: 1,
+    explicacion: 'La complejidad depende del TAMAÑO de la entrada (n), no del número literal de vueltas. Este for siempre hace 5 iteraciones pase lo que pase con n, así que es C (constante) ≈ O(1). Sería L (lineal) si el tope fuera n.'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: 'Según el vocabulario C / L / P, ¿cuál de estas equivalencias con Big-O es la correcta?',
+    opciones: ['C ≈ O(n), L ≈ O(n²), P ≈ O(1)',
+               'C ≈ O(1), L ≈ O(n), P ≈ O(n²) o más',
+               'C ≈ O(log n), L ≈ O(n log n), P ≈ O(2ⁿ)',
+               'C ≈ O(n²), L ≈ O(n), P ≈ O(1)'],
+    correcta: 1,
+    explicacion: 'C (constante) ≈ O(1): el costo no depende de n. L (lineal) ≈ O(n): recorre la entrada una vez. P (polinómico) ≈ O(n²) o más (O(n³), …): bucles anidados sobre n.'
+  },
+  {
+    tipo: 'costo',
+    enunciado: 'Aplicando la técnica paso a paso, ¿cuál es la complejidad de este método? (el if con throw está antes del bucle)',
+    codigo:
+`int primero(int[] arr, int n) {
+    if (n == 0) {
+        throw new RuntimeException("vacío");
+    }
+    for (int i = 0; i < n; i++) {
+        if (arr[i] > 0) return i;
+    }
+    return -1;
+}`,
+    opciones: ['O(1)', 'O(n)', 'O(n²)', 'O(log n)'],
+    correcta: 1,
+    explicacion: 'El if con throw es O(1) (la condición es O(1) y el throw también). El for es O(n) y su cuerpo es O(1). Sumando las partes en secuencia, O(1) + O(n) = O(n): gana el término dominante.'
+  },
+  {
+    tipo: 'costo',
+    enunciado: 'Hay un bucle simple y, después, dos bucles anidados. ¿Cuál es la complejidad TOTAL?',
+    codigo:
+`for (int i = 0; i < n; i++) {
+    suma += arr[i];
+}
+for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        comparar(arr[i], arr[j]);
+    }
+}`,
+    opciones: ['O(n)', 'O(n²)', 'O(n³)', 'O(n + n²)'],
+    correcta: 1,
+    explicacion: 'El primer bloque es O(n) y el segundo (anidados) es O(n²). Están en secuencia, así que se SUMAN: O(n) + O(n²), y gana el término dominante ⇒ O(n²).'
+  },
+  {
+    tipo: 'costo',
+    enunciado: 'Caso engañoso: los dos while comparten la misma i, que NO se reinicia. ¿Cuál es la complejidad?',
+    codigo:
+`int i = 0;
+int maxSeq = 0;
+while (i < n) {
+    int largo = 0;
+    while (i < n && arr[i] == 1) {
+        largo++;
+        i++;
+    }
+    if (largo > maxSeq) maxSeq = largo;
+    i++;
+}`,
+    opciones: ['O(n²), porque hay dos while anidados',
+               'O(n), porque i avanza en total n veces entre los dos while',
+               'O(log n), porque algo se divide',
+               'O(1), porque maxSeq es una sola variable'],
+    correcta: 1,
+    explicacion: 'Aunque los while estén anidados, comparten la misma i y NUNCA la reinician: i pasa una sola vez por cada valor de 0 a n. Sumando todas las vueltas de ambos while, i avanza n veces en total ⇒ O(n), no O(n²).'
+  },
+  {
+    tipo: 'costo',
+    enunciado: 'Costo ESPACIAL: ¿cuánta memoria extra usa esta versión recursiva del factorial?',
+    codigo:
+`int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}`,
+    opciones: ['O(1) espacial, usa pocas variables',
+               'O(n) espacial, apila una llamada por cada nivel',
+               'O(n²) espacial',
+               'O(log n) espacial'],
+    correcta: 1,
+    explicacion: 'Cada llamada recursiva queda apilada hasta llegar al caso base: conviven n llamadas a la vez (factorial(n), factorial(n-1), …). El costo espacial es O(profundidad) = O(n). La versión iterativa con un for sería O(1) espacial.'
+  },
+  {
+    tipo: 'ordenar',
+    enunciado: 'Ordená los pasos de la técnica para calcular el costo de un método con if y bucles, de lo primero a lo último.',
+    lineas: [
+      'Recorrer el código por partes, anotando el costo de cada bloque.',
+      'En cada if, sumar la condición y quedarse con el peor de las dos ramas (throw y return son O(1)).',
+      'Tachar las constantes y las ramas baratas (O(1)).',
+      'Al anidar bucles, multiplicar sus costos.',
+      'Al sumar partes en secuencia, quedarse con el término dominante.'
+    ],
+    explicacion: 'Primero se descompone el método, luego se resuelve cada if (condición + peor rama), se tachan las constantes, se multiplican los bucles anidados y, al final, se suma todo quedándose con el término que más crece.'
   }
 ];

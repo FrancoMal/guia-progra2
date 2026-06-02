@@ -184,5 +184,49 @@ window.ACTIVIDADES = [
       '}'
     ],
     explicacion: 'Primero la firma; después el caso base (exp == 0 vale 1, porque cualquier base elevada a 0 es 1); por último el caso recursivo, que multiplica base por la potencia con exp - 1.'
+  },
+  // ───────────── ÁRBOLES ─────────────
+  {
+    tipo: 'trazar',
+    enunciado: 'Para el árbol con raíz 5, hijo izquierdo 3 (hijos 1 y 4) e hijo derecho 8 (hijos null), ¿qué devuelve contarNodos(raiz)?',
+    codigo:
+`public int contarNodos(NodoArbol nodo) {
+    if (nodo == null) return 0;
+    return 1 + contarNodos(nodo.izq) + contarNodos(nodo.der);
+}
+// Árbol:        5
+//             /   \\
+//            3     8
+//           / \\
+//          1   4`,
+    opciones: ['4', '5', '6'],
+    correcta: 1,
+    explicacion: 'Cada nodo aporta 1 más lo que cuenten sus subárboles; los null aportan 0. El árbol tiene los nodos 5, 3, 8, 1 y 4, así que contarNodos = 5.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Para ese mismo árbol (raíz 5; izquierda 3 con hijos 1 y 4; derecha 8 sin hijos), ¿qué devuelve altura(raiz) con la convención de que el árbol vacío mide 0?',
+    codigo:
+`public int altura(NodoArbol nodo) {
+    if (nodo == null) return 0;
+    return 1 + Math.max(altura(nodo.izq), altura(nodo.der));
+}
+// Árbol:        5
+//             /   \\
+//            3     8
+//           / \\
+//          1   4`,
+    opciones: ['2', '3', '4'],
+    correcta: 1,
+    explicacion: 'La rama más larga es 5 → 3 → 1 (o 5 → 3 → 4): tres niveles. Como el vacío mide 0, cada nivel suma 1 al subárbol más alto, así que altura = 3.'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: 'Una recursión lineal sobre n elementos (factorial, suma, recorrer una lista) tiene costo en TIEMPO O(n). ¿Cuál es su costo en ESPACIO y por qué?',
+    opciones: ['O(1), porque no usa estructuras auxiliares',
+               'O(n), porque cada llamada viva ocupa un lugar en la pila de ejecución hasta llegar al caso base',
+               'O(2^n), igual que el Fibonacci recursivo'],
+    correcta: 1,
+    explicacion: 'Cada llamada queda apilada esperando a la de adentro, así que se acumulan n marcos a la vez: el costo espacial es O(profundidad) = O(n). La versión iterativa usa unas pocas variables y es O(1) en espacio.'
   }
 ];

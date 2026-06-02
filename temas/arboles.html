@@ -20,8 +20,28 @@
   <ul>
     <li><strong>Raíz</strong>: el nodo de arriba de todo, el único sin padre.</li>
     <li><strong>Hoja</strong>: un nodo sin hijos (izquierdo y derecho en <code>null</code>).</li>
-    <li><strong>Altura</strong>: la longitud del camino más largo desde la raíz hasta una hoja.</li>
+    <li><strong>Nodo interno</strong>: un nodo que <strong>sí</strong> tiene al menos un hijo (no es hoja). La raíz, si el árbol tiene más de un nodo, es interna.</li>
+    <li><strong>Padre / hijo</strong>: si <code>A</code> apunta a <code>B</code> (por <code>izq</code> o <code>der</code>), <code>A</code> es el <strong>padre</strong> de <code>B</code> y <code>B</code> es <strong>hijo</strong> de <code>A</code>. Cada nodo tiene a lo sumo un padre.</li>
+    <li><strong>Ancestros / descendientes</strong>: los <strong>ancestros</strong> de un nodo son su padre, el padre de su padre, etc., hasta la raíz. Los <strong>descendientes</strong> son todos los nodos que cuelgan de él (sus hijos, nietos, …).</li>
+    <li><strong>Profundidad de un nodo</strong>: la longitud del camino desde la <strong>raíz hasta ese nodo</strong>. La raíz tiene profundidad <strong>0</strong>; sus hijos, 1; sus nietos, 2; y así. Es una propiedad <em>de cada nodo</em>.</li>
+    <li><strong>Altura</strong>: la longitud del camino más largo desde la raíz hasta una hoja. Es una propiedad <em>del árbol entero</em> (la profundidad máxima). No la confundas con la profundidad de un nodo puntual.</li>
     <li><strong>Subárbol</strong>: cualquier nodo junto con todos sus descendientes es, a su vez, un árbol.</li>
+  </ul>
+  <div class="callout"><span class="et">📏 Profundidad vs. altura, con un ejemplo</span>
+    Tomá este ABB: raíz <code>8</code>; a su izquierda <code>3</code>; a la izquierda de <code>3</code>, la hoja <code>1</code>;
+    y a la derecha de <code>8</code>, la hoja <code>10</code>.
+    <ul>
+      <li>Profundidad de <code>8</code> = 0 (es la raíz). Profundidad de <code>3</code> y <code>10</code> = 1. Profundidad de <code>1</code> = 2.</li>
+      <li><strong>Altura del árbol</strong> = 2 (el camino más largo, <code>8 → 3 → 1</code>, tiene 2 aristas).</li>
+    </ul>
+    La profundidad la mirás <em>bajando</em> desde la raíz a un nodo; la altura es la profundidad del nodo más hondo.</div>
+  <p>Según su forma, a un árbol binario lo clasificamos así:</p>
+  <ul>
+    <li><strong>Sesgado / degenerado</strong>: cada nodo tiene a lo sumo un hijo, así que se estira como una lista.
+        Su altura es <code>n − 1</code> (la peor posible). Es lo que pasa en un ABB si insertás valores ya ordenados.</li>
+    <li><strong>Completo</strong>: todos los niveles están llenos salvo, quizás, el último, que se llena de izquierda a derecha.</li>
+    <li><strong>Perfecto</strong>: todos los niveles, incluido el último, están <strong>completamente llenos</strong>.
+        Un árbol perfecto de altura <code>h</code> tiene exactamente <code>2^(h+1) − 1</code> nodos.</li>
   </ul>
   <p>Se usan para representar jerarquías (carpetas, organigramas), para búsquedas eficientes
      (el <strong>ABB</strong>) y como base de estructuras balanceadas (el <strong>AVL</strong>).</p>
@@ -44,6 +64,23 @@
         delegás en el subárbol izquierdo y el derecho.</li>
     <li>El <strong>caso base</strong> casi siempre es "el nodo es <code>null</code>": ahí cortás la recursión.</li>
   </ul>
+  <div class="callout"><span class="et">📕 Modelo recursivo de Monzón</span>
+    Esta guía usa el modelo <strong>"Nodo con <code>izq</code>/<code>der</code>"</strong> (un nodo guarda un valor
+    y dos referencias a nodos). El TDA <code>BinaryTree</code> que <strong>Monzón entrega impreso</strong> usa
+    otro modelo, <strong>recursivo</strong>: el árbol <em>es</em> su raíz.
+    <ul>
+      <li><code>getRoot()</code> devuelve el <strong>valor</strong> de la raíz (un <code>int</code>).</li>
+      <li><code>getLeft()</code> / <code>getRight()</code> devuelven <strong>otro <code>BinaryTree</code></strong>
+          —el subárbol completo, o <code>null</code> si no hay—, <strong>no</strong> un valor.</li>
+      <li><code>addLeft(int)</code> / <code>addRight(int)</code> crean una <strong>hoja</strong> hija y
+          <strong>lanzan excepción si ya existe</strong> ese hijo (no pisan).</li>
+      <li><code>removeLeft()</code> / <code>removeRight()</code> <strong>podan</strong> esa rama entera.</li>
+    </ul>
+    El caso base canónico de todo recorrido sobre este modelo es
+    <code>if (arbol == null || arbol.isEmpty()) return;</code>. Como acá el subárbol es otro árbol, recursás
+    pasando <code>arbol.getLeft()</code> y <code>arbol.getRight()</code> en vez de <code>nodo.izq</code> y
+    <code>nodo.der</code>. La lógica es la misma; lo que cambia es <strong>quién</strong> viaja en la recursión:
+    un subárbol entero, no una referencia a nodo.</div>
 
   <h2>3. Recorridos y operaciones (Java)</h2>
   <h3>Recorridos</h3>
@@ -75,6 +112,31 @@ void postorden(Nodo nodo) {
   <div class="callout tip"><span class="et">💡 Tip de parcial</span>
     En un <strong>ABB</strong>, el recorrido <strong>inorden</strong> imprime los valores
     <strong>ordenados de menor a mayor</strong>. Es una pregunta clásica.</div>
+
+  <h4>Recorrido por niveles (BFS)</h4>
+  <p>Preorden, inorden y postorden van <strong>en profundidad</strong> (se hunden por una rama antes de
+     pasar a la siguiente). El recorrido <strong>por niveles</strong> hace lo contrario: visita primero la
+     raíz, después todos los nodos de profundidad 1, luego los de profundidad 2, y así. Es el clásico
+     <strong>BFS</strong> (<em>breadth-first</em>), y la mejor forma de hacerlo <strong>no es recursiva</strong>:
+     se apoya en una <strong>Cola</strong>.</p>
+  <p>La idea: encolás la raíz; mientras la cola no esté vacía, <strong>desencolás un nodo, lo procesás y
+     encolás sus hijos no nulos</strong> (primero el izquierdo, después el derecho). La cola garantiza el
+     orden FIFO, que es justo el orden por niveles.</p>
+  <pre><code class="java">void porNiveles(Nodo raiz) {
+    if (raiz == null) return;            // Árbol vacío: no hay nada que recorrer.
+    Queue&lt;Nodo&gt; cola = new LinkedList&lt;&gt;();
+    cola.add(raiz);                      // Arrancamos encolando la raíz.
+    while (!cola.isEmpty()) {
+        Nodo actual = cola.poll();       // Desencolamos (FIFO: sale el más viejo).
+        System.out.print(actual.valor + " ");
+        if (actual.izq != null) cola.add(actual.izq);   // Encolamos los hijos
+        if (actual.der != null) cola.add(actual.der);   // que existan.
+    }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 No todo recorrido es recursivo</span>
+    Los tres recorridos en profundidad salen naturales con recursión (la pila de llamadas hace el trabajo).
+    El recorrido por niveles, en cambio, es <strong>iterativo</strong> y necesita una <strong>Cola</strong>
+    explícita. Es un buen recordatorio de que recursión y recorrido no son lo mismo.</div>
 
   <h3>ABB (Árbol Binario de Búsqueda)</h3>
   <p>Un <strong>ABB</strong> es un árbol binario con una <strong>propiedad de orden</strong>: para cada
@@ -109,6 +171,53 @@ boolean buscar(Nodo nodo, int x) {
      <code>x &amp;&amp; nodo.valor</code> de forma similar y <strong>bajamos por un solo lado</strong>:
      izquierda si <code>x &lt; nodo.valor</code>, derecha si <code>x &gt; nodo.valor</code>.</p>
 
+  <h4>Eliminar en un ABB</h4>
+  <p>Borrar es la operación más delicada del ABB, porque hay que sacar el nodo <strong>sin romper la
+     propiedad de orden</strong>. Primero bajamos buscando el valor (igual que en <code>insertar</code>);
+     cuando lo encontramos, distinguimos <strong>tres casos</strong> según cuántos hijos tenga:</p>
+  <ul>
+    <li><strong>Hoja (sin hijos)</strong>: se borra directamente devolviendo <code>null</code> en su lugar.</li>
+    <li><strong>Un solo hijo</strong>: se reemplaza por <strong>ese hijo</strong> (el que no es <code>null</code>),
+        que sube a ocupar el lugar.</li>
+    <li><strong>Dos hijos</strong>: no podemos devolver <code>null</code> ni un solo hijo. La maniobra clásica es
+        reemplazar el valor del nodo por el <strong>mayor del subárbol izquierdo</strong> (su
+        <strong>antecesor inorden</strong>: el valor inmediatamente anterior en orden) y después
+        <strong>borrar ese mayor</strong> recursivamente. Como el mayor del subárbol izquierdo es la hoja
+        más a la derecha de ese subárbol, su borrado cae siempre en el caso 1 o el 2.</li>
+  </ul>
+  <pre><code class="java">// Elimina x del ABB. Devuelve la (nueva) raíz del subárbol.
+Nodo eliminar(Nodo nodo, int x) {
+    if (nodo == null) return null;           // No está: no hay nada que borrar.
+
+    if (x &lt; nodo.valor)                       // Bajamos buscando x, como en insertar/buscar.
+        nodo.izq = eliminar(nodo.izq, x);
+    else if (x &gt; nodo.valor)
+        nodo.der = eliminar(nodo.der, x);
+    else {                                    // ¡Encontramos el nodo a borrar!
+        // Caso 1 y 2: cero o un solo hijo → devolvemos el hijo que exista (o null).
+        if (nodo.izq == null) return nodo.der;
+        if (nodo.der == null) return nodo.izq;
+
+        // Caso 3: dos hijos. Reemplazamos por el MAYOR del subárbol izquierdo
+        // (antecesor inorden) y lo borramos de ese subárbol.
+        int reemplazo = mayor(nodo.izq);
+        nodo.valor = reemplazo;
+        nodo.izq = eliminar(nodo.izq, reemplazo);
+    }
+    return nodo;
+}
+
+// Mayor valor de un subárbol: bajamos siempre por la derecha hasta la última hoja.
+int mayor(Nodo nodo) {
+    while (nodo.der != null) nodo = nodo.der;
+    return nodo.valor;
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Por qué el antecesor inorden</span>
+    El mayor del subárbol izquierdo es <strong>menor que todo lo que está a la derecha</strong> del nodo y
+    <strong>mayor que todo el resto del subárbol izquierdo</strong>: por eso, al ponerlo en lugar del nodo
+    borrado, la propiedad de orden del ABB se mantiene intacta. (Simétricamente, también vale usar el
+    <em>sucesor inorden</em>: el menor del subárbol derecho.)</div>
+
   <h3>AVL (ABB balanceado)</h3>
   <p>El problema del ABB es que su eficiencia <strong>depende de la forma</strong>. Si insertás valores
      ya ordenados (1, 2, 3, 4, …), cada nodo cuelga a la derecha del anterior y el árbol
@@ -118,10 +227,73 @@ boolean buscar(Nodo nodo, int x) {
      y derecho no difieran en más de 1. Si se desbalancea, aplica <strong>rotaciones</strong>: operaciones
      locales que reacomodan unos pocos nodos para volver a balancear, <strong>sin romper la propiedad de
      orden del ABB</strong>.</p>
+
+  <h4>Factor de equilibrio (FE)</h4>
+  <p>El AVL se define con un número concreto por nodo, el <strong>factor de equilibrio</strong>:</p>
+  <pre><code class="java">FE(nodo) = altura(nodo.der) - altura(nodo.izq)</code></pre>
+  <p>Un AVL es válido cuando <strong>todos</strong> sus nodos tienen <code>FE ∈ {-1, 0, +1}</code>. El signo
+     te dice para qué lado pesa:</p>
+  <ul>
+    <li><code>FE = 0</code>: equilibrado, ambos lados igual de altos.</li>
+    <li><code>FE = +1</code>: pesa un poco a la <strong>derecha</strong> (todavía válido).</li>
+    <li><code>FE = -1</code>: pesa un poco a la <strong>izquierda</strong> (todavía válido).</li>
+    <li><code>FE = +2</code> o <code>FE = -2</code>: <strong>desbalanceado</strong> → hay que rotar.</li>
+  </ul>
+
+  <h4>Qué rotación aplicar: regla del signo</h4>
+  <p>Cuando una inserción deja un nodo con <code>FE = ±2</code>, mirás el <strong>signo del nodo
+     desbalanceado</strong> y el <strong>signo de su hijo del lado pesado</strong>. Con eso decidís de una:</p>
+  <ul>
+    <li><strong>Mismo signo</strong> (ambos <code>+</code> o ambos <code>−</code>) → <strong>rotación SIMPLE</strong>:
+        <code>RR</code> si ambos son <code>+</code> (caso derecha-derecha), <code>LL</code> si ambos son <code>−</code>
+        (caso izquierda-izquierda).</li>
+    <li><strong>Signo distinto</strong> (uno <code>+</code> y el otro <code>−</code>) → <strong>rotación DOBLE</strong>:
+        <code>RL</code> si el nodo es <code>+</code> y el hijo <code>−</code>; <code>LR</code> si el nodo es <code>−</code>
+        y el hijo <code>+</code>. Una doble es, en realidad, dos simples encadenadas.</li>
+  </ul>
+  <p>Lo importante para el parcial: una sola inserción rompe el balance en <strong>a lo sumo un nodo</strong>
+     (el ancestro desbalanceado más cercano), y se arregla con <strong>a lo sumo 2 rotaciones</strong>
+     (1 si es simple, 2 si es doble). Por eso reequilibrar cuesta O(1) y el AVL mantiene su altura en
+     <strong>O(log n)</strong>.</p>
+
+  <h4>Mini-ejemplo: insertar 1, 2, 3</h4>
+  <p>Insertamos en orden creciente en un AVL vacío. Al meter el <code>3</code>, la raíz <code>1</code> queda con
+     <code>FE = +2</code> y su hijo del lado pesado (<code>2</code>) con <code>FE = +1</code>: <strong>mismo signo</strong>
+     → rotación <strong>simple RR</strong>. El <code>2</code> sube a la raíz:</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">ANTES — raíz: 1 (FE=+2)</span><span class="flecha">→</span>
+    <span class="nodo">der: 2 (FE=+1)</span><span class="flecha">→</span>
+    <span class="nodo">der: 3</span>
+  </div>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">DESPUÉS — raíz: 2 (FE=0)</span><span class="flecha">→</span>
+    <span class="nodo">izq: 1</span><span class="flecha">→</span>
+    <span class="nodo">der: 3</span>
+  </div>
+  <p>Con una sola rotación pasamos de una lista degenerada (altura 2) a un árbol perfecto (altura 1), sin
+     tocar la propiedad de orden: el inorden sigue dando <code>1 2 3</code>.</p>
+
   <div class="callout tip"><span class="et">💡 Por qué importa el balance</span>
     Manteniendo la altura cercana a <strong>log n</strong>, el AVL <strong>garantiza</strong> que
     buscar e insertar sean O(log n) <em>siempre</em>, incluso en el peor caso. Es la diferencia entre
     descartar la mitad del árbol en cada paso o tener que recorrerlo entero.</div>
+
+  <div class="equiv"><span class="et">Equivalencia con Monzón (inglés)</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>raiz()</code> (valor de la raíz)</td><td><code>getRoot() : int</code></td></tr>
+        <tr><td class="es"><code>hijoIzq()</code></td><td><code>getLeft() : BinaryTree</code></td></tr>
+        <tr><td class="es"><code>hijoDer()</code></td><td><code>getRight() : BinaryTree</code></td></tr>
+        <tr><td class="es"><code>insertar(x)</code> (en un ABB)</td><td><code>SearchBinaryTree.add(int)</code></td></tr>
+        <tr><td class="es"><code>Nodo</code> con <code>izq</code>/<code>der</code></td><td>(sin equivalente directo)</td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Ojo clave: <code>getLeft()</code> y <code>getRight()</code> devuelven el <strong>subárbol</strong>
+      (otro <code>BinaryTree</code>, o <code>null</code>), <strong>no</strong> un valor. Para leer el dato de un
+      hijo hacés <code>arbol.getLeft().getRoot()</code>. El modelo "<code>Nodo</code> con <code>izq</code>/<code>der</code>"
+      de esta guía no tiene equivalente directo en el TDA de Monzón: ahí el árbol <em>es</em> su raíz.</p>
+  </div>
 
   <h2>🌳 Laboratorio: ABB interactivo</h2>
   <p>Insertá valores y mirá cómo el árbol se arma respetando la propiedad de orden. Después ejecutá los
@@ -160,9 +332,9 @@ boolean buscar(Nodo nodo, int x) {
   <ul>
     <li><strong>Árbol binario</strong>: estructura jerárquica donde cada nodo tiene a lo sumo dos hijos (<code>izq</code>, <code>der</code>).</li>
     <li>Un árbol vacío es <code>null</code>; las operaciones son <strong>recursivas</strong> con caso base "nodo <code>null</code>".</li>
-    <li><strong>Recorridos</strong>: preorden, inorden y postorden, todos O(n). El inorden de un ABB sale ordenado.</li>
-    <li><strong>ABB</strong>: propiedad de orden (izquierda menores, derecha mayores) ⇒ buscar e insertar O(log n) si está balanceado, O(n) en el peor caso.</li>
-    <li><strong>AVL</strong>: ABB que se rebalancea con rotaciones ⇒ <strong>garantiza O(log n)</strong>.</li>
+    <li><strong>Recorridos</strong>: preorden, inorden y postorden (en profundidad, recursivos) más el recorrido <strong>por niveles</strong> (BFS, iterativo con una <strong>Cola</strong>), todos O(n). El inorden de un ABB sale ordenado.</li>
+    <li><strong>ABB</strong>: propiedad de orden (izquierda menores, derecha mayores) ⇒ buscar e insertar O(log n) si está balanceado, O(n) en el peor caso. Para <strong>eliminar</strong> con dos hijos, se reemplaza por el mayor del subárbol izquierdo (antecesor inorden).</li>
+    <li><strong>AVL</strong>: ABB que se rebalancea con rotaciones. <code>FE = altura(der) − altura(izq)</code> debe quedar en <code>{-1, 0, +1}</code>; mismo signo ⇒ rotación simple, signo distinto ⇒ rotación doble (a lo sumo 2 por inserción) ⇒ <strong>garantiza O(log n)</strong>.</li>
   </ul>
 
   <section class="actividades" data-actividades>

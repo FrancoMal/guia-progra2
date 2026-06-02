@@ -197,5 +197,62 @@ return i + 1;`,
       'a[j + 1] = actual;'
     ],
     explicacion: 'Mientras haya elementos mayores que actual, los corremos un lugar a la derecha (a[j+1] = a[j]) y bajamos j. Al salir del while, j+1 es el hueco donde va el valor actual.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Insertamos los valores 5, 3, 8, 1, 4 (en ese orden) en un ABB vacío y después lo recorremos in-orden (izquierda, raíz, derecha). ¿Qué secuencia imprime el recorrido?',
+    codigo:
+`// Insertamos en este orden en un ABB vacío:
+//   5, 3, 8, 1, 4
+//
+// Árbol resultante:
+//        5
+//       / \\
+//      3   8
+//     / \\
+//    1   4
+//
+// Recorrido in-orden: izquierda, raíz, derecha.`,
+    opciones: ['1, 3, 4, 5, 8', '5, 3, 8, 1, 4', '1, 4, 3, 8, 5', '8, 5, 4, 3, 1'],
+    correcta: 0,
+    explicacion: 'El recorrido in-orden de un ABB visita las claves de menor a mayor. Sea cual sea el orden de inserción, in-orden devuelve los valores ordenados: 1, 3, 4, 5, 8. Por eso "insertar en un ABB y recorrer in-orden" es una forma de ordenar.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Volcamos los valores [3, 1, 2] a una cola de prioridad usando como prioridad el propio valor (sale primero el menor) y después desencolamos hasta vaciarla. ¿En qué orden salen?',
+    codigo:
+`// Cargamos en la cola de prioridad (prioridad = valor, menor primero):
+//   encolar(3); encolar(1); encolar(2);
+//
+// Luego desencolamos mientras no esté vacía:
+//   while (!cola.colaVacia()) { imprimir(cola.proximo()); cola.desacolar(); }`,
+    opciones: ['1, 2, 3', '3, 1, 2', '3, 2, 1', '2, 1, 3'],
+    correcta: 0,
+    explicacion: 'Una cola de prioridad entrega siempre el elemento de mayor prioridad; si la prioridad es el valor y el menor tiene prioridad, salen 1, 2, 3. Volcar a la cola y desencolar es ordenar (idea del heapsort): cargar n y vaciarla cuesta O(n log n).'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: '¿Cuál es la PRECONDICIÓN para poder usar búsqueda binaria, y cuál es su costo?',
+    opciones: ['Ninguna precondición; cuesta O(n)',
+               'El arreglo debe estar ordenado; cuesta O(log n)',
+               'El arreglo debe tener tamaño par; cuesta O(1)',
+               'El arreglo debe estar al revés; cuesta O(n log n)'],
+    correcta: 1,
+    explicacion: 'La búsqueda binaria exige que el arreglo esté ordenado: compara contra el medio y descarta media mitad en cada paso, logrando O(log n). Sobre un arreglo desordenado puede dar un resultado incorrecto. La que no pide precondición es la búsqueda lineal, que cuesta O(n).'
+  },
+  {
+    tipo: 'costo',
+    enunciado: 'Counting sort recibe enteros con la precondición de que todos están en el rango [0, k]. Cuenta apariciones y reconstruye. Si k es del orden de n, ¿cuál es su costo?',
+    codigo:
+`static void countingSort(int[] a, int k) {
+    int[] conteo = new int[k + 1];
+    for (int v : a) conteo[v]++;          // recorre a: n pasos
+    int idx = 0;
+    for (int v = 0; v <= k; v++)          // recorre conteo: k pasos
+        while (conteo[v]-- > 0) a[idx++] = v;
+}`,
+    opciones: ['O(n²)', 'O(n log n)', 'O(n + k), que con k ~ n es O(n)', 'O(log n)'],
+    correcta: 2,
+    explicacion: 'No hay bucles anidados que multipliquen: se recorre el arreglo (n) y los conteos (k) por separado, escribiendo en total n valores. El costo es O(n + k); cuando k es comparable a n, queda O(n). Counting no compara elementos, por eso esquiva el techo O(n log n).'
   }
 ];

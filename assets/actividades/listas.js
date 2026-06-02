@@ -204,5 +204,41 @@ System.out.println(turista.valor);`,
       '}'
     ],
     explicacion: 'Primero se chequea que la lista no esté vacía (origen != null); recién ahí se mueve origen al segundo nodo (origen = origen.sig), que pasa a ser el nuevo primero. El nodo viejo queda sin referencias.'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: 'Querés ELIMINAR el nodo que contiene x (que no es el primero). ¿Cuál de los dos idiomas de recorrido necesitás?',
+    codigo:
+`// Idioma A:
+while (turista != null && turista.valor != x)
+    turista = turista.sig;
+
+// Idioma B:
+while (turista.sig != null && turista.sig.valor != x)
+    turista = turista.sig;`,
+    opciones: ['El idioma A, porque me deja parado justo sobre el nodo con x',
+               'El idioma B, porque para eliminar necesito quedar parado en el nodo ANTERIOR a x y modificar su sig',
+               'Da igual cuál de los dos: ambos sirven para eliminar'],
+    correcta: 1,
+    explicacion: 'Para borrar un nodo hay que cambiar el sig del de atrás para que lo saltee (turista.sig = turista.sig.sig). Eso obliga a quedar parado en el ANTERIOR, que es lo que hace el idioma B mirando turista.sig.valor. El idioma A se planta sobre el propio nodo y ya no tenés el anterior para reengancharlo.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'La lista es 4 → 9 → 4 → null y se ejecuta eliminar(4). El método trata el primer nodo aparte (origen.valor == x → origen = origen.sig) ANTES de entrar al while del idioma B. ¿Cómo queda la lista?',
+    codigo:
+`if (origen != null) {
+    if (origen.valor == x) {
+        origen = origen.sig;          // primer nodo: caso especial
+    } else {
+        Nodo turista = origen;
+        while (turista.sig != null && turista.sig.valor != x)
+            turista = turista.sig;
+        if (turista.sig != null)
+            turista.sig = turista.sig.sig;
+    }
+}`,
+    opciones: ['9 → 4 → null', '4 → 9 → null', '9 → null'],
+    correcta: 0,
+    explicacion: 'Como el primer nodo vale 4 (== x), entra al caso especial y hace origen = origen.sig: borra SOLO ese primero y queda 9 → 4 → null. Nunca llega al while, así que el segundo 4 sobrevive. Eliminar borra la primera ocurrencia, y el primer nodo se trata aparte porque no tiene un anterior sobre el cual pararse.'
   }
 ];

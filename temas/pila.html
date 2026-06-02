@@ -34,6 +34,20 @@
     boolean pilaVacia();      // Pila inicializada.
 }</code></pre>
 
+  <div class="equiv"><span class="et">Equivalencia con Monzón (inglés)</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>inicializarPila()</code></td><td>el <strong>constructor</strong> (no hay método aparte)</td></tr>
+        <tr><td class="es"><code>apilar(x)</code></td><td><code>add(x)</code></td></tr>
+        <tr><td class="es"><code>desapilar()</code></td><td><code>remove()</code></td></tr>
+        <tr><td class="es"><code>tope()</code></td><td><code>getTop()</code></td></tr>
+        <tr><td class="es"><code>pilaVacía()</code></td><td><code>isEmpty()</code></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Solo cambian los nombres: la semántica es idéntica (LIFO, mismas precondiciones). En el TDA <code>Stack</code> de Monzón la inicialización la hace el constructor, no un método <code>inicializarPila()</code> separado.</p>
+  </div>
+
   <h2>3. Implementaciones</h2>
   <h3>Con lista dinámica (LD)</h3>
   <p>El tope de la pila es el primer nodo de la lista enlazada. Apilar inserta adelante y
@@ -69,6 +83,74 @@
     public int tope() { return datos[tope - 1]; }
     public boolean pilaVacia() { return tope == 0; }
 }</code></pre>
+  <div class="callout error"><span class="et">⚠️ Overflow del arreglo</span>
+    A diferencia de la lista dinámica, el arreglo tiene <strong>tamaño fijo</strong>. Si la pila ya
+    está llena (<code>tope == datos.length</code>) y se llama a <code>apilar(x)</code>, no hay
+    posición libre: <code>datos[tope] = x</code> revienta con <code>ArrayIndexOutOfBoundsException</code>.
+    Apilar con el arreglo lleno es una <strong>violación de precondición</strong> (no queda espacio).
+    En un examen esto se chequea o se lanza un error explícito:
+    <pre><code class="java">public void apilar(int x) {
+    if (tope == datos.length) throw new RuntimeException("Pila llena (overflow)");
+    datos[tope] = x;
+    tope++;
+}</code></pre></div>
+
+  <h3>Recorrer una pila: es una estructura destructiva</h3>
+  <div class="callout"><span class="et">📦 Estructura destructiva</span>
+    El TDA Pila <strong>no tiene iterador no destructivo</strong>: la única forma de leer todos sus
+    elementos es ir <code>desapilar</code>ándolos uno a uno hasta que <code>pilaVacia()</code>… pero
+    al hacerlo <strong>la pila queda vacía</strong>. Si un método recibe una pila y <em>no</em> debe
+    alterarla, hay que trabajar sobre una <strong>copia</strong>.
+    <p style="margin:.4em 0 0">Dato fino: copiar una pila requiere <strong>2 vuelcos</strong>, porque cada
+    vuelco la invierte. Volcás la original a una auxiliar (queda al revés) y volcás la auxiliar a la
+    copia (vuelve al orden original); de paso, así reconstruís también la original.</p>
+  </div>
+  <pre><code class="java">// Copia 'origen' en 'copia' dejando 'origen' como estaba. Dos vuelcos:
+static void copiar(PilaTDA origen, PilaTDA copia) {
+    PilaA aux = new PilaA();  aux.inicializarPila();
+    copia.inicializarPila();
+    while (!origen.pilaVacia()) {        // 1er vuelco: origen → aux (aux queda invertida)
+        aux.apilar(origen.tope());
+        origen.desapilar();
+    }
+    while (!aux.pilaVacia()) {           // 2do vuelco: aux → origen y copia (ambas al orden original)
+        origen.apilar(aux.tope());
+        copia.apilar(aux.tope());
+        aux.desapilar();
+    }
+}</code></pre>
+
+  <h3>Invertir una pila por recursión</h3>
+  <p>Un clásico de parcial que <strong>conecta pila con recursividad</strong>: invertir una pila
+     usando <em>solo</em> recursión, sin estructuras auxiliares explícitas. La idea aprovecha que
+     todas las llamadas recursivas comparten la <strong>misma pila</strong>: se saca el tope, se
+     invierte el resto, y se reinserta el elemento sacado <strong>en el fondo</strong> con un helper
+     <code>insertarAlFondo</code> (también recursivo).</p>
+  <pre><code class="java">// Invierte la pila p usando solo recursión.
+static void invertir(PilaTDA p) {
+    if (p.pilaVacia()) return;          // Caso base: nada que invertir.
+    int x = p.tope();                   // Saco el tope...
+    p.desapilar();
+    invertir(p);                        // ...invierto lo que quedó (más chico → termina)...
+    insertarAlFondo(p, x);              // ...y meto x en el FONDO de la pila ya invertida.
+}
+
+// Inserta x en el fondo de p (no en el tope), solo con recursión.
+static void insertarAlFondo(PilaTDA p, int x) {
+    if (p.pilaVacia()) {                // Caso base: pila vacía → el fondo es el tope.
+        p.apilar(x);
+        return;
+    }
+    int t = p.tope();                   // Aparto el tope actual...
+    p.desapilar();
+    insertarAlFondo(p, x);              // ...bajo x hasta el fondo...
+    p.apilar(t);                        // ...y al volver, repongo cada elemento encima.
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Por qué funciona</span>
+    Cada llamada a <code>invertir</code> saca un elemento y deja la pila más chica, así que la
+    recursión avanza hacia el caso base. <code>insertarAlFondo</code> baja el valor hasta lo más
+    profundo apartando los elementos de arriba en la propia pila (de ahí que no haga falta una
+    estructura auxiliar) y los repone al regresar de cada llamada.</div>
 
   <h2>4. Costo</h2>
   <table class="costo">

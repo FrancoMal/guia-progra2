@@ -201,5 +201,42 @@ d.agregar(1, 30);
       'return valores;'
     ],
     explicacion: 'Primero se crea e inicializa el ConjuntoTDA de salida. Después se ubica la clave y se arranca el recorrido desde nodo.valores, agregando cada valor al conjunto. Al final se devuelve el conjunto (vacío si la clave no tenía valores).'
+  },
+  {
+    tipo: 'mapear',
+    enunciado: 'Relacioná cada operación del Diccionario Múltiple (español, Wehbe) con su equivalente en inglés (Monzón). Ojo con el tipo de retorno: recuperar/getValues devuelven un CONJUNTO de valores sin repetidos.',
+    pares: [
+      ['agregar(clave, valor)', 'add(key, value)'],
+      ['eliminarValor(clave, valor)', 'remove(key, value)'],
+      ['recuperar(clave)', 'getValues(key)'],
+      ['claves()', 'getKeys()']
+    ],
+    explicacion: 'Mismo TDA, distinto idioma: add=agregar, remove=eliminarValor (saca un solo valor), getValues=recuperar (devuelve el conjunto de valores de la clave) y getKeys=claves (el conjunto de todas las claves). En Monzón, getValues suele devolver Set; en algún examen aparece como List: verificá el apéndice.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Ejercicio de sinónimos. Un Diccionario Simple D tiene "auto"→3, "coche"→3 y "can"→7 (palabra→significado). Se arma el Diccionario Múltiple DS recorriendo claves() de D y haciendo agregar(significado, palabra). ¿Cuántas palabras (valores) tiene recuperar(3) en DS al final?',
+    codigo:
+`// D simple: "auto"->3, "coche"->3, "can"->7
+ConjuntoTDA palabras = d.claves();
+while (!palabras.conjuntoVacío()) {
+    int palabra = palabras.elegir();
+    palabras.sacar(palabra);
+    int significado = d.recuperar(palabra);
+    ds.agregar(significado, palabra);   // significado -> palabra
+}
+// ds.recuperar(3)`,
+    opciones: ['1', '2', '3'],
+    correcta: 1,
+    explicacion: 'El significado 3 lo comparten "auto" y "coche": las dos terminan como valores de la clave 3 en DS. "can" tiene significado 7, así que cae en otra clave. La clave 3 de DS queda con {auto, coche} = 2 palabras.'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: 'Por el invariante "nunca una clave sin valores", ¿en qué se diferencian eliminar(clave) y eliminarValor(clave, valor) cuando el valor que se saca era el ÚNICO de esa clave?',
+    opciones: ['En ese caso quedan iguales: ambos terminan borrando la clave entera del diccionario',
+               'eliminar deja la clave vacía y eliminarValor la borra; son opuestos',
+               'eliminarValor nunca puede borrar la clave, solo eliminar lo hace'],
+    correcta: 0,
+    explicacion: 'eliminar(clave) siempre borra la clave entera. eliminarValor(clave, valor) saca un solo valor, pero si era el último la clave queda vacía y, para respetar el invariante, también se borra (eliminarValor llama a eliminar). Cuando el valor era el único, ambos dejan el mismo resultado: la clave desaparece.'
   }
 ];

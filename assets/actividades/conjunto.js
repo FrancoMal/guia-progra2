@@ -111,16 +111,28 @@ c.agregar(9);
   },
   {
     tipo: 'trazar',
-    enunciado: 'En ConjuntoLD se agrega siempre adelante (en origen) y elegir() devuelve origen.valor. Tras esta secuencia, ¿qué devuelve elegir()?',
+    enunciado: 'elegir() devuelve un elemento AL AZAR del conjunto. Tras esta secuencia, ¿qué devuelve elegir()?',
     codigo:
 `c.inicializarConjunto();
 c.agregar(1);
 c.agregar(6);
 c.agregar(4);
 // c.elegir()`,
-    opciones: ['1', '6', '4', 'Un valor cualquiera, no se puede saber'],
+    opciones: ['Siempre 1 (el primero agregado)', 'Siempre 4 (el último agregado)', 'Cualquiera de {1, 6, 4}: no se puede saber cuál', 'El menor, o sea 1'],
     correcta: 2,
-    explicacion: 'En la lista dinámica cada agregar inserta adelante, así que origen termina apuntando al último insertado (el 4). Como elegir() devuelve origen.valor, da 4. Ojo: esto es un detalle de ESTA implementación; conceptualmente elegir() devuelve "alguno".'
+    explicacion: 'elegir() no es determinista: devuelve un elemento cualquiera del conjunto. Puede tocar 1, 6 o 4, y no hay forma de predecir cuál. No depende del orden de inserción ni del valor: el conjunto no tiene orden.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Sobre un conjunto c = {2, 7} se ejecuta dos veces seguidas elegir(), sin sacar nada en el medio. ¿Qué se puede afirmar de los dos resultados?',
+    codigo:
+`// c = {2, 7}
+int a = c.elegir();
+int b = c.elegir();   // c sigue siendo {2, 7}: elegir NO saca
+// ¿qué relación hay entre a y b?`,
+    opciones: ['Siempre a == b, porque el conjunto no cambió', 'Siempre a != b', 'Pueden ser iguales o distintos: cada elegir() es al azar', 'a es el primero y b el segundo'],
+    correcta: 2,
+    explicacion: 'Como elegir() es aleatorio y no saca el elemento, la segunda llamada vuelve a elegir sobre el mismo {2, 7}. Puede dar el mismo valor que la primera o el otro: no está garantizado que coincidan ni que difieran.'
   },
 
   // ───────────────────────────── COSTO ─────────────────────────────
@@ -219,5 +231,50 @@ c.agregar(4);
       '}'
     ],
     explicacion: 'Primero se busca la posición de x. Si se encontró (i != -1), se pisa ese hueco con el último elemento y se decrementa cant. Como no hay orden, no hace falta desplazar el resto.'
+  },
+
+  // ───────────────────────────── MAPEAR ─────────────────────────────
+  {
+    tipo: 'mapear',
+    enunciado: 'Asociá cada operación del Conjunto (español, esta guía) con su equivalente en el Set de Monzón (inglés, tu examen).',
+    pares: [
+      ['agregar(x)', 'add(x)'],
+      ['sacar(x)', 'remove(x)'],
+      ['elegir()', 'choose()'],
+      ['conjuntoVacío()', 'isEmpty()']
+    ],
+    explicacion: 'agregar→add, sacar→remove, elegir→choose (también aleatorio) y conjuntoVacío→isEmpty. Ojo: el Set de Monzón es minimalista y NO tiene pertenece/contains: para saber si un elemento está hay que recorrer con choose/remove sobre una copia.'
+  },
+
+  // ──────────────────────── TRAZAR (operaciones entre conjuntos) ────────────────────────
+  {
+    tipo: 'trazar',
+    enunciado: 'Con A = {1, 2, 3} y B = {3, 4, 5}, se recorre una COPIA de A eligiendo y sacando, y se agrega a r solo si el elemento pertenece a B. ¿Qué queda en r?',
+    codigo:
+`// A = {1, 2, 3}, B = {3, 4, 5}
+ConjuntoTDA r = nuevoVacío();
+ConjuntoTDA ca = copia(A);
+while (!ca.conjuntoVacío()) {
+    int x = ca.elegir();
+    if (B.pertenece(x)) r.agregar(x);
+    ca.sacar(x);
+}
+// ¿qué hay en r?`,
+    opciones: ['{1, 2, 3, 4, 5} (unión)', '{3} (intersección)', '{1, 2} (diferencia A − B)', '{} (vacío)'],
+    correcta: 1,
+    explicacion: 'Se recorre A y se conserva cada elemento solo si TAMBIÉN está en B. De {1, 2, 3}, únicamente el 3 está en B, así que r = {3}: es la intersección. El orden en que elegir() saque los elementos no cambia el resultado.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Para la UNIÓN se vacían copias de A y de B agregando todo a r. Con A = {1, 2, 3} y B = {3, 4, 5}, ¿cuántos elementos tiene r al final?',
+    codigo:
+`// A = {1, 2, 3}, B = {3, 4, 5}
+ConjuntoTDA r = nuevoVacío();   // arranca del vacío (neutro de la unión)
+// vacío copia de A agregando todo a r
+// vacío copia de B agregando todo a r
+// ¿cantidad de elementos en r?`,
+    opciones: ['6', '5', '4', '3'],
+    correcta: 1,
+    explicacion: 'La unión junta todo: 1, 2, 3 de A y 3, 4, 5 de B. El 3 está en ambos, pero agregar() no admite repetidos, así que entra una sola vez. Quedan {1, 2, 3, 4, 5}: 5 elementos.'
   }
 ];

@@ -78,6 +78,67 @@ public int contar(Nodo nodo) {
     return 1 + contar(nodo.sig);         // 1 (este nodo) + el resto.
 }</code></pre>
 
+  <h3>Recursión sobre árboles (plantillas)</h3>
+  <p>Un árbol es una estructura <strong>recursiva por naturaleza</strong>: cada nodo tiene un
+     subárbol izquierdo y uno derecho, que a su vez son árboles. Por eso casi todo recorrido se
+     escribe con el <strong>patrón canónico</strong>: <em>caso base</em> cuando el nodo es
+     <code>null</code>, y <em>caso recursivo</em> que <strong>combina el resultado de la izquierda
+     con el de la derecha</strong>. Cambia solo cómo se combinan.</p>
+  <p>Asumimos un nodo así (igual al del tema de árboles):</p>
+  <pre><code class="java">class NodoArbol {
+    int valor;
+    NodoArbol izq;   // Subárbol izquierdo (otro árbol).
+    NodoArbol der;   // Subárbol derecho.
+}</code></pre>
+
+  <p><strong>Contar nodos.</strong> El caso base (árbol vacío) aporta 0; cada nodo aporta 1 más lo
+     que cuenten sus dos subárboles.</p>
+  <pre><code class="java">public int contarNodos(NodoArbol nodo) {
+    if (nodo == null) return 0;                              // Caso base: árbol vacío.
+    return 1 + contarNodos(nodo.izq) + contarNodos(nodo.der); // Este + izquierda + derecha.
+}</code></pre>
+
+  <p><strong>Altura.</strong> Un árbol vacío mide 0 (o −1 según la convención; acá usamos 0). Cada
+     nodo suma 1 al <strong>más alto</strong> de sus dos subárboles.</p>
+  <pre><code class="java">public int altura(NodoArbol nodo) {
+    if (nodo == null) return 0;                              // Caso base: no hay nivel.
+    return 1 + Math.max(altura(nodo.izq), altura(nodo.der)); // 1 + el subárbol más alto.
+}</code></pre>
+
+  <p><strong>Suma de los valores.</strong> Misma plantilla: el vacío aporta 0; cada nodo suma su
+     <code>valor</code> a la suma de izquierda y derecha.</p>
+  <pre><code class="java">public int sumar(NodoArbol nodo) {
+    if (nodo == null) return 0;                              // Caso base.
+    return nodo.valor + sumar(nodo.izq) + sumar(nodo.der);   // valor + izquierda + derecha.
+}</code></pre>
+
+  <p><strong>Devolver un conjunto con los nodos que cumplen una condición.</strong> En vez de
+     combinar con <code>+</code>, combinamos <strong>uniendo conjuntos</strong>: armo el conjunto del
+     subárbol izquierdo, le hago la unión con el del derecho y, si este nodo cumple, lo agrego. El
+     caso base devuelve el <strong>conjunto vacío</strong>.</p>
+  <pre><code class="java">// Devuelve un ConjuntoTDA con los valores pares del árbol.
+public ConjuntoTDA pares(NodoArbol nodo) {
+    ConjuntoTDA c = new ConjuntoEstatico();   // Implementación concreta del TDA.
+    c.inicializarConjunto();
+    if (nodo == null) return c;               // Caso base: conjunto vacío.
+
+    ConjuntoTDA izq = pares(nodo.izq);        // Conjunto del subárbol izquierdo.
+    ConjuntoTDA der = pares(nodo.der);        // Conjunto del subárbol derecho.
+    c = union(c, union(izq, der));            // Combino: uno los dos subárboles.
+
+    if (nodo.valor % 2 == 0)                  // Si este nodo cumple la condición...
+        c.agregar(nodo.valor);                // ...lo agrego al conjunto.
+    return c;
+}</code></pre>
+  <p>Fijate que es la <strong>misma estructura</strong> que <code>contarNodos</code>: caso base que
+     devuelve el "neutro" (0 o conjunto vacío) y un caso recursivo que combina izquierda y derecha.
+     Solo cambia la operación de combinar (<code>+</code> vs. <code>union</code>) y el dato neutro.</p>
+  <div class="callout tip"><span class="et">💡 La plantilla mental</span>
+    Para cualquier pregunta sobre un árbol ("¿cuántos…?", "¿la suma de…?", "¿el más alto…?",
+    "¿qué nodos cumplen…?") arrancá igual: <code>if (nodo == null) return NEUTRO;</code> y después
+    <strong>combiná</strong> el resultado de <code>nodo.izq</code> con el de <code>nodo.der</code>,
+    sumando lo que aporta el nodo actual.</div>
+
   <h2>4. Costo</h2>
   <p>La recursión <strong>lineal</strong> (una sola llamada por nivel) hace <code>n</code> llamadas:
      es <strong>O(n)</strong>. Fibonacci recursivo hace <strong>dos llamadas</strong> por nivel, y
@@ -111,6 +172,38 @@ public int contar(Nodo nodo) {
     }
     return b;
 }</code></pre>
+
+  <h3>Costo de la recursión</h3>
+  <p>Hasta acá miramos el costo en <strong>tiempo</strong> (cuántas operaciones). Pero la recursión
+     tiene además un costo en <strong>espacio</strong> que la iteración no paga: <strong>cada llamada
+     viva ocupa un lugar en la pila de ejecución</strong>. Mientras una llamada está "esperando" el
+     resultado de la de adentro, su marco (parámetros, variables, dónde volver) queda apilado.</p>
+  <p>Entonces el costo espacial es <strong>O(profundidad de la recursión)</strong>: la cantidad máxima
+     de llamadas apiladas a la vez. En cambio, la versión iterativa usa unas pocas variables y es
+     <strong>O(1)</strong> en espacio.</p>
+  <table class="costo">
+    <thead><tr><th>Caso</th><th>Profundidad máxima</th><th>Costo espacial</th></tr></thead>
+    <tbody>
+      <tr><td><code>factorial(n)</code>, <code>suma(n)</code>, lista enlazada</td><td>n llamadas anidadas</td><td>O(n)</td></tr>
+      <tr><td>Recorrido recursivo de un árbol</td><td>tan profundo como la <strong>altura</strong></td><td>O(altura)</td></tr>
+      <tr><td>Cualquier versión <strong>iterativa</strong> equivalente</td><td>no se apila nada</td><td>O(1)</td></tr>
+    </tbody>
+  </table>
+  <p>En un árbol, la pila no crece con la <em>cantidad</em> de nodos sino con la <strong>altura</strong>:
+     la recursión baja por una rama, apila hasta la hoja y va desapilando al volver. Un árbol
+     balanceado de <code>n</code> nodos tiene altura ~<code>log n</code>, así que usa poca pila; uno
+     degenerado (todo hacia un lado) tiene altura <code>n</code> y se comporta como una lista.</p>
+  <div class="callout error"><span class="et">⚠️ StackOverflow por pila llena</span>
+    Si el caso base <strong>no se alcanza</strong>, las llamadas se apilan sin fin hasta que la pila
+    se llena y salta <code>StackOverflowError</code>. Por eso importa la <strong>precondición</strong>:
+    garantizar que cada llamada acerca la entrada al caso base. Incluso una recursión correcta puede
+    desbordar la pila si la profundidad es enorme (por ejemplo, recorrer recursivamente una lista de
+    millones de elementos).</div>
+  <div class="callout error"><span class="et">⚠️ Fibonacci: árbol de llamadas duplicadas</span>
+    El Fibonacci recursivo no es caro por la pila (su profundidad es solo <code>n</code>), sino por el
+    <strong>tiempo</strong>: cada nivel dispara <strong>dos</strong> llamadas y el árbol de llamadas se
+    duplica en cada paso, recalculando los mismos valores una y otra vez. Eso da
+    <strong>O(2<sup>n</sup>)</strong> en tiempo, frente a <strong>O(n)</strong> de la versión iterativa.</div>
 
   <h2>5. Errores comunes</h2>
   <div class="callout error"><span class="et">⚠️ Olvidar el caso base</span>

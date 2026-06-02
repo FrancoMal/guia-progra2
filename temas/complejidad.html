@@ -43,6 +43,36 @@
     Contá las operaciones, quedate con el término dominante y borrá los números que lo multiplican o
     suman: <code>5n² + 100n + 30</code> ⇒ <strong>O(n²)</strong>.</div>
 
+  <h3>El vocabulario C / L / P de la cátedra</h3>
+  <p>En la cursada, para clasificar un algoritmo no hace falta escribir la O grande completa: alcanza
+     con decir si es <strong>C</strong>, <strong>L</strong> o <strong>P</strong>. Es la misma idea de
+     Big-O, pero en tres categorías gruesas:</p>
+  <table class="costo">
+    <thead><tr><th>Letra</th><th>Categoría</th><th>Big-O equivalente</th><th>Ejemplo típico</th></tr></thead>
+    <tbody>
+      <tr><td>C</td><td>Constante</td><td>≈ O(1)</td><td>Acceder a <code>arr[i]</code>, tope de una pila, un <code>if</code> sin bucles</td></tr>
+      <tr><td>L</td><td>Lineal</td><td>≈ O(n)</td><td>Recorrer una lista una vez</td></tr>
+      <tr><td>P</td><td>Polinómico</td><td>≈ O(n²) o más (O(n³), …)</td><td>Dos o más bucles anidados sobre <code>n</code></td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><span class="et">📋 Qué se pide (y qué no)</span>
+    En el parcial alcanza con <strong>clasificar</strong> (C, L o P) y justificar contando bucles.
+    <strong>No</strong> se piden demostraciones formales con límites, ni encontrar la constante
+    <code>c</code> ni el <code>n₀</code> de la definición matemática de Big-O. Eso es teoría que no
+    se evalúa: lo importante es razonar el orden de crecimiento.</div>
+
+  <h3>Dos precisiones que se evalúan</h3>
+  <div class="callout"><span class="et">🎯 Siempre se analiza el PEOR caso</span>
+    Aunque a veces el algoritmo termine antes, la clasificación se hace sobre el peor escenario
+    posible. La <strong>búsqueda lineal es L</strong> (≈ O(n)) aunque a veces acierte en el primer
+    intento: ese golpe de suerte es el mejor caso, no el que define el orden.</div>
+  <div class="callout"><span class="et">🎯 El número literal de vueltas NO importa: importa <code>n</code></span>
+    La complejidad mide cómo crece el costo con el <strong>tamaño de la entrada</strong> (<code>n</code>),
+    no cuántas veces gira un bucle según un número fijo. Por eso un
+    <code>for (int i = 0; i &lt; 5; i++)</code> es <strong>C / O(1)</strong>, no lineal: hace 5 vueltas
+    siempre, no dependen de <code>n</code>. En cambio <code>for (int i = 0; i &lt; n; i++)</code> es
+    <strong>L / O(n)</strong>, porque las vueltas crecen con la entrada.</div>
+
   <h2>3. Órdenes comunes (con ejemplos)</h2>
   <p>Estos son los órdenes que más aparecen, de más rápido (mejor) a más lento (peor):</p>
   <table class="costo">
@@ -90,6 +120,83 @@ while (ini &lt;= fin) {                 // Se repite log₂(n) veces.
     else fin = medio - 1;                         // Descarto la mitad de arriba.
 }   // En cada paso el rango se parte al medio ⇒ O(log n).</code></pre>
 
+  <h3>Técnica paso a paso para un método entero</h3>
+  <p>Cuando hay <code>if</code>, <code>throw</code> y bucles mezclados, conviene atacar el código por
+     partes y armar la cuenta de a poco:</p>
+  <ul>
+    <li><strong>Costo de un <code>if</code></strong> = costo de la <em>condición</em> + el <strong>peor</strong>
+        de sus ramas: <code>costo(if) = costo(condición) + peor(then, else)</code>. No se suman las dos
+        ramas: solo cuenta la más cara, porque en una corrida se ejecuta una sola.</li>
+    <li>Un <code>throw</code> (lanzar una excepción) es <strong>O(1)</strong>: cortar la ejecución
+        cuesta constante, igual que un <code>return</code>.</li>
+    <li><strong>Tachá las constantes y las ramas baratas</strong>: las asignaciones sueltas, los
+        <code>return</code> y los <code>throw</code> son O(1) y se borran del conteo final.</li>
+    <li>Al <strong>SUMAR</strong> partes en secuencia, gana el <strong>término dominante</strong>:
+        <code>O(n) + O(1) = O(n)</code>; <code>O(n²) + O(n) = O(n²)</code>.</li>
+    <li>Al <strong>ANIDAR</strong>, se <strong>multiplica</strong>. Un bucle O(n) que adentro llama a
+        una operación que ya es O(n), todo dentro de otro bucle O(n), da
+        <code>n × n × n = </code><strong>O(n³)</strong>.</li>
+  </ul>
+  <pre><code class="java">int buscarPosicion(int[] arr, int x, int n) {
+    if (n == 0)                       // condición: O(1)...
+        throw new RuntimeException(); // ...rama: throw es O(1).  Todo el if: O(1).
+    for (int i = 0; i &lt; n; i++) {     // bucle: O(n)...
+        if (arr[i] == x) return i;    // cuerpo: O(1) (comparar + return).
+    }
+    return -1;                        // O(1), se tacha.
+}   // O(1) + O(n) ⇒ gana el dominante ⇒ O(n).</code></pre>
+
+  <div class="callout error"><span class="et">⚠️ El caso engañoso: dos <code>while</code> que comparten la MISMA <code>i</code></span>
+    Si dos bucles están anidados pero comparten una variable <code>i</code> que <strong>no se
+    reinicia</strong>, <code>i</code> avanza en total <code>n</code> veces sumando todas las vueltas,
+    no <code>n</code> por cada vuelta del de afuera. Eso es <strong>O(n)</strong>, NO O(n²).</div>
+  <pre><code class="java">int i = 0;
+while (i &lt; n) {              // Parece el bucle externo...
+    while (i &lt; n &amp;&amp; arr[i] == 0) {   // ...pero usa la MISMA i y NO la reinicia.
+        i++;                // i nunca vuelve a 0: avanza en total n veces.
+    }
+    i++;
+}   // Entre los dos while, i pasa una sola vez por cada valor ⇒ O(n), no O(n²).</code></pre>
+
+  <p>Distinto es el bucle <strong>triangular</strong>, donde el interno arranca en <code>i</code> (o va
+     hasta <code>i</code>) y <strong>sí</strong> se reinicia en cada vuelta del externo: hace
+     <code>n + (n-1) + ... + 1 ≈ n²/2</code> pasos, que descartando la constante es
+     <strong>O(n²)</strong>.</p>
+  <pre><code class="java">for (int i = 0; i &lt; n; i++) {       // n veces...
+    for (int j = 0; j &lt;= i; j++) {   // ...el interno SÍ se reinicia, llega hasta i.
+        comparar(arr[i], arr[j]);    // n + (n-1) + ... + 1 ≈ n²/2 ⇒ O(n²).
+    }
+}</code></pre>
+
+  <h3>Costo espacial y recursión</h3>
+  <p>Además del costo <strong>temporal</strong> (cuántas operaciones), a veces se pide el costo
+     <strong>espacial</strong>: cuánta <strong>memoria extra</strong> usa el algoritmo según
+     <code>n</code>. Un algoritmo iterativo que solo usa unas variables sueltas es
+     <strong>O(1) espacial</strong>, aunque su tiempo sea O(n).</p>
+  <p>La <strong>recursión</strong> es donde el costo espacial se vuelve interesante: cada llamada que
+     todavía no terminó queda <strong>apilada</strong> en la pila de ejecución. Por eso el costo
+     espacial de un algoritmo recursivo es <strong>O(profundidad)</strong>, la cantidad de llamadas
+     anidadas que conviven al mismo tiempo:</p>
+  <ul>
+    <li><strong>Factorial o recorrer una lista</strong>: una llamada por elemento ⇒ profundidad
+        <code>n</code> ⇒ <strong>O(n) espacial</strong>. La versión iterativa hace lo mismo con un
+        bucle y unas variables ⇒ <strong>O(1) espacial</strong>.</li>
+    <li><strong>Recorrer un árbol</strong>: se apila una llamada por nivel ⇒ profundidad =
+        <strong>altura</strong> del árbol ⇒ <strong>O(altura) espacial</strong>.</li>
+    <li>Si la recursión <strong>no llega al caso base</strong> (se llama sin achicar el problema), la
+        pila crece sin freno hasta reventar: <strong>StackOverflow</strong>.</li>
+  </ul>
+  <pre><code class="java">int factorial(int n) {
+    if (n &lt;= 1) return 1;            // caso base: corta la recursión.
+    return n * factorial(n - 1);     // se apila una llamada por cada n, n-1, ...
+}   // Tiempo O(n) y espacio O(n): hay n llamadas apiladas a la vez.</code></pre>
+
+  <div class="callout error"><span class="et">⚠️ Fibonacci recursivo: árbol de llamadas que se duplican</span>
+    <code>fib(n) = fib(n-1) + fib(n-2)</code> abre <strong>dos llamadas por cada una</strong>, y esas
+    se vuelven a abrir: el árbol de llamadas duplica su ancho a cada nivel ⇒
+    <strong>O(2ⁿ) temporal</strong>. Recalcula los mismos valores miles de veces; por eso conviene una
+    versión iterativa (O(n) tiempo, O(1) espacio).</div>
+
   <h2>5. Errores comunes</h2>
   <div class="callout error"><span class="et">⚠️ Sumar en vez de multiplicar bucles anidados</span>
     Si un bucle está <strong>adentro</strong> de otro, los costos se <strong>multiplican</strong>
@@ -110,10 +217,19 @@ while (ini &lt;= fin) {                 // Se repite log₂(n) veces.
   <h2>6. Resumen</h2>
   <ul>
     <li><strong>Big-O</strong> mide cómo crece el costo según <code>n</code>, en el <strong>peor caso</strong>.</li>
+    <li>En la cátedra alcanza con clasificar <strong>C ≈ O(1)</strong>, <strong>L ≈ O(n)</strong>,
+        <strong>P ≈ O(n²) o más</strong>; sin demostraciones formales (sin <code>c</code> ni <code>n₀</code>).</li>
     <li>Se <strong>ignoran constantes y términos menores</strong>: <code>3n + 5</code> ⇒ <strong>O(n)</strong>.</li>
     <li>Órdenes de mejor a peor: <strong>O(1) → O(log n) → O(n) → O(n log n) → O(n²) → O(2ⁿ)</strong>.</li>
     <li>Bucle simple ⇒ <strong>O(n)</strong>; bucles anidados ⇒ <strong>se multiplican (O(n²))</strong>; dividir a la mitad ⇒ <strong>O(log n)</strong>.</li>
-    <li>Recordá: <strong>O(2n) = O(n)</strong> y Big-O es el peor caso, no el mejor.</li>
+    <li><strong>Técnica</strong>: <code>costo(if) = condición + peor(then, else)</code>; <code>throw</code>
+        es O(1); al sumar gana el dominante, al anidar se multiplica. Ojo con la <code>i</code> que no
+        se reinicia (es O(n), no O(n²)) y con el triangular (sí O(n²)).</li>
+    <li><strong>Costo espacial</strong>: la recursión apila una llamada por nivel ⇒ O(profundidad)
+        (O(n) en factorial/lista, O(altura) en árboles); la iterativa suele ser O(1). Fibonacci
+        recursivo = árbol duplicado ⇒ O(2ⁿ).</li>
+    <li>Recordá: un <code>for</code> con tope fijo (<code>i &lt; 5</code>) es <strong>C / O(1)</strong>, no lineal;
+        <strong>O(2n) = O(n)</strong>; y Big-O es el peor caso, no el mejor.</li>
   </ul>
 
   <section class="actividades" data-actividades>

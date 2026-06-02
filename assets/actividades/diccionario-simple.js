@@ -210,5 +210,39 @@ d.agregar(2, 300);
       'nuevo.valor = x;'
     ],
     explicacion: 'Primero se busca la clave con clave2Nodo. Si no existe (null) se crea el nodo y se engancha al inicio. La asignación del valor va al final, fuera del if: así actualiza si la clave existía y carga el valor si recién se creó.'
+  },
+  {
+    tipo: 'mapear',
+    enunciado: 'Relacioná cada operación del Diccionario Simple (español, Wehbe) con su equivalente en inglés (Monzón). OJO: en Monzón, remove pide clave Y valor; y según el apéndice recuperar puede ser getValue(k) o get(k).',
+    pares: [
+      ['agregar(c, v)', 'add(k, v)'],
+      ['eliminar(c)', 'remove(k, v)'],
+      ['recuperar(c)', 'getValue(k)'],
+      ['claves()', 'getKeys(): Set']
+    ],
+    explicacion: 'add(k,v) es agregar (upsert). remove(k,v) es eliminar, pero en Monzón pide clave y valor. getValue(k) (o get(k) según el apéndice) es recuperar. getKeys():Set es claves(): como el Dictionary no tiene containsKey, la existencia de una clave se chequea recorriendo ese Set.'
+  },
+  {
+    tipo: 'quiz',
+    enunciado: 'Sobre un diccionario con la clave 7 ya cargada con valor 100, se hace eliminar(99) (clave que NO existe) y después agregar(7, 500). ¿Qué pasa?',
+    opciones: ['eliminar(99) lanza una excepción porque la clave 99 no existe',
+               'eliminar(99) no hace nada (no es error) y agregar(7, 500) sobreescribe el valor de la clave 7 a 500',
+               'agregar(7, 500) crea un segundo nodo con clave 7, así que quedan dos claves 7',
+               'agregar(7, 500) lanza una excepción porque la clave 7 ya existe'],
+    correcta: 1,
+    explicacion: 'Eliminar una clave inexistente NO es error: eliminar(99) simplemente termina sin tocar nada. agregar es un upsert: como la clave 7 ya existe, no la duplica, solo reemplaza su valor 100 por 500.'
+  },
+  {
+    tipo: 'trazar',
+    enunciado: 'Se ejecuta esta secuencia sobre un diccionario vacío. ¿Qué devuelve recuperar(8) al final?',
+    codigo:
+`d.inicializarDiccionario();
+d.agregar(8, 70);
+d.agregar(8, 90);   // "modificar" = volver a agregar
+d.eliminar(4);      // la clave 4 no existe
+// recuperar(8)`,
+    opciones: ['70', '90', 'Lanza una excepción: la clave 8 fue eliminada'],
+    correcta: 1,
+    explicacion: 'agregar(8,70) carga la clave 8. agregar(8,90) es un upsert: la clave 8 ya existía, así que solo actualiza su valor a 90. eliminar(4) no hace nada porque la clave 4 nunca se cargó (no es error). recuperar(8) devuelve 90.'
   }
 ];
