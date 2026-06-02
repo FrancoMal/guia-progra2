@@ -186,37 +186,5 @@ for (int i = 0; i < n; i++) {
     opciones: ['4', '5', '6', '10'],
     correcta: 1,
     explicacion: 'El bucle va con i = 0, 1, 2, 3, 4 (mientras i < 5): son 5 iteraciones. La línea se ejecuta n veces, por eso el costo es O(n).'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'El comentario que indica el costo es incorrecto. ¿En qué línea está el error?',
-    lineas: [
-      'for (int i = 0; i < n; i++) {',
-      '    for (int j = 0; j < n; j++) {',
-      '        // Costo total: O(n) porque hay un for adentro de otro.',
-      '        comparar(arr[i], arr[j]);',
-      '    }',
-      '}'
-    ],
-    lineaError: 2,
-    fix: '// Costo total: O(n²) porque los bucles anidados se multiplican (n × n).',
-    explicacion: 'Los bucles anidados se MULTIPLICAN, no se suman: n × n = n² ⇒ O(n²). La suma (O(n)) corresponde a dos bucles uno después del otro, no a uno adentro del otro.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'El comentario afirma que este método es O(1), pero está mal. ¿En qué línea está el error?',
-    lineas: [
-      '// Costo: O(1), siempre el mismo trabajo.',
-      'public int sumarTodo(int[] arr) {',
-      '    int suma = 0;',
-      '    for (int i = 0; i < arr.length; i++) {',
-      '        suma += arr[i];',
-      '    }',
-      '    return suma;',
-      '}'
-    ],
-    lineaError: 0,
-    fix: '// Costo: O(n), recorre los n elementos del arreglo.',
-    explicacion: 'No es O(1): hay un bucle que recorre los n elementos del arreglo para sumarlos. Recorrer todo en función del tamaño de la entrada es O(n), no constante.'
   }
 ];

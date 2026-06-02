@@ -210,42 +210,5 @@ d.agregar(2, 300);
       'nuevo.valor = x;'
     ],
     explicacion: 'Primero se busca la clave con clave2Nodo. Si no existe (null) se crea el nodo y se engancha al inicio. La asignación del valor va al final, fuera del if: así actualiza si la clave existía y carga el valor si recién se creó.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este agregar(clave, x) debería actualizar el valor si la clave ya existe, pero duplica la clave. ¿En qué línea está el error?',
-    lineas: [
-      'public void agregar(int clave, int x) {',
-      '    Nodo nuevo = new Nodo();',
-      '    nuevo.clave = clave;',
-      '    nuevo.valor = x;',
-      '    nuevo.sig = inicio;',
-      '    inicio = nuevo;',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'Nodo nuevo = clave2Nodo(clave); if (nuevo == null) { nuevo = new Nodo(); nuevo.clave = clave; nuevo.sig = inicio; inicio = nuevo; } nuevo.valor = x;',
-    explicacion: 'Crea un nodo nuevo sin buscar primero si la clave ya está. Hay que buscarla con clave2Nodo: si existe, solo se reasigna el valor; si no existe, recién ahí se crea el nodo. Así la clave nunca queda duplicada.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este eliminar(clave) recorre bien la lista, pero no saca el nodo: nunca lo desengancha. ¿En qué línea está el error?',
-    lineas: [
-      'public void eliminar(int clave) {',
-      '    if (inicio != null)',
-      '        if (inicio.clave == clave) {',
-      '            inicio = inicio.sig;',
-      '        } else {',
-      '            Nodo turista = inicio;',
-      '            while (turista.sig != null && turista.sig.clave != clave)',
-      '                turista = turista.sig;',
-      '            if (turista.sig != null)',
-      '                turista = turista.sig.sig;',
-      '        }',
-      '}'
-    ],
-    lineaError: 9,
-    fix: 'turista.sig = turista.sig.sig;',
-    explicacion: 'Al encontrar el nodo hay que circunvalarlo: turista.sig debe apuntar al que sigue (turista.sig = turista.sig.sig). La línea con error reasigna turista en vez de turista.sig, así que solo mueve el turista y deja el nodo enganchado: no elimina nada.'
   }
 ];

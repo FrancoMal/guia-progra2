@@ -184,31 +184,5 @@ window.ACTIVIDADES = [
       '}'
     ],
     explicacion: 'Primero la firma; después el caso base (exp == 0 vale 1, porque cualquier base elevada a 0 es 1); por último el caso recursivo, que multiplica base por la potencia con exp - 1.'
-  },
-  // ───────────── CORREGIR ─────────────
-  {
-    tipo: 'corregir',
-    enunciado: 'Esta versión recursiva tiene un error que provoca StackOverflowError. ¿En qué línea está?',
-    lineas: [
-      'public int factorial(int n) {',
-      '    return n * factorial(n - 1);',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'Agregar el caso base antes del return: if (n == 0) return 1;',
-    explicacion: 'Falta el caso base, así que n nunca llega a cortar: factorial sigue llamándose (n-1, n-2, ...) sin parar, la pila de ejecución se llena y salta StackOverflowError.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Esta suma recursiva tiene caso base, pero igual tira StackOverflowError. ¿En qué línea está el error?',
-    lineas: [
-      'public int suma(int n) {',
-      '    if (n == 0) return 0;',
-      '    return n + suma(n);',
-      '}'
-    ],
-    lineaError: 2,
-    fix: 'return n + suma(n - 1);',
-    explicacion: 'El caso recursivo no reduce el problema: llama a suma(n) con el mismo n, así que nunca baja a 0 y el caso base no se alcanza. Hay que llamar a suma(n - 1) para acercarse al caso base.'
   }
 ];

@@ -188,39 +188,5 @@ dfs(g, inicio, visitados);`,
       'mAdy[d][o] = peso;'
     ],
     explicacion: 'Primero se traducen las etiquetas origen y destino a sus índices. Luego se cargan las DOS celdas con el peso: mAdy[o][d] y su simétrica mAdy[d][o], porque en un grafo no dirigido la arista vale en ambos sentidos.'
-  },
-  // ───────────────────────────── CORREGIR ─────────────────────────────
-  {
-    tipo: 'corregir',
-    enunciado: 'Este DFS entra en bucle infinito ante un ciclo. ¿En qué línea está el error?',
-    lineas: [
-      'void dfs(GrafoTDA g, int v, ConjuntoTDA visitados) {',
-      '    procesar(v);',
-      '    ConjuntoTDA vs = g.vertices();',
-      '    while (!vs.conjuntoVacio()) {',
-      '        int w = vs.elegir();',
-      '        vs.sacar(w);',
-      '        if (g.existeArista(v, w) && !visitados.pertenece(w))',
-      '            dfs(g, w, visitados);',
-      '    }',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'visitados.agregar(v); procesar(v);',
-    explicacion: 'Nunca se marca v como visitado, así que la condición !visitados.pertenece(w) siempre da true y, ante un ciclo, se vuelve a entrar a los mismos nodos sin fin. Hay que agregar v al conjunto de visitados (antes de procesar) al inicio de la función.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este agregarArista pretende construir un grafo NO dirigido, pero los recorridos no encuentran la conexión en el sentido destino→origen. ¿En qué línea está el problema?',
-    lineas: [
-      'public void agregarArista(int origen, int destino, int peso) {',
-      '    int o = vertice2indice(origen);',
-      '    int d = vertice2indice(destino);',
-      '    mAdy[o][d] = peso;',
-      '}'
-    ],
-    lineaError: 3,
-    fix: 'mAdy[o][d] = peso; mAdy[d][o] = peso;',
-    explicacion: 'Solo se carga la celda mAdy[o][d], así que la arista queda en un único sentido (dirigido). Para un grafo no dirigido falta cargar también la celda simétrica mAdy[d][o] = peso, de modo que la conexión valga en ambos sentidos.'
   }
 ];

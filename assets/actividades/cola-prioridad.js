@@ -202,55 +202,5 @@ public int prioridad() { return primero.prioridad; }`,
       'turista.sig = nuevo;'
     ],
     explicacion: 'El turista arranca en primero y avanza mientras el siguiente exista y tenga prioridad mayor o igual. Cuando se detiene, el nuevo se engancha entre turista y su siguiente: primero nuevo.sig = turista.sig y recién después turista.sig = nuevo, para no perder el resto.'
-  },
-
-  // ---------------------------------------------------------------- CORREGIR
-  {
-    tipo: 'corregir',
-    enunciado: 'Este acolarPrioridad tiene la comparación de prioridad invertida y rompe el orden. ¿En qué línea está el error?',
-    lineas: [
-      'public void acolarPrioridad(int x, int prioridad) {',
-      '    NodoPrioridad nuevo = new NodoPrioridad();',
-      '    nuevo.valor = x;',
-      '    nuevo.prioridad = prioridad;',
-      '    if (primero == null || prioridad < primero.prioridad) {',
-      '        nuevo.sig = primero;',
-      '        primero = nuevo;',
-      '    } else {',
-      '        NodoPrioridad turista = primero;',
-      '        while (turista.sig != null && turista.sig.prioridad >= prioridad)',
-      '            turista = turista.sig;',
-      '        nuevo.sig = turista.sig;',
-      '        turista.sig = nuevo;',
-      '    }',
-      '}'
-    ],
-    lineaError: 4,
-    fix: 'if (primero == null || prioridad > primero.prioridad) {',
-    explicacion: 'El nuevo va al frente cuando tiene MÁS prioridad que el primero actual: la condición debe ser prioridad > primero.prioridad. Con < se manda adelante al menos prioritario y la lista deja de estar ordenada de mayor a menor.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este acolarPrioridad se cae con NullPointerException al insertar al final de la cola. ¿En qué línea está el error?',
-    lineas: [
-      'public void acolarPrioridad(int x, int prioridad) {',
-      '    NodoPrioridad nuevo = new NodoPrioridad();',
-      '    nuevo.valor = x;',
-      '    nuevo.prioridad = prioridad;',
-      '    if (primero == null || prioridad > primero.prioridad) {',
-      '        nuevo.sig = primero;',
-      '        primero = nuevo;',
-      '    } else {',
-      '        NodoPrioridad turista = primero;',
-      '        while (turista.sig.prioridad >= prioridad)',
-      '            turista = turista.sig;',
-      '        nuevo.sig = turista.sig;',
-      '        turista.sig = nuevo;',
-      '    }',
-      '}'
-    ],
-    lineaError: 9,
-    fix: 'while (turista.sig != null && turista.sig.prioridad >= prioridad)',
-    explicacion: 'Falta el control turista.sig != null en el while. Sin él, cuando el turista llega al último nodo se evalúa turista.sig.prioridad sobre null y revienta. El chequeo de null debe ir PRIMERO para cortar antes de mirar la prioridad.'
   }
 ];

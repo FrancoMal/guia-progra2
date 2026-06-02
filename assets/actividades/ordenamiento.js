@@ -28,7 +28,7 @@ window.ACTIVIDADES = [
                'Compara pares adyacentes y los intercambia si están desordenados',
                'Elige un pivote y particiona el arreglo en menores y mayores'],
     correcta: 1,
-    explicacion: 'La inserción agarra el elemento actual y lo encaja en el tramo ordenado de la izquierda, corriendo a la derecha los mayores. La opción 1 es selección, la 3 es burbuja y la 4 es quicksort.'
+    explicacion: 'La inserción agarra el elemento actual y lo encaja en el tramo ordenado de la izquierda, corriendo a la derecha los mayores. Buscar el mínimo y ponerlo al principio es selección; comparar pares adyacentes es burbuja; elegir un pivote y particionar es quicksort.'
   },
   {
     tipo: 'quiz',
@@ -197,43 +197,5 @@ return i + 1;`,
       'a[j + 1] = actual;'
     ],
     explicacion: 'Mientras haya elementos mayores que actual, los corremos un lugar a la derecha (a[j+1] = a[j]) y bajamos j. Al salir del while, j+1 es el hueco donde va el valor actual.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este selección tiene un error en el límite del bucle interno. ¿En qué línea está?',
-    lineas: [
-      'static void seleccion(int[] a) {',
-      '    int n = a.length;',
-      '    for (int i = 0; i < n - 1; i++) {',
-      '        int min = i;',
-      '        for (int j = i + 1; j <= n; j++) {',
-      '            if (a[j] < a[min]) min = j;',
-      '        }',
-      '        swap(a, i, min);',
-      '    }',
-      '}'
-    ],
-    lineaError: 4,
-    fix: 'for (int j = i + 1; j < n; j++) {',
-    explicacion: 'Con j <= n el bucle llega a j = n y accede a a[n], que no existe (los índices válidos van de 0 a n-1): salta ArrayIndexOutOfBoundsException. La condición correcta es j < n.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Esta burbuja ordena al revés (de mayor a menor) en vez de menor a mayor. ¿En qué línea está el error?',
-    lineas: [
-      'static void burbuja(int[] a) {',
-      '    int n = a.length;',
-      '    for (int i = 0; i < n - 1; i++) {',
-      '        for (int j = 0; j < n - 1 - i; j++) {',
-      '            if (a[j] < a[j + 1]) {',
-      '                swap(a, j, j + 1);',
-      '            }',
-      '        }',
-      '    }',
-      '}'
-    ],
-    lineaError: 4,
-    fix: 'if (a[j] > a[j + 1]) {',
-    explicacion: 'La comparación está invertida: con a[j] < a[j+1] manda los chicos al final y ordena de mayor a menor. Para ordenar de menor a mayor hay que intercambiar cuando a[j] > a[j+1].'
   }
 ];

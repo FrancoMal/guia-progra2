@@ -219,37 +219,5 @@ c.agregar(4);
       '}'
     ],
     explicacion: 'Primero se busca la posición de x. Si se encontró (i != -1), se pisa ese hueco con el último elemento y se decrementa cant. Como no hay orden, no hace falta desplazar el resto.'
-  },
-
-  // ───────────────────────────── CORREGIR ─────────────────────────────
-  {
-    tipo: 'corregir',
-    enunciado: 'Este agregar(x) tiene un error: rompe la definición de conjunto. ¿En qué línea está?',
-    lineas: [
-      'public void agregar(int x) {',
-      '    Nodo nuevo = new Nodo();',
-      '    nuevo.valor = x;',
-      '    nuevo.sig = origen;',
-      '    origen = nuevo;',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'if (!this.pertenece(x)) {  // ...y cerrar el bloque con } antes del cierre del método',
-    explicacion: 'Falta chequear pertenece antes de insertar. Sin el if (!pertenece(x)), entran duplicados y deja de ser un conjunto. Esa verificación no es opcional: es parte de la operación agregar.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este sacar(x) (lista dinámica) busca bien el nodo anterior al buscado, pero no termina de sacarlo. ¿En qué línea está el error?',
-    lineas: [
-      'public void sacar(int x) {',
-      '    Nodo turista = origen;',
-      '    while (turista.sig != null && turista.sig.valor != x)',
-      '        turista = turista.sig;',
-      '    turista.sig = turista.sig;',
-      '}'
-    ],
-    lineaError: 4,
-    fix: 'turista.sig = turista.sig.sig;',
-    explicacion: 'turista.sig = turista.sig no cambia nada (se asigna a sí mismo). Para sacar el nodo hay que saltearlo enganchando con el de DOS más adelante: turista.sig = turista.sig.sig.'
   }
 ];

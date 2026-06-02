@@ -204,34 +204,5 @@ System.out.println(turista.valor);`,
       '}'
     ],
     explicacion: 'Primero se chequea que la lista no esté vacía (origen != null); recién ahí se mueve origen al segundo nodo (origen = origen.sig), que pasa a ser el nuevo primero. El nodo viejo queda sin referencias.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este recorrido revienta con NullPointerException cuando la lista está vacía. ¿En qué línea está el error?',
-    lineas: [
-      'Nodo turista = origen;',
-      'while (turista.sig != null) {',
-      '    System.out.println(turista.valor);',
-      '    turista = turista.sig;',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'while (turista != null) {',
-    explicacion: 'Hay que chequear turista != null antes de tocar turista.sig. Si la lista está vacía (origen == null), el primer turista.sig revienta. La condición correcta es while (turista != null).'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este agregarAdelante(x) no agrega nada: después de llamarlo, la lista queda igual que antes. ¿En qué línea está el error?',
-    lineas: [
-      'public void agregarAdelante(int x) {',
-      '    Nodo nuevo = new Nodo();',
-      '    nuevo.valor = x;',
-      '    nuevo.sig = origen;',
-      '    nuevo = origen;',
-      '}'
-    ],
-    lineaError: 4,
-    fix: 'origen = nuevo;',
-    explicacion: 'La asignación está al revés: nuevo = origen solo reescribe la variable local nuevo y no cambia la lista. Para que el nodo recién creado pase a ser el primero hay que hacer origen = nuevo (después de nuevo.sig = origen).'
   }
 ];

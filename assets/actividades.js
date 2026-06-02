@@ -1,7 +1,8 @@
 /* Motor de actividades de práctica (Fase 2).
    Lee window.ACTIVIDADES (definido por assets/actividades/<tema>.js) y las renderiza
    dentro de <section class="actividades">. Sin dependencias; usa window.resaltarJava
-   (de app.js) para resaltar el código. Tipos: quiz | trazar | costo | ordenar | corregir.
+   (de app.js) para resaltar el código. Tipos: quiz | trazar | costo | ordenar.
+   Las opciones de quiz/trazar/costo se barajan en cada render.
    En los datos, el código va como string normal (sin escapar HTML): se inserta con
    textContent, así que < > & se manejan solos. */
 (function () {
@@ -9,7 +10,7 @@
 
   const ETIQUETAS = {
     quiz: 'Quiz', trazar: 'Trazá / Predecí la salida', costo: 'Análisis de costo',
-    ordenar: 'Ordená el código', corregir: 'Encontrá el error'
+    ordenar: 'Ordená el código'
   };
 
   function badge(tipo) {
@@ -60,13 +61,17 @@
     card.appendChild(enunciado(act.enunciado));
     const pre = bloqueCodigo(act.codigo); if (pre) card.appendChild(pre);
     const ops = document.createElement('div'); ops.className = 'act-opciones';
+    // Mezclamos las opciones para que la respuesta correcta no caiga siempre en
+    // la misma posición. Guardamos el texto correcto para identificarlo tras barajar.
+    const textoCorrecto = act.opciones[act.correcta];
+    const opciones = shuffle(act.opciones.slice());
     let resuelta = false;
-    act.opciones.forEach((op, i) => {
+    opciones.forEach((op) => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'act-op'; b.textContent = op;
       b.onclick = () => {
         if (resuelta) return;
-        if (i === act.correcta) {
+        if (op === textoCorrecto) {
           b.classList.add('correcta'); resuelta = true; acertar();
           explicacion(card, true, act.explicacion);
           ops.querySelectorAll('button').forEach(x => x.disabled = true);
@@ -123,35 +128,6 @@
     cont.appendChild(card);
   }
 
-  // ---- Corregir: clic en la línea con el bug ----
-  function renderCorregir(act, cont) {
-    sumarTotal();
-    const card = document.createElement('div'); card.className = 'actividad';
-    card.appendChild(badge('corregir'));
-    card.appendChild(enunciado(act.enunciado));
-    const lista = document.createElement('div'); lista.className = 'corregir-lista';
-    let resuelta = false;
-    act.lineas.forEach((ln, i) => {
-      const fila = document.createElement('div'); fila.className = 'corregir-linea';
-      const code = document.createElement('code'); code.className = 'java'; code.textContent = ln;
-      fila.appendChild(code);
-      fila.onclick = () => {
-        if (resuelta) return;
-        if (i === act.lineaError) {
-          fila.classList.add('correcta'); resuelta = true; acertar();
-          const fix = (act.fix ? 'Corrección: ' + act.fix + '. ' : '') + (act.explicacion || '');
-          explicacion(card, true, fix);
-        } else {
-          fila.classList.add('incorrecta');
-        }
-      };
-      lista.appendChild(fila);
-    });
-    card.appendChild(lista);
-    cont.appendChild(card);
-    if (window.resaltarJava) window.resaltarJava();
-  }
-
   window.renderActividades = function () {
     if (!Array.isArray(window.ACTIVIDADES) || !window.ACTIVIDADES.length) return;
     const sec = document.querySelector('section.actividades');
@@ -163,8 +139,8 @@
     const cont = document.createElement('div');
     sec.appendChild(cont);
     window.ACTIVIDADES.forEach(act => {
+      if (act.tipo === 'corregir') return;   // las de "Encontrá el error" se retiraron
       if (act.tipo === 'ordenar') renderOrdenar(act, cont);
-      else if (act.tipo === 'corregir') renderCorregir(act, cont);
       else renderOpcion(act, cont);   // quiz | trazar | costo
     });
     actualizarScore();

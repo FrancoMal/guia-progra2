@@ -201,36 +201,5 @@ d.agregar(1, 30);
       'return valores;'
     ],
     explicacion: 'Primero se crea e inicializa el ConjuntoTDA de salida. Después se ubica la clave y se arranca el recorrido desde nodo.valores, agregando cada valor al conjunto. Al final se devuelve el conjunto (vacío si la clave no tenía valores).'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este agregar tiene un error: crea una clave nueva aunque ya exista. ¿En qué línea está?',
-    lineas: [
-      'public void agregar(int clave, int valor) {',
-      '    NodoClave nodo = new NodoClave();   // siempre crea una clave nueva',
-      '    nodo.clave = clave;',
-      '    nodo.sigClave = inicio;',
-      '    inicio = nodo;',
-      '    // ... agrega el valor a nodo.valores',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'NodoClave nodo = clave2NodoClave(clave); if (nodo == null) { nodo = new NodoClave(); nodo.clave = clave; nodo.sigClave = inicio; inicio = nodo; }',
-    explicacion: 'Hay que buscar primero la clave con clave2NodoClave y crear un NodoClave nuevo solo si devuelve null. Crear siempre uno duplica la clave: te quedan dos NodoClave con la misma clave y los valores repartidos entre ambas.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este agregar resuelve bien la clave, pero al sumar el valor permite repetidos (no respeta el conjunto). ¿En qué línea está el error?',
-    lineas: [
-      'NodoClave nodo = clave2NodoClave(clave);',
-      'if (nodo == null) { nodo = new NodoClave(); nodo.clave = clave; nodo.sigClave = inicio; inicio = nodo; }',
-      'NodoValor nuevo = new NodoValor();   // agrega el valor sin chequear si ya estaba',
-      'nuevo.valor = valor;',
-      'nuevo.sigValor = nodo.valores;',
-      'nodo.valores = nuevo;'
-    ],
-    lineaError: 2,
-    fix: 'NodoValor turista = nodo.valores; while (turista != null && turista.valor != valor) turista = turista.sigValor; if (turista == null) { NodoValor nuevo = new NodoValor(); nuevo.valor = valor; nuevo.sigValor = nodo.valores; nodo.valores = nuevo; }',
-    explicacion: 'Antes de crear el NodoValor hay que recorrer la lista de valores buscando el valor; solo si no estaba (turista == null) se lo agrega. Sin ese chequeo, agregar(1,10) dos veces deja el 10 repetido y deja de ser un conjunto.'
   }
 ];

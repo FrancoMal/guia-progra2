@@ -49,18 +49,6 @@ p.apilar(7);
     ],
     explicacion: 'Primero se crea el nodo y se carga el valor; luego se engancha al tope viejo y, recién al final, el nuevo pasa a ser el tope.'
   },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este tope() tiene un error. ¿En qué línea está?',
-    lineas: [
-      'public int tope() {',
-      '    return tope.sig.valor;',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'return tope.valor;',
-    explicacion: 'El tope es el primer nodo, así que se devuelve tope.valor, no el del siguiente.'
-  },
 
   // ---------- Nuevas actividades ----------
 
@@ -210,29 +198,5 @@ while (!a.pilaVacia()) {
       'p.apilar(7);'
     ],
     explicacion: 'inicializar → []; apilar(5) → [5]; apilar(2) → [2,5]; desapilar() saca el 2 → [5]; apilar(7) → [7,5]. El 2 se apila y se desapila enseguida; quedan el 5 de base y el 7 en el tope.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este desapilar() (lista dinámica) puede romper el programa. ¿En qué línea está el problema?',
-    lineas: [
-      'public void desapilar() {',
-      '    tope = tope.sig;',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'if (!pilaVacia()) tope = tope.sig;',
-    explicacion: 'Si la pila está vacía, tope es null y tope.sig lanza NullPointerException. Hay que respetar la precondición verificando !pilaVacia() antes de avanzar el tope.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este tope() de la implementación con arreglo tiene un error. ¿En qué línea está?',
-    lineas: [
-      'public int tope() {',
-      '    return datos[tope];',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'return datos[tope - 1];',
-    explicacion: 'tope es la cantidad de elementos, así que datos[tope] es la posición libre (basura). El último apilado está en datos[tope - 1].'
   }
 ];

@@ -211,38 +211,5 @@ buscar(raiz, 5);`,
       'return nodo;'
     ],
     explicacion: 'Primero el caso base: si el lugar está vacío, ahí va el nodo nuevo. Después se compara: si x es menor baja por la izquierda, si es mayor por la derecha (y si es igual no hace nada). Al final devuelve el nodo para reenganchar el subárbol actualizado.'
-  },
-
-  // ---------------- CORREGIR ----------------
-  {
-    tipo: 'corregir',
-    enunciado: 'Este recorrido preorden tiene un error. ¿En qué línea está?',
-    lineas: [
-      'void preorden(Nodo nodo) {',
-      '    System.out.print(nodo.valor + " ");',
-      '    preorden(nodo.izq);',
-      '    preorden(nodo.der);',
-      '}'
-    ],
-    lineaError: 1,
-    fix: 'if (nodo == null) return;',
-    explicacion: 'Falta el caso base. Sin el "if (nodo == null) return;" al principio, al bajar más allá de una hoja se accede a nodo.valor sobre null y explota con NullPointerException. El chequeo de null debe ir antes de usar el nodo.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este insertar de ABB rompe la propiedad de orden. ¿En qué línea está el error?',
-    lineas: [
-      'Nodo insertar(Nodo nodo, int x) {',
-      '    if (nodo == null) return nuevoNodo(x);',
-      '    if (x < nodo.valor)',
-      '        nodo.der = insertar(nodo.der, x);',
-      '    else',
-      '        nodo.izq = insertar(nodo.izq, x);',
-      '    return nodo;',
-      '}'
-    ],
-    lineaError: 3,
-    fix: 'nodo.izq = insertar(nodo.izq, x);',
-    explicacion: 'Están invertidos los lados: cuando x es menor (x < nodo.valor) debe ir a la izquierda, no a la derecha. Tal como está, manda los menores a la derecha y rompe la propiedad del ABB, con lo cual el inorden deja de salir ordenado y la búsqueda falla.'
   }
 ];

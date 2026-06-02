@@ -218,39 +218,5 @@ c.desacolar();
       'ultimo = nuevo;'
     ],
     explicacion: 'Se crea el nodo y se carga; si la cola estaba vacía el nuevo es el frente, si no, el viejo final lo engancha; y en cualquier caso el nuevo termina siendo ultimo.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este acolar(x) falla al agregar el PRIMER elemento. ¿En qué línea está el error?',
-    lineas: [
-      'public void acolar(int x) {',
-      '    Nodo nuevo = new Nodo();',
-      '    nuevo.valor = x;',
-      '    nuevo.sig = null;',
-      '    if (colaVacia()) {',
-      '        primero = nuevo;',
-      '    } else {',
-      '        ultimo.sig = nuevo;',
-      '    }',
-      '}'
-    ],
-    lineaError: 9,
-    fix: '    }\n    ultimo = nuevo;',
-    explicacion: 'Falta actualizar ultimo después del if. Sin ultimo = nuevo, al acolar el primer elemento ultimo queda en null y el próximo acolar engancha mal con ultimo.sig.'
-  },
-  {
-    tipo: 'corregir',
-    enunciado: 'Este desacolar() no saca el frente: la cola nunca se vacía. ¿En qué línea está el error?',
-    lineas: [
-      'public void desacolar() {',
-      '    ultimo = ultimo.sig;',
-      '    if (primero == null) {',
-      '        ultimo = null;',
-      '    }',
-      '}'
-    ],
-    lineaError: 1,
-    fix: '    primero = primero.sig;',
-    explicacion: 'Desacolar saca por el FRENTE, así que hay que avanzar primero, no ultimo. Debe ser primero = primero.sig. (Además ultimo.sig al final es null, con lo que la línea original ni siquiera tiene sentido.)'
   }
 ];
