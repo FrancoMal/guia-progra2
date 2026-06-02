@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulacro de Parcial · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="simulacro-parcial">
+<main>
+<article>
+  <h1>Simulacro de Parcial</h1>
+
+  <h2>1. Cómo es el parcial de Monzón (2023–2025)</h2>
+  <p>Los primeros parciales de la cátedra de <strong>Monzón</strong> tienen una estructura
+     <strong>fija</strong> que se repite año a año. Son <strong>tres ejercicios</strong> y se aprueba
+     con el <strong>60 %</strong>. La duración típica es de <strong>~3 horas</strong>, se rinde
+     <strong>sin conexión a internet</strong> y solo podés usar las técnicas y TDAs vistos en la
+     cursada (prohibido genéricos y estructuras de la JRE como <code>ArrayList</code> o
+     <code>HashMap</code>).</p>
+  <div class="callout"><span class="et">🧭 Estructura fija</span>
+    <ul>
+      <li><strong>Ejercicio 1 — Definición, implementación y costos de un TDA (40 %)</strong>:
+          te dan un TDA conocido <em>modificado</em> (una pila/cola/diccionario/conjunto con una regla
+          extra) y tenés que (A) escribir la <strong>interfaz</strong> con pre/postcondiciones,
+          (B) dar una <strong>implementación</strong> (estática con arreglo o dinámica con nodos) y
+          (C) calcular el <strong>costo</strong> de algún método.</li>
+      <li><strong>Ejercicio 2 — Utilización de los TDAs (40 %)</strong>: un método
+          <code>static</code> que <strong>combina varios TDAs</strong> (Pila + Cola + Diccionario +
+          Conjunto + Árbol). Acá no implementás estructuras: las <em>usás</em> respetando sus
+          operaciones y trabajando sobre <strong>copias</strong> cuando no debés destruir la entrada.</li>
+      <li><strong>Ejercicio 3 — Teoría + dibujar un árbol (20 %)</strong>: una pregunta conceptual
+          (costos, ABB vs. árbol binario, AVL, propiedad de orden) y un árbol para
+          <strong>completar, clasificar o dibujar</strong> (típicamente un ABB o un AVL con sus
+          rotaciones).</li>
+    </ul>
+  </div>
+  <div class="callout tip"><span class="et">💡 Reparto de puntaje</span>
+    Cada <strong>ítem</strong> vale el porcentaje de su sección dividido por la cantidad de ítems. Si el
+    Ejercicio 1 tiene tres ítems (A, B, C) y vale 40 %, cada uno aporta ~13 puntos. Por eso conviene
+    <strong>no clavarse</strong> en un solo ítem: sumar parcialmente en los tres ejercicios suele rendir
+    más que dejar uno perfecto y otros dos en blanco.</div>
+  <div class="callout"><span class="et">🎲 Variantes por legajo (LU)</span>
+    En varios parciales (y en los finales) la consigna depende de un <strong>predicado</strong>:
+    <code>P(n) = tu LU módulo 3 es n</code>. Es decir, calculás <code>P = LU mod 3</code> y eso te asigna
+    la <strong>variante A (0), B (1) o C (2)</strong> del enunciado. Abajo el simulacro te deja meter tu
+    legajo (o la suma de legajos del grupo) y te muestra la variante que te toca.</div>
+
+  <h2>2. Simulacro interactivo</h2>
+  <p>Elegí tu variante con el legajo, leé los tres ejercicios con su peso y, recién después de
+     intentarlos en papel o en el IDE, desplegá la <strong>solución modelo</strong>. Tenés un
+     <strong>cronómetro de 3 horas</strong> para ensayar el examen en condiciones reales.</p>
+  <div id="simulacro"></div>
+
+  <h2>3. Cómo encarar cada ejercicio</h2>
+  <ul>
+    <li><strong>Ej. 1 (TDA modificado)</strong>: arrancá copiando la <em>interfaz base</em> del TDA que
+        conozcas (Pila, Cola, Conjunto, Diccionario) y agregá <strong>solo</strong> lo que cambia. Escribí
+        las <strong>precondiciones</strong> en el comentario de cada método (eso suma). Para el costo, pensá
+        cada <code>if</code> como si tuviera <code>else</code> y quedate con la peor rama.</li>
+    <li><strong>Ej. 2 (combinar TDAs)</strong>: identificá qué estructura te da el <em>orden</em> que
+        necesitás (Pila = LIFO, Cola = FIFO) y cuál te da <em>búsqueda por clave</em> (Diccionario) o
+        <em>pertenencia</em> (Conjunto). Si la entrada no debe destruirse, <strong>copiala primero</strong>.</li>
+    <li><strong>Ej. 3 (teoría + árbol)</strong>: para "completar para que sea ABB" usá la propiedad de
+        orden (izquierda menores, derecha mayores) acotando cada hueco. Para AVL, recordá la regla del
+        signo: mismo signo → rotación simple, distinto → doble.</li>
+  </ul>
+  <div class="callout tip"><span class="et">💡 Antes de entregar</span>
+    Revisá tres cosas que descuentan siempre: (1) <strong>precondiciones</strong> escritas, (2) no
+    <strong>destruir</strong> estructuras recibidas que deberían quedar intactas, y (3) el
+    <strong>caso base</strong> de cada recursión (<code>null</code> / vacío) para no romper con
+    <code>NullPointerException</code>.</div>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+<script src="../assets/simulacro.js"></script>
+</body>
+</html>

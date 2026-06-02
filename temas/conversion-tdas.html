@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversión entre TDAs · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="conversion-tdas">
+<main>
+<article>
+  <h1>Conversión entre TDAs</h1>
+
+  <h2>1. Convertir un TDA en otro: la idea de "map"</h2>
+  <p>Un patrón que aparece una y otra vez en los integradores de Monzón (siempre el
+     <strong>Ejercicio 3</strong>) es <strong>convertir un TDA en otro</strong>: tomar los datos de
+     una estructura y volcarlos en otra distinta. El método que hace eso se suele llamar
+     <code>map</code>, y la consigna típica pide armar los dos sentidos: por ejemplo
+     <em>"convertir una lista a una pila, y otro <code>map</code> que convierta una pila a una lista"</em>.</p>
+  <p>La pregunta de fondo, la que decide si el ejercicio es fácil o tiene trampa, es:
+     <strong>¿la conversión es reversible?</strong> Es decir, si paso de A a B y después de B vuelvo a A,
+     ¿recupero <em>exactamente</em> la estructura original? La respuesta depende de <strong>qué información
+     guarda cada TDA</strong>.</p>
+  <div class="callout"><span class="et">🔑 La regla mental</span>
+    Una conversión <code>A → B</code> es <strong>reversible</strong> si <code>B</code> conserva
+    <strong>toda</strong> la información que tenía <code>A</code>. Es <strong>irreversible</strong> (pierde
+    información) si <code>B</code> <em>descarta</em> algo que <code>A</code> distinguía: el <strong>orden</strong>,
+    los <strong>duplicados</strong>, o la <strong>forma</strong>. Si tirás información al convertir, no hay
+    forma de adivinarla para volver atrás.</div>
+  <p>Conviene pensar cada TDA por <em>qué distingue</em>:</p>
+  <ul>
+    <li><strong>Pila / Cola / Lista</strong>: son <strong>lineales</strong> y <strong>ordenadas</strong>;
+        admiten <strong>duplicados</strong> (el mismo valor puede aparecer varias veces).</li>
+    <li><strong>Conjunto</strong>: <strong>no tiene orden</strong> y <strong>no admite repetidos</strong>.
+        Solo le importa si un elemento pertenece o no.</li>
+    <li><strong>Diccionario</strong>: asocia <strong>clave → valor</strong>; las claves son únicas.</li>
+    <li><strong>Árbol binario</strong>: estructura <strong>jerárquica</strong> con forma (qué es hijo
+        izquierdo, qué es hijo derecho).</li>
+  </ul>
+
+  <h2>2. Conversiones reversibles (no se pierde nada)</h2>
+  <p>Cuando origen y destino conservan la misma información, la conversión va y viene sin perder nada.
+     Estos son los casos clásicos de examen, casi todos sacados de un Ej3 real:</p>
+  <h3>Entre estructuras lineales: List ↔ Stack, CircularBuffer ↔ Queue</h3>
+  <p>Una <strong>lista</strong>, una <strong>pila</strong> y una <strong>cola</strong> guardan los mismos
+     datos: una secuencia ordenada con posibles repetidos. Pasar de una a otra es solo
+     <strong>recorrer y reinsertar</strong>; mientras cuides el orden, la conversión es reversible.
+     Lo mismo vale para <code>CircularBuffer ↔ Queue</code> (un integrador entero gira alrededor de esto):
+     ambos son colas, solo cambia la mecánica interna, no la información.</p>
+  <div class="equiv"><span class="et">Por qué son reversibles</span>
+    <table>
+      <thead><tr><th>Conversión</th><th>¿Qué conserva el destino?</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>List ↔ Stack</code></td><td>orden y duplicados (las dos son lineales)</td></tr>
+        <tr><td class="es"><code>CircularBuffer ↔ Queue</code></td><td>orden FIFO y duplicados</td></tr>
+        <tr><td class="es"><code>Function → Dictionary</code></td><td>cada par clave→valor (una función <em>es</em> un diccionario)</td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Detalle fino del Ej3 de listas y pilas: convertir <code>List → Stack</code> con un solo
+      vuelco <strong>invierte</strong> el orden (la pila es LIFO). Si querés que la pila quede "en el mismo
+      orden de lectura" que la lista, tenés que tener en cuenta esa inversión. Reversible no quiere decir
+      "queda idéntica al primer vuelco": quiere decir que la <em>información</em> alcanza para reconstruir.</p>
+  </div>
+
+  <h3>De lineal a árbol sesgado: Pila → árbol a la derecha, Cola → árbol a la izquierda</h3>
+  <p>Un <strong>árbol sesgado</strong> (cada nodo con un solo hijo) es, en el fondo, una secuencia lineal
+     disfrazada de árbol: tiene la misma forma que una lista. Por eso una <strong>pila</strong> o una
+     <strong>cola</strong> se pueden volcar a un árbol sesgado sin perder nada. El Ej3 del tercer integrador
+     pide exactamente: <em>"convertir una pila en un árbol sesgado a derecha"</em> y <em>"convertir una cola
+     en un árbol sesgado a izquierda"</em>.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">Pila [tope→7, 3, 5]</span><span class="flecha">→</span>
+    <span class="nodo">raíz: 7</span><span class="flecha">→ der</span>
+    <span class="nodo">3</span><span class="flecha">→ der</span>
+    <span class="nodo">5</span>
+  </div>
+  <p>Como el árbol guarda los valores en orden a lo largo de una sola rama, se puede recorrer esa rama y
+     reconstruir la pila o la cola: <strong>reversible</strong>.</p>
+
+  <h3>BinaryTree ↔ Dictionary indexando posiciones</h3>
+  <p>Acá está el truco más fino. El Ej3 del tercer integrador pide convertir un <strong>árbol binario a un
+     diccionario</strong> y poder <strong>recuperar el árbol</strong>. Un diccionario no tiene forma de árbol…
+     salvo que uses la clave para <strong>codificar la posición</strong> de cada nodo. Si a cada nodo le
+     asignás un índice (por ejemplo: raíz = 1, hijo izquierdo de <code>i</code> = <code>2·i</code>, hijo
+     derecho = <code>2·i + 1</code>), el diccionario <code>posición → valor</code> guarda <strong>la forma
+     completa</strong> del árbol. Con ese mapeo, volver del diccionario al árbol es determinista:
+     <strong>reversible</strong>.</p>
+  <div class="callout tip"><span class="et">💡 La clave es no perder la forma</span>
+    Si convertís el árbol a un diccionario <code>nodo → altura</code> (otra variante del enunciado), eso
+    <strong>no</strong> es reversible: la altura no te dice quién era el padre de quién. Para que sea
+    reversible la clave tiene que codificar la <strong>posición</strong>, no una propiedad cualquiera.</div>
+
+  <h2>3. Conversiones que PIERDEN información (no reversibles)</h2>
+  <p>El caso que más confunde en el parcial: convertir una <strong>pila</strong> o una <strong>cola</strong>
+     a un <strong>conjunto</strong>. Parece inofensivo —"paso los elementos a un conjunto"— pero el conjunto
+     <strong>tira dos cosas</strong> que la pila/cola sí distinguían.</p>
+  <div class="callout error"><span class="et">⚠️ El conjunto pierde el ORDEN</span>
+    Una pila <code>[tope→7, 3, 5]</code> y una pila <code>[tope→5, 3, 7]</code> son
+    <strong>distintas</strong>. Pero ambas se convierten al <strong>mismo</strong> conjunto
+    <code>{3, 5, 7}</code>, porque el conjunto <strong>no tiene orden</strong>. Una vez en el conjunto,
+    ya no hay rastro de cuál era el tope ni en qué secuencia estaban. No podés volver a la pila original
+    porque <em>la información del orden se borró</em>.</div>
+  <div class="callout error"><span class="et">⚠️ El conjunto pierde los DUPLICADOS</span>
+    Una cola <code>[4, 4, 4, 9]</code> tiene cuatro elementos. Al volcarla a un conjunto queda
+    <code>{4, 9}</code>: el conjunto <strong>no admite repetidos</strong>, así que las tres copias del
+    <code>4</code> colapsan en una sola. Desde <code>{4, 9}</code> es imposible saber si en la cola había
+    un <code>4</code> o veinte. <em>La información de la cantidad se borró.</em></div>
+  <p>Por eso <strong>Pila/Cola → Conjunto es irreversible</strong>: el conjunto guarda <em>menos</em>
+     información (solo "qué valores aparecen"), y lo que se descarta —el orden y la multiplicidad— no se
+     puede adivinar. Es una conversión <strong>de muchos a uno</strong>: muchas pilas distintas terminan
+     en el mismo conjunto, así que no hay una "inversa" bien definida.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">[7, 3, 5]</span><span class="flecha">→</span>
+    <span class="nodo">{3, 5, 7}</span><span class="flecha">←</span>
+    <span class="nodo">[5, 3, 7]</span>
+  </div>
+  <p style="margin-top:.2em;text-align:center"><em>Dos pilas distintas, un mismo conjunto: no hay vuelta atrás.</em></p>
+
+  <h2>4. Para convertir hay que RECORRER (y eso es destructivo)</h2>
+  <p>Hay un detalle de implementación que <strong>determina el resultado</strong> de toda conversión: para
+     pasar los datos de A a B <strong>tenés que recorrer A</strong>, y en estos TDAs <strong>recorrer es
+     destructivo</strong>. La pila, la cola y el conjunto <strong>no tienen iterador no destructivo</strong>:
+     la única forma de leer todos sus elementos es ir sacándolos uno a uno hasta que quede vacía.</p>
+  <ul>
+    <li><strong>Volcar una pila la INVIERTE.</strong> Sacás el tope primero, así que el primero que sale es
+        el último que entró. Si lo reinsertás en otra estructura en ese orden, queda al revés.</li>
+    <li><strong>Volcar una cola PRESERVA el orden.</strong> La cola es FIFO: el primero que sale es el más
+        viejo. Si lo reinsertás, mantenés la secuencia original.</li>
+    <li>Volcar un <strong>conjunto</strong> saca elementos en orden <strong>impredecible</strong>
+        (<code>elegir()</code> / <code>choose()</code> es aleatorio): por eso nunca podés apoyarte en el
+        orden al convertir <em>desde</em> un conjunto.</li>
+  </ul>
+  <div class="callout"><span class="et">📦 Recorrer vacía la estructura</span>
+    Si la consigna pide convertir <strong>sin destruir</strong> el origen, tenés que trabajar sobre una
+    <strong>copia</strong> (o reconstruir el origen mientras lo recorrés). Acordate del truco de la pila:
+    copiar una pila requiere <strong>dos vuelcos</strong>, porque cada vuelco la invierte.</div>
+
+  <h3>Ejemplo: volcar una Pila a una Cola</h3>
+  <p>Recorremos la pila sacando el tope y lo encolamos. Como la pila es LIFO y la cola es FIFO, la cola
+     queda <strong>invertida</strong> respecto del orden de inserción original de la pila:</p>
+  <pre><code class="java">// Convierte (vuelca) una pila a una cola. Deja la pila vacía.
+// El primer elemento que sale de la pila es el TOPE, así que termina
+// adelante en la cola: el resultado queda INVERTIDO respecto del fondo.
+static Queue pilaACola(Stack p) {
+    Queue q = new StaticQueue();   // cola destino, vacía
+    while (!p.isEmpty()) {         // recorrer la pila la vacía
+        q.add(p.getTop());        // encolo el tope...
+        p.remove();               // ...y lo desapilo
+    }
+    return q;
+}</code></pre>
+  <p>Si la pila era <code>[tope→7, 3, 5]</code>, sale primero el <code>7</code>, después el <code>3</code> y
+     por último el <code>5</code>, así que la cola queda <code>[7, 3, 5]</code> leída de adelante hacia
+     atrás (el <code>7</code> es el primero en salir de la cola). El orden depende <strong>de cómo recorrés</strong>.</p>
+
+  <h3>Ejemplo: volcar un Conjunto a una Lista (irreversible)</h3>
+  <p>Pasar un conjunto a una lista <strong>sí se puede</strong> (la lista admite todo lo que el conjunto
+     tiene), pero el orden de la lista resultante es <strong>impredecible</strong>, porque
+     <code>choose()</code> devuelve un elemento al azar. Y al revés —de lista a conjunto— se
+     <strong>pierden</strong> el orden y los duplicados, igual que con la pila:</p>
+  <pre><code class="java">// Convierte un conjunto a una lista. Deja el conjunto vacío (lo recorre sacando).
+// OJO: el orden de la lista NO es predecible: choose() elige al azar.
+static List conjuntoALista(Set c) {
+    List l = new StaticList();
+    while (!c.isEmpty()) {      // recorrer el conjunto lo vacía
+        int x = c.choose();    // elijo un elemento cualquiera...
+        l.addLast(x);          // ...lo agrego a la lista...
+        c.remove(x);           // ...y lo saco del conjunto
+    }
+    return l;
+}
+
+// Al revés: lista → conjunto. Esta conversión PIERDE información.
+static Set listaAConjunto(List l) {
+    Set c = new StaticSet();
+    // ... recorre la lista y hace c.add(x) de cada elemento ...
+    // Los repetidos colapsan (el conjunto no admite duplicados) y
+    // el orden de la lista se descarta: NO se puede volver a la lista original.
+    return c;
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Cómo lo preguntan en el examen</span>
+    Una pregunta teórica típica (recuperatorio del tercer integrador) es:
+    <em>"¿qué significa que un árbol binario de búsqueda pueda convertirse a una lista y al revés? ¿Qué
+    pasa si la lista de entrada está desordenada?"</em>. La respuesta vive en estas dos ideas:
+    convertir es <strong>recorrer y reinsertar</strong>, y la conversión es <strong>reversible solo si el
+    destino conserva la información</strong> (acá, el <em>orden</em> que define al ABB). Si la lista viene
+    desordenada, el ABB que armás ya no respeta el inorden esperado y la "vuelta" no reconstruye la lista
+    original.</div>
+
+  <h2>5. Equivalencia con Monzón (inglés)</h2>
+  <div class="equiv"><span class="et">Operaciones que usás al convertir</span>
+    <table>
+      <thead><tr><th>Español — Wehbe (esta guía)</th><th>Inglés — Monzón (tu examen)</th></tr></thead>
+      <tbody>
+        <tr><td class="es">Pila: <code>tope()</code> / <code>desapilar()</code> / <code>pilaVacía()</code></td><td><code>getTop()</code> / <code>remove()</code> / <code>isEmpty()</code></td></tr>
+        <tr><td class="es">Cola: <code>primero()</code> / <code>desencolar()</code> / <code>colaVacía()</code></td><td><code>getFirst()</code> / <code>remove()</code> / <code>isEmpty()</code></td></tr>
+        <tr><td class="es">Conjunto: <code>elegir()</code> / <code>sacar(x)</code> / <code>conjuntoVacío()</code></td><td><code>choose()</code> / <code>remove(x)</code> / <code>isEmpty()</code></td></tr>
+        <tr><td class="es">Diccionario: <code>obtener(k)</code> / <code>claves()</code></td><td><code>getValue(k)</code> / <code>getKeys()</code></td></tr>
+        <tr><td class="es">"convertir A a B"</td><td>el método <code>map(...)</code> del Ejercicio 3</td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Para encolar/apilar/agregar, todos los TDAs de Monzón usan <code>add(...)</code>. El
+      <code>Set</code> de Monzón <strong>no tiene <code>contains</code></strong>: para saber si un elemento
+      está, hay que recorrerlo con <code>choose()</code>/<code>remove(x)</code> sobre una copia. Recordá que
+      en el examen están <strong>prohibidos</strong> los genéricos y las estructuras de la JRE: las
+      conversiones se hacen con estos TDAs hechos a mano.</p>
+  </div>
+
+  <h2>6. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Creer que toda conversión es reversible</span>
+    Pila/Cola → Conjunto y Lista → Conjunto <strong>pierden</strong> el orden y los duplicados. No existe
+    una inversa: muchas estructuras distintas dan el mismo conjunto.</div>
+  <div class="callout error"><span class="et">⚠️ Olvidar que volcar una pila la invierte</span>
+    Si convertís pila → cola o pila → pila con un solo vuelco y esperás "el mismo orden", te vas a equivocar:
+    cada vuelco de pila invierte. Si necesitás conservar el orden, hacé dos vuelcos.</div>
+  <div class="callout error"><span class="et">⚠️ Destruir el origen sin querer</span>
+    Recorrer una pila, cola o conjunto los <strong>vacía</strong>. Si la consigna pide no modificar el
+    origen, trabajá sobre una copia o reconstruilo a medida que lo recorrés.</div>
+  <div class="callout error"><span class="et">⚠️ Confiar en el orden al recorrer un conjunto</span>
+    <code>choose()</code> devuelve un elemento <strong>al azar</strong>. Nunca asumas que salen en orden de
+    inserción ni ordenados: el conjunto no tiene orden.</div>
+
+  <h2>7. Resumen</h2>
+  <ul>
+    <li>Convertir un TDA en otro (<code>map</code>) es <strong>recorrer el origen y reinsertar en el destino</strong>.</li>
+    <li>Es <strong>reversible</strong> si el destino conserva toda la información: <code>List↔Stack</code>,
+        <code>CircularBuffer↔Queue</code>, <code>Function→Dictionary</code>, pila/cola → árbol sesgado, y
+        <code>BinaryTree↔Dictionary</code> <em>indexando posiciones</em>.</li>
+    <li>Es <strong>irreversible</strong> cuando el destino tira información: <strong>Pila/Cola → Conjunto</strong>
+        pierde el <strong>orden</strong> y los <strong>duplicados</strong> (muchos a uno: no hay inversa).</li>
+    <li>Recorrer una pila/cola/conjunto es <strong>destructivo</strong>: los vacía. Volcar una pila
+        <strong>invierte</strong>; volcar una cola <strong>preserva</strong> el orden; un conjunto sale en
+        orden <strong>impredecible</strong>.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">Cargando…</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

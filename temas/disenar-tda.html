@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diseñar un TDA propio · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="disenar-tda">
+<main>
+<article>
+  <h1>Diseñar un TDA propio</h1>
+
+  <h2>1. El problema: "diseñá un TDA nuevo imitando los de clase"</h2>
+  <p>Este es <strong>el patrón estrella del integrador de Monzón</strong>. En vez de pedirte que
+     implementes una pila o una cola que ya conocés, el examen te da una estructura
+     <strong>inventada</strong> (un <code>CircularBuffer</code>, un <code>Pair</code>, una
+     <code>ComplexityAdapter</code>…) y te dice algo como: <em>"Crear el TDA X, imitando en lo que se
+     pueda la implementación de Y desarrollada en clase"</em>. No hay una solución única: lo que se
+     evalúa es que <strong>diseñes</strong> bien.</p>
+  <p>La trampa es que parece un ejercicio nuevo cada vez, pero <strong>siempre es el mismo
+     esqueleto</strong>. Si lo tenés sistematizado, lo resolvés casi de memoria. La receta es:</p>
+  <ol>
+    <li><strong>Declarar qué tipo de estructura es</strong> según los 4 ejes de diseño (sección 2).</li>
+    <li><strong>Elegir la interfaz mínima</strong>: el conjunto más chico de operaciones que resuelva
+        todo, con sus precondiciones (sección 3).</li>
+    <li><strong>Dar las DOS implementaciones</strong>: una estática (arreglo con <code>MAX</code>) y
+        una dinámica (nodos enlazados), porque el examen casi siempre pide ambas o te asigna una según
+        un predicado <code>P(a)/P(b)/P(c)</code> (sección 4).</li>
+    <li>Escribir en un <code>.txt</code> los <strong>invariantes</strong>, y en cada método las
+        <strong>precondiciones, postcondiciones y estrategia</strong>.</li>
+  </ol>
+  <div class="callout error"><span class="et">⚠️ Reglas del integrador (textual de Monzón)</span>
+    <em>"Solo podrá utilizar técnicas vistas en este curso. Está prohibido el uso de librerías,
+    estructuras de datos abstractas que vienen por defecto en la JRE y el uso de genéricos. No respetar
+    este punto es suficiente para desaprobar el integrador."</em> Es decir: <strong>nada de
+    <code>ArrayList</code>, <code>HashMap</code>, <code>LinkedList</code>, ni <code>&lt;T&gt;</code></strong>.
+    Solo arreglos nativos (<code>int[]</code>) y nodos que vos definas, o los TDAs que ya
+    implementaste a mano.</div>
+
+  <h2>2. Los 4 ejes de diseño a declarar</h2>
+  <p>Antes de escribir una línea de código, decidí (y <strong>escribí</strong>) dónde cae tu TDA en
+     estos cuatro ejes. Son las primeras preguntas que tenés que poder responder, y la consigna casi
+     siempre te las regala ("<em>será una estructura lineal destructiva</em>", "<em>la estructura será
+     mutable</em>").</p>
+
+  <h3>Eje 1 — Lineal vs. no-lineal</h3>
+  <p>Una estructura es <strong>lineal</strong> si sus elementos forman una secuencia: cada uno tiene
+     a lo sumo un anterior y un siguiente. Es <strong>no-lineal</strong> (jerárquica o en red) si un
+     elemento puede tener varios "siguientes".</p>
+  <ul>
+    <li><strong>Lineales</strong>: Pila, Cola, Lista, Cola de prioridad, <code>CircularBuffer</code>.</li>
+    <li><strong>No-lineales</strong>: Árbol binario (cada nodo tiene hasta dos hijos), Grafo, Conjunto
+        y Diccionario (no hay orden entre elementos).</li>
+  </ul>
+
+  <h3>Eje 2 — Destructiva vs. no-destructiva</h3>
+  <p>Una estructura es <strong>destructiva</strong> si la <strong>única forma de leer todos sus
+     elementos es ir sacándolos</strong> (y al terminar queda vacía). Es <strong>no-destructiva</strong>
+     si podés recorrerla sin romperla.</p>
+  <ul>
+    <li><strong>Destructivas</strong>: Pila y Cola. Para ver el segundo elemento de una pila tenés que
+        desapilar el primero. Si un método recibe una y no debe alterarla, trabajás sobre una copia.</li>
+    <li><strong>No-destructivas</strong>: el Diccionario (con <code>getKeys()</code> obtenés las claves
+        sin tocar el contenido) o un Árbol (lo recorrés con preorden/inorden sin vaciarlo).</li>
+  </ul>
+  <div class="callout"><span class="et">📦 El detalle de Monzón sobre el CircularBuffer</span>
+    En el integrador, el <code>CircularBuffer</code> es destructivo pero con una vuelta de tuerca:
+    <em>"cuando un elemento se consume pasa a estar al final de la estructura"</em>. La consigna aclara
+    que <em>"si consumir un elemento no cambia el tamaño de la estructura, para recorrerla desde fuera
+    tiene que ser posible con el resto de los métodos definidos"</em>. Traducido: tu interfaz tiene que
+    permitir dar la vuelta completa al buffer leyendo todo sin perder elementos. Eso es una
+    <strong>decisión de diseño que tenés que justificar</strong>.</div>
+
+  <h3>Eje 3 — Estática vs. dinámica</h3>
+  <p>Es el eje de la <strong>implementación</strong> (no del comportamiento). Una estructura es
+     <strong>estática</strong> si se respalda en un <strong>arreglo de tamaño fijo</strong>
+     (<code>MAX</code>); es <strong>dinámica</strong> si usa <strong>nodos enlazados</strong> que se
+     crean con <code>new</code> a medida que hacen falta.</p>
+  <ul>
+    <li><strong>Estática</strong>: <code>int[] datos = new int[MAX];</code> + un contador
+        <code>count</code>. Capacidad limitada (puede desbordar), pero acceso por índice directo.</li>
+    <li><strong>Dinámica</strong>: <code>class Nodo { int valor; Nodo sig; }</code>. Crece sin tope
+        fijo, pero un nodo por elemento.</li>
+  </ul>
+  <p>El examen casi siempre te asigna una u otra según el predicado del grupo. Por ejemplo, en un
+     integrador real: <em>"Si P(a), entonces cola con prioridad dinámica y pila estática; si P(b),
+     diccionario simple dinámico y cola estática…"</em>. Por eso conviene tener las
+     <strong>dos versiones</strong> practicadas (sección 4).</p>
+
+  <h3>Eje 4 — Mutable vs. inmutable</h3>
+  <p>Una estructura es <strong>mutable</strong> si sus operaciones <strong>modifican el objeto
+     existente</strong> (cambian su estado interno). Es <strong>inmutable</strong> si cada "operación"
+     devuelve un objeto <strong>nuevo</strong> y nunca toca el original.</p>
+  <ul>
+    <li><strong>Mutables</strong>: casi todos los TDAs de la cursada. <code>pila.apilar(x)</code>
+        modifica <code>pila</code>; no devuelve una pila nueva.</li>
+    <li><strong>Inmutables</strong>: el <strong>Par/Dupla matemática</strong>. La consigna lo dice
+        explícito: <em>"Crear el TDA Pair… La diferencia con una dupla es que el par es mutable"</em>.
+        O sea, una <em>dupla</em> sería inmutable y el <em>Par</em> mutable: el mismo dato, dos
+        decisiones de diseño opuestas.</li>
+  </ul>
+  <div class="callout tip"><span class="et">💡 Cómo presentarlo en el examen</span>
+    Arrancá tu entrega con una frase tipo: <em>"El TDA <code>CircularBuffer</code> es una estructura
+    <strong>lineal</strong>, <strong>destructiva</strong>, <strong>mutable</strong>, de la que doy una
+    implementación <strong>estática</strong> y una <strong>dinámica</strong>."</em> Eso solo ya muestra
+    que entendiste el marco y te ordena el resto.</div>
+
+  <h2>3. Elegir el conjunto MÍNIMO de operaciones</h2>
+  <p>La consigna pide <em>"definir un conjunto de métodos que permita resolver la mayor cantidad de
+     algoritmos"</em>. Eso <strong>no</strong> significa muchos métodos: significa la
+     <strong>interfaz más chica y coherente</strong> con la que se pueda construir todo lo demás. Mirá
+     lo austeras que son las interfaces de Monzón:</p>
+  <pre><code class="java">public interface Queue {
+    void add(int a);        // Encolar al final.
+    void remove();          // Desencolar el primero.
+    boolean isEmpty();      // ¿Está vacía?
+    int getFirst();         // Ver el primero (sin sacarlo).
+}
+
+public interface Stack {
+    void add(int a);        // Apilar.
+    void remove();          // Desapilar.
+    int getTop();           // Ver el tope.
+    boolean isEmpty();      // ¿Está vacía?
+}</code></pre>
+  <p>Cuatro métodos cada una. Ni uno de más. Tres reglas para elegir tu interfaz:</p>
+  <ul>
+    <li><strong>Un constructor que inicialice</strong> (en Monzón no hay método
+        <code>inicializar()</code> aparte: lo hace el constructor).</li>
+    <li><strong>Operaciones de modificación</strong> (insertar / sacar) y de
+        <strong>consulta</strong> (ver / preguntar si está vacía). El <em>ver</em> separado del
+        <em>sacar</em> es clave: <code>getTop()</code> no desapila, solo mira.</li>
+    <li><strong>No mezcles responsabilidades</strong>: cada método hace una cosa. Si necesitás
+        "imprimir todo", eso es un algoritmo de afuera que usa la interfaz, no un método del TDA.</li>
+  </ul>
+  <div class="callout"><span class="et">📌 Precondiciones: la otra mitad del diseño</span>
+    Por cada método, declará qué tiene que valer para poder llamarlo. Son las mismas de siempre:
+    <code>remove()</code> y <code>getTop()</code>/<code>getFirst()</code> exigen
+    <strong>estructura no vacía</strong>; en la versión estática, <code>add()</code> exige que
+    <strong>no esté llena</strong> (si no, overflow del arreglo). Si la precondición se viola, lanzás
+    un <code>RuntimeException</code> con un mensaje claro, como hace el <code>StaticSet</code> de la
+    cátedra: <code>throw new RuntimeException("No se puede elegir de un conjunto vacío");</code></div>
+
+  <h2>4. Dar SIEMPRE las dos implementaciones</h2>
+  <p>Una vez fijada la interfaz, escribís el mismo TDA <strong>dos veces</strong>: estática (arreglo)
+     y dinámica (nodos). Como ejemplo concreto vamos con el <strong>caso del integrador real</strong>:
+     el TDA <code>CircularBuffer</code>, que <strong>imita la Cola</strong>. Su regla especial es que
+     al consumir un elemento (sacarlo del frente), <strong>vuelve al final</strong> en vez de
+     desaparecer; así se puede recorrer en círculo. Lo modelamos con tres operaciones núcleo
+     (<code>add</code>, <code>consume</code> que devuelve y rota, y <code>getFirst</code>) más
+     <code>isEmpty</code>.</p>
+
+  <h3>Implementación estática (arreglo con MAX)</h3>
+  <p>El "circular" se logra con dos índices, <code>frente</code> y <code>cola</code>, que avanzan en
+     módulo <code>MAX</code> y dan la vuelta. Un <code>count</code> lleva la cantidad real.</p>
+  <pre><code class="java">public class StaticCircularBuffer implements CircularBuffer {
+    private static final int MAX = 10000;
+    private final int[] datos;
+    private int frente;   // Índice del primer elemento.
+    private int cola;     // Índice de la próxima posición libre.
+    private int count;    // Cantidad de elementos guardados.
+
+    public StaticCircularBuffer() {        // El constructor inicializa (no hay método aparte).
+        datos = new int[MAX];
+        frente = 0; cola = 0; count = 0;
+    }
+
+    public void add(int x) {               // Precond.: no lleno (count &lt; MAX).
+        if (count == MAX)
+            throw new RuntimeException("Buffer lleno (overflow)");
+        datos[cola] = x;
+        cola = (cola + 1) % MAX;           // Avanza en círculo: al llegar a MAX, vuelve a 0.
+        count++;
+    }
+
+    public int consume() {                 // Precond.: no vacío. Saca el frente Y lo reinserta atrás.
+        if (isEmpty())
+            throw new RuntimeException("Buffer vacío");
+        int x = datos[frente];
+        frente = (frente + 1) % MAX;       // El frente avanza...
+        add(x);                            // ...y el consumido va al final (regla del TDA).
+        return x;
+    }
+
+    public int getFirst() {                // Precond.: no vacío.
+        if (isEmpty()) throw new RuntimeException("Buffer vacío");
+        return datos[frente];
+    }
+
+    public boolean isEmpty() { return count == 0; }
+}</code></pre>
+  <p>El patrón <code>(indice + 1) % MAX</code> es el corazón de cualquier estructura "circular" sobre
+     arreglo: cuando el índice llega al final del arreglo, el módulo lo manda de nuevo a 0.</p>
+
+  <h3>Implementación dinámica (nodos enlazados)</h3>
+  <p>La misma interfaz, pero con nodos. Guardamos referencias al <code>frente</code> y al
+     <code>ultimo</code> para que <code>add</code> sea O(1) por los dos extremos.</p>
+  <pre><code class="java">public class DynamicCircularBuffer implements CircularBuffer {
+    private class Nodo { int valor; Nodo sig; }   // Nodo propio (NADA de la JRE).
+    private Nodo frente;   // Primer nodo.
+    private Nodo ultimo;   // Último nodo (para encolar en O(1)).
+
+    public DynamicCircularBuffer() { frente = null; ultimo = null; }
+
+    public void add(int x) {
+        Nodo nuevo = new Nodo();
+        nuevo.valor = x;
+        nuevo.sig = null;
+        if (frente == null) frente = nuevo;        // Estaba vacío: el nuevo es frente y último.
+        else ultimo.sig = nuevo;                   // Si no, lo engancho después del último.
+        ultimo = nuevo;
+    }
+
+    public int consume() {                          // Precond.: no vacío.
+        if (isEmpty()) throw new RuntimeException("Buffer vacío");
+        int x = frente.valor;
+        frente = frente.sig;                        // Avanza el frente...
+        if (frente == null) ultimo = null;
+        add(x);                                     // ...y reencola el consumido al final.
+        return x;
+    }
+
+    public int getFirst() {                         // Precond.: no vacío.
+        if (isEmpty()) throw new RuntimeException("Buffer vacío");
+        return frente.valor;
+    }
+
+    public boolean isEmpty() { return frente == null; }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 El truco para no quedarte en blanco</span>
+    La versión estática es siempre <code>int[] + count</code> (más índices si hace falta circularidad);
+    la dinámica es siempre <code>class Nodo + referencias</code>. Cambian los detalles, pero el
+    <strong>esqueleto se repite</strong> en toda estructura lineal. Aprendelo una vez y lo adaptás a
+    cualquier TDA inventado.</div>
+
+  <h3>Variantes que aparecen en el examen</h3>
+  <p>El mismo molde sirve para otros TDAs inventados. Lo único que cambia es <em>qué imita</em>:</p>
+  <table class="costo">
+    <thead><tr><th>TDA inventado</th><th>Imita a…</th><th>Idea de diseño</th></tr></thead>
+    <tbody>
+      <tr><td><code>Pair</code></td><td>una Dupla, pero mutable</td><td>dos campos <code>a</code>, <code>b</code> + <code>setA/setB</code>; un helper que proyecte la i-ésima componente (i=0 ó i=1).</td></tr>
+      <tr><td><code>CircularBuffer</code></td><td>una Cola (Queue)</td><td>FIFO con índices en módulo MAX; el consumido vuelve al final.</td></tr>
+      <tr><td><code>ComplexityAdapter</code></td><td>—</td><td>interfaz mínima que otras clases implementan para "llevar" su complejidad temporal.</td></tr>
+      <tr><td><code>Complexity</code></td><td>un acumulador</td><td>guarda y combina familias de complejidad con reglas de absorción (suma vs. producto).</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. TDA contenedor de TDAs: y por qué obliga a definir la igualdad</h2>
+  <p>Un giro frecuente es que el TDA contenga <strong>otros TDAs</strong> en vez de <code>int</code>:
+     una <strong>Pila de Árboles</strong>, un <strong>Conjunto de Pilas</strong>, una <strong>Cola de
+     Pares</strong>. El esqueleto no cambia (en el arreglo o en el nodo guardás referencias al TDA
+     contenido en vez de un entero), pero aparece un problema nuevo.</p>
+  <div class="callout error"><span class="et">⚠️ ¿Cuándo dos elementos son "el mismo"?</span>
+    Operaciones como <code>Set.add(x)</code> (que no repite) o <code>Set.remove(x)</code> necesitan
+    <strong>comparar elementos por igualdad</strong>. Con <code>int</code> es trivial (<code>==</code>).
+    Pero, ¿cuándo dos <em>pilas</em> son iguales? ¿Cuándo dos <em>árboles</em> son iguales? <code>==</code>
+    en Java compara <strong>referencias</strong> (si son el mismo objeto en memoria), no contenido. Por
+    eso, un <strong>contenedor de TDAs te obliga a DEFINIR la igualdad</strong> de los elementos
+    contenidos.</div>
+  <p>La definición de igualdad es una decisión de diseño que tenés que escribir. Por ejemplo, dos
+     pilas son iguales si tienen los mismos elementos en el mismo orden:</p>
+  <pre><code class="java">// ¿Son iguales dos pilas? Mismo contenido, mismo orden. Sin tocar las originales:
+static boolean iguales(Stack a, Stack b) {
+    // Trabajo sobre copias porque la pila es destructiva (sección "destructiva").
+    Stack ca = copiar(a);
+    Stack cb = copiar(b);
+    while (!ca.isEmpty() &amp;&amp; !cb.isEmpty()) {
+        if (ca.getTop() != cb.getTop()) return false;   // Algún elemento difiere.
+        ca.remove();
+        cb.remove();
+    }
+    return ca.isEmpty() &amp;&amp; cb.isEmpty();                  // Iguales solo si se vaciaron juntas.
+}</code></pre>
+  <div class="callout"><span class="et">📕 El caso real del integrador</span>
+    En el tercer integrador (jerarquía de clases con árboles), Monzón lo dice sin vueltas:
+    <em>"Notar que la igualdad de clases no se da por su jerarquía, sino por el valor que las
+    identifica"</em>. Es decir: el <code>ClassHierarchy</code> es un árbol que contiene clases
+    (<code>Clazz</code>), y para validar que <strong>ninguna clase aparezca dos veces en una cadena de
+    herencia</strong> hay que definir cuándo dos <code>Clazz</code> son la misma: por su nombre
+    (un <code>String</code>), no por dónde están en el árbol. <strong>Definir la igualdad correctamente
+    es lo que hace que el contenedor funcione.</strong></div>
+
+  <h2>6. Una estructura sobre otra (reimplementar con otro backing)</h2>
+  <p>El otro patrón clásico es <strong>reimplementar un TDA manteniendo su interfaz, pero cambiando lo
+     que lo respalda por dentro</strong>. La consigna del integrador es literal:
+     <em>"Modificar la implementación estática de Stack, para que en lugar de usar un arreglo nativo, se
+     utilice el TDA CircularBuffer."</em> Es decir: una Pila por fuera, otra estructura por dentro.</p>
+  <p>La clave es que <strong>la interfaz pública no cambia</strong> (sigue siendo
+     <code>add/remove/getTop/isEmpty</code>): quien usa la pila ni se entera de qué tiene adentro. Lo
+     que cambia es el atributo de respaldo. Veamos una <strong>Pila respaldada por una Cola de
+     prioridad de pares <code>(valor, orden)</code></strong>: a cada elemento le ponemos un número de
+     orden creciente, y la cola de prioridad lo devuelve por orden <strong>descendente</strong>, así
+     el último en entrar (mayor orden) sale primero — comportamiento LIFO de una pila.</p>
+  <pre><code class="java">// Pila implementada SOBRE una cola de prioridad de pares (valor, orden).
+// Por fuera es una Stack; por dentro, una PriorityQueue de máximos.
+public class StackSobrePQ implements Stack {
+    private PriorityQueue pq;   // TDA propio: saca el de MAYOR orden primero.
+    private int proximoOrden;   // Contador que crece con cada add.
+
+    public StackSobrePQ() {
+        pq = new StaticPriorityQueue();   // Cualquier impl. propia, NADA de la JRE.
+        proximoOrden = 0;
+    }
+
+    public void add(int x) {
+        // Le asigno un orden creciente: el más nuevo tendrá la prioridad más alta.
+        pq.add(x, proximoOrden);   // (valor, prioridad=orden)
+        proximoOrden++;
+    }
+
+    public void remove() {         // Precond.: no vacía.
+        pq.remove();               // Saca el de mayor orden = el último apilado.
+    }
+
+    public int getTop() {          // Precond.: no vacía.
+        return pq.getMax();        // El de mayor orden es el tope de la pila.
+    }
+
+    public boolean isEmpty() { return pq.isEmpty(); }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Por qué funciona</span>
+    Una pila es LIFO: sale el último que entró. Si a cada elemento le pongo un número de orden que
+    <strong>crece</strong>, "el último que entró" es siempre "el de mayor orden". Una cola de prioridad
+    de máximos devuelve justamente el de mayor prioridad: ¡exactamente el tope de la pila! Cambié el
+    <em>backing</em> (cola de prioridad de pares) pero respeté la <em>interfaz</em> (Stack). Eso es
+    "una estructura sobre otra".</div>
+  <div class="callout"><span class="et">📌 El par (valor, orden) es un TDA contenido</span>
+    Fijate que este ejemplo combina las dos ideas: la cola de prioridad contiene <strong>pares</strong>
+    (un TDA dentro de otro, sección 5) y la pila se construye <strong>sobre</strong> esa cola de
+    prioridad (sección 6). Estos patrones se mezclan: practicarlos por separado te deja listo para
+    combinarlos.</div>
+
+  <h2>7. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Usar estructuras de la JRE o genéricos</span>
+    <code>ArrayList</code>, <code>HashMap</code>, <code>LinkedList</code>, <code>Stack</code> de Java,
+    o <code>&lt;T&gt;</code>: <strong>prohibidos</strong> y motivo de desaprobación directa. Solo
+    <code>int[]</code>, nodos propios y los TDAs que hiciste a mano.</div>
+  <div class="callout error"><span class="et">⚠️ Comparar TDAs con ==</span>
+    En un contenedor de TDAs, <code>==</code> compara referencias, no contenido. Si no definís la
+    igualdad por valor, tu Conjunto de Pilas dejará entrar pilas "iguales" duplicadas.</div>
+  <div class="callout error"><span class="et">⚠️ Olvidar las precondiciones / el overflow</span>
+    En la versión estática, <code>add</code> con el arreglo lleno revienta con
+    <code>ArrayIndexOutOfBoundsException</code>. Chequeá <code>count == MAX</code> y lanzá un error
+    claro. Y nunca hagas <code>remove()</code>/<code>getTop()</code> sin verificar
+    <code>!isEmpty()</code>.</div>
+  <div class="callout error"><span class="et">⚠️ Dar una sola implementación</span>
+    El examen casi siempre pide (o asigna) la versión estática Y la dinámica. Si solo entregás una,
+    perdés la mitad del puntaje del ejercicio.</div>
+  <div class="callout tip"><span class="et">💡 No te olvides del .txt y del main de prueba</span>
+    Monzón pide explícitamente <strong>invariantes en un <code>.txt</code></strong> y un
+    <em>"set de prueba en el main del proyecto"</em> para demostrar que tu código anda. Sin esas dos
+    cosas, el ejercicio queda incompleto aunque el código sea perfecto.</div>
+
+  <h2>8. Resumen</h2>
+  <ul>
+    <li><strong>Patrón estrella del integrador</strong>: te dan un TDA inventado y tenés que diseñarlo
+        "imitando los de clase". Siempre es el mismo esqueleto.</li>
+    <li><strong>4 ejes</strong> que tenés que declarar: lineal/no-lineal, destructiva/no-destructiva,
+        estática/dinámica, mutable/inmutable.</li>
+    <li><strong>Interfaz mínima</strong>: el conjunto más chico y coherente de operaciones (modificar +
+        consultar), con sus precondiciones; el constructor inicializa.</li>
+    <li><strong>Dos implementaciones siempre</strong>: estática (<code>int[]</code> + <code>count</code>,
+        circularidad con <code>% MAX</code>) y dinámica (<code>class Nodo</code> + referencias).</li>
+    <li><strong>Contenedor de TDAs</strong> (Pila de Árboles, Conjunto de Pilas): obliga a
+        <strong>definir la igualdad</strong> por contenido, no con <code>==</code>.</li>
+    <li><strong>Una estructura sobre otra</strong>: misma interfaz, distinto backing (Pila sobre una
+        cola de prioridad de pares <code>(valor, orden)</code>).</li>
+    <li>Prohibido: genéricos y estructuras de la JRE. Obligatorio: invariantes en <code>.txt</code> y
+        pruebas en el <code>main</code>.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">Cargando…</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

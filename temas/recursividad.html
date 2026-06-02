@@ -226,6 +226,15 @@ public ConjuntoTDA pares(NodoArbol nodo) {
     <li>Sin caso base alcanzable o sin reducir el problema → <code>StackOverflowError</code>.</li>
   </ul>
 
+  <h2>7. Laboratorio: pila de llamadas</h2>
+  <p>Acá podés <strong>ver la recursión por dentro</strong>. Elegí una función y un <code>n</code>,
+     y mirá cómo cada llamada se <strong>apila</strong> (queda esperando), cómo se llega al
+     <strong>caso base</strong> y cómo, al volver, cada llamada <strong>devuelve su valor</strong>
+     desapilándose de adentro hacia afuera. Con <code>fibonacci</code> vas a ver las
+     <strong>llamadas duplicadas</strong> y el contador que explica el <strong>O(2<sup>n</sup>)</strong>;
+     y con <em>«Romper la recursión»</em>, qué pasa cuando el caso base nunca se alcanza.</p>
+  <div id="recursion-visual" class="lab-box"></div>
+
   <section class="actividades" data-actividades>
     <h2>Actividades</h2>
     <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
@@ -235,5 +244,6 @@ public ConjuntoTDA pares(NodoArbol nodo) {
 </main>
 <script src="../assets/data.js"></script>
 <script src="../assets/app.js"></script>
+<script src="../assets/visual-recursion.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
   let root = null;
   let animando = false;
+  let modoAVL = false;
 
   // ---- ABB ----
   function insertar(v) { root = ins(root, v); }
@@ -26,6 +27,61 @@
   function postorden(n, a) { if (!n) return; postorden(n.izq, a); postorden(n.der, a); a.push(n); }
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+  // ---- AVL: equilibrio y rotaciones (solo se usan en modo AVL; no afectan al ABB) ----
+  // Factor de equilibrio: FE = altura(der) − altura(izq).
+  function fe(n) { return n ? altura(n.der) - altura(n.izq) : 0; }
+
+  // Padre de un nodo dentro de un árbol (null si es la raíz o no está).
+  function padreDe(raiz, nodo) {
+    let p = null, n = raiz;
+    while (n && n !== nodo) { p = n; n = nodo.v < n.v ? n.izq : n.der; }
+    return n === nodo ? p : null;
+  }
+
+  // Camino raíz→valor recién insertado (de raíz a hoja).
+  function caminoHasta(raiz, v) {
+    const c = []; let n = raiz;
+    while (n) { c.push(n); if (v === n.v) break; n = v < n.v ? n.izq : n.der; }
+    return c;
+  }
+
+  // Primer nodo desequilibrado subiendo desde la hoja (el más profundo).
+  function primerDesbalanceado(raiz, v) {
+    const c = caminoHasta(raiz, v);
+    for (let i = c.length - 1; i >= 0; i--) if (Math.abs(fe(c[i])) > 1) return c[i];
+    return null;
+  }
+
+  // Rotaciones puras: devuelven la nueva raíz del subárbol rotado.
+  function rotarDerecha(z) { const y = z.izq; z.izq = y.der; y.der = z; return y; } // LL
+  function rotarIzquierda(z) { const y = z.der; z.der = y.izq; y.izq = z; return y; } // RR
+
+  // Aplica el caso de rotación a 'z' y reengancha el resultado en su padre.
+  function aplicarRotacion(z, caso) {
+    let nueva;
+    if (caso === 'LL') nueva = rotarDerecha(z);
+    else if (caso === 'RR') nueva = rotarIzquierda(z);
+    else if (caso === 'LR') { z.izq = rotarIzquierda(z.izq); nueva = rotarDerecha(z); }
+    else if (caso === 'RL') { z.der = rotarDerecha(z.der); nueva = rotarIzquierda(z); }
+    else return;
+    const p = padreDe(root, z);
+    if (!p) root = nueva;
+    else if (p.izq === z) p.izq = nueva;
+    else p.der = nueva;
+  }
+
+  // Caso correcto según el desequilibrio (regla mismo signo / signo distinto).
+  function casoCorrecto(z) {
+    if (fe(z) < -1) { // pesado a la izquierda
+      return fe(z.izq) <= 0 ? 'LL' : 'LR';
+    } else { // pesado a la derecha (fe > 1)
+      return fe(z.der) >= 0 ? 'RR' : 'RL';
+    }
+  }
+
+  // Hijo del lado pesado de un nodo desequilibrado.
+  function hijoPesado(z) { return fe(z) < 0 ? z.izq : z.der; }
+
   // ---- Estructura del widget ----
   mount.innerHTML =
     '<div class="lab-controles">' +
@@ -38,6 +94,27 @@
         '<button class="btn lab-preset" data-seq="50,30,70,20,40,60,80">Ej. balanceado</button>' +
         '<button class="btn lab-preset" data-seq="1,2,3,4,5,6">Ej. degenerado</button>' +
         '<button class="btn lab-vaciar">Vaciar</button>' +
+      '</div>' +
+      '<div class="lab-grupo">' +
+        '<label class="lab-lbl" style="display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.85rem;">' +
+          '<input type="checkbox" id="lab-avl" style="width:1rem;height:1rem;accent-color:var(--accent);cursor:pointer;"> Modo AVL (auto-equilibrado)' +
+        '</label>' +
+      '</div>' +
+    '</div>' +
+    '<div class="lab-controles" id="lab-avl-fila" hidden>' +
+      '<div class="lab-grupo">' +
+        '<span class="lab-lbl">Casos AVL:</span>' +
+        '<button class="btn lab-preset-avl" data-seq="30,20,10">→ LL</button>' +
+        '<button class="btn lab-preset-avl" data-seq="10,20,30">→ RR</button>' +
+        '<button class="btn lab-preset-avl" data-seq="30,10,20">→ LR</button>' +
+        '<button class="btn lab-preset-avl" data-seq="10,30,20">→ RL</button>' +
+      '</div>' +
+      '<div class="lab-grupo">' +
+        '<span class="lab-lbl">Rotar:</span>' +
+        '<button class="btn lab-rot" data-rot="LL" disabled>LL</button>' +
+        '<button class="btn lab-rot" data-rot="RR" disabled>RR</button>' +
+        '<button class="btn lab-rot" data-rot="LR" disabled>LR</button>' +
+        '<button class="btn lab-rot" data-rot="RL" disabled>RL</button>' +
       '</div>' +
     '</div>' +
     '<div class="lab-controles">' +
@@ -62,6 +139,10 @@
   const salidaVals = mount.querySelector('.lab-salida-vals');
   const numInput = mount.querySelector('#lab-num');
   const buscarInput = mount.querySelector('#lab-buscar');
+  const avlCheck = mount.querySelector('#lab-avl');
+  const avlFila = mount.querySelector('#lab-avl-fila');
+  const rotBtns = Array.from(mount.querySelectorAll('.lab-rot'));
+  let mostrarFE = false; // dibujar badges de factor de equilibrio en cada nodo
 
   function setSalida(label, vals) {
     salidaLbl.textContent = label;
@@ -77,8 +158,14 @@
   }
   function actualizarStats() {
     const n = contar(root);
-    stats.textContent = n === 0 ? '' : 'Nodos: ' + n + '  ·  Altura: ' + altura(root) +
-      (n > 0 && altura(root) === n ? '  ·  ⚠️ degenerado (lista) → buscar O(n)' : '');
+    if (n === 0) { stats.textContent = ''; return; }
+    let txt = 'Nodos: ' + n + '  ·  Altura: ' + altura(root);
+    if (modoAVL) {
+      txt += '  ·  Modo AVL: el árbol se mantiene equilibrado (altura ≈ log₂ n)';
+    } else if (altura(root) === n) {
+      txt += '  ·  ⚠️ degenerado (lista) → buscar O(n)';
+    }
+    stats.textContent = txt;
   }
   function limpiarEstados() {
     canvas.querySelectorAll('.lab-nodo').forEach(g => g.classList.remove('visitando', 'visitado', 'en-camino', 'encontrado'));
@@ -128,6 +215,18 @@
       const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', R);
       const t = document.createElementNS(NS, 'text'); t.setAttribute('text-anchor', 'middle'); t.setAttribute('dy', '0.34em'); t.textContent = nd.v;
       g.appendChild(c); g.appendChild(t); svg.appendChild(g); nd._el = g;
+      if (mostrarFE) {
+        const f = fe(nd);
+        const badge = document.createElementNS(NS, 'text');
+        badge.setAttribute('text-anchor', 'middle');
+        badge.setAttribute('x', R + 2); badge.setAttribute('y', -R + 2);
+        badge.setAttribute('font-size', '12');
+        badge.setAttribute('font-family', 'var(--font-mono)');
+        badge.setAttribute('font-weight', '700');
+        badge.setAttribute('fill', Math.abs(f) > 1 ? 'var(--err)' : (f === 0 ? 'var(--muted)' : 'var(--accent-2)'));
+        badge.textContent = (f > 0 ? '+' : '') + f;
+        g.appendChild(badge);
+      }
       if (nuevoVal != null && nd.v === nuevoVal) g.classList.add('nodo-nuevo');
     });
     canvas.appendChild(svg);
@@ -137,6 +236,8 @@
   function setDisabled(d) {
     animando = d;
     mount.querySelectorAll('button, input').forEach(el => { el.disabled = d; });
+    // Los botones de rotación solo se habilitan durante una pausa de equilibrado.
+    if (!d) rotBtns.forEach(b => { b.disabled = true; });
   }
 
   // ---- Acciones ----
@@ -146,6 +247,95 @@
     insertar(v); render(nuevo ? v : null); return true;
   }
   function flashExiste(v) { setSalida('El valor ' + v + ' ya está en el árbol', []); }
+
+  // ---- Flujo AVL interactivo ----
+  function resaltar(nodo, clase) { if (nodo && nodo._el) nodo._el.classList.add(clase); }
+
+  // Habilita/inhabilita solo los 4 botones de rotación.
+  function rotEnabled(on) { rotBtns.forEach(b => { b.disabled = !on; }); }
+
+  // Espera a que el usuario elija una rotación; devuelve 'LL'|'RR'|'LR'|'RL'.
+  let esperarRotacion = null;
+  function pedirRotacion() {
+    return new Promise(resolve => {
+      esperarRotacion = caso => { esperarRotacion = null; rotEnabled(false); resolve(caso); };
+      rotEnabled(true);
+    });
+  }
+
+  // Inserta un valor en modo AVL: detecta el primer nodo desbalanceado,
+  // pausa, pide la rotación al usuario y la aplica con animación.
+  async function agregarValorAVL(v) {
+    if (!Number.isFinite(v)) return;
+    if (existe(root, v)) { render(); flashExiste(v); return; }
+    insertar(v);
+    mostrarFE = true;
+    render(v);
+    setSalida('Insertado ' + v + '. Factores de equilibrio (FE = altura der − altura izq) arriba de cada nodo.', []);
+    await sleep(650);
+
+    // Mientras quede algún nodo con |FE| > 1, pedir y aplicar rotaciones
+    // (una sola inserción suele necesitar una; el bucle lo hace robusto).
+    let z = primerDesbalanceado(root, v);
+    if (!z) {
+      setSalida('✓ ' + v + ' insertado. Todos los |FE| ≤ 1: el árbol sigue equilibrado.', []);
+      return;
+    }
+    while (z) {
+      const feZ = fe(z);
+      const lado = feZ < 0 ? 'izquierdo' : 'derecho';
+      const hijo = hijoPesado(z);
+      limpiarEstados();
+      render(v); // re-render: limpia estados pero mantiene los badges de FE
+      resaltar(z, 'encontrado');
+      if (hijo) resaltar(hijo, 'en-camino');
+      const correcto = casoCorrecto(z);
+      setSalida('⚠️ Desequilibrio en el nodo ' + z.v + ' (FE = ' + (feZ > 0 ? '+' : '') + feZ + ', pesado a la ' + lado +
+        '). Regla: signos iguales → rotación simple (LL/RR); signos distintos → rotación doble (LR/RL). Elegí la rotación ↑', []);
+
+      // Esperar la elección del usuario (con reintentos si se equivoca).
+      let caso = await pedirRotacion();
+      while (caso !== correcto) {
+        const explicacion = (caso === 'LL' || caso === 'RR')
+          ? 'pediste una rotación simple, pero acá los signos del nodo y su hijo difieren.'
+          : 'pediste una rotación doble, pero acá los signos coinciden.';
+        setSalida('✗ ' + caso + ' no resuelve este caso: ' + explicacion + ' Probá otra vez ↑', []);
+        caso = await pedirRotacion();
+      }
+
+      // Aplicar y animar.
+      const doble = caso[0] !== caso[1];
+      setSalida('✓ ' + caso + ' es la correcta. Aplicando rotación ' + (doble ? 'doble' : 'simple') + '…', []);
+      await sleep(550);
+      aplicarRotacion(z, caso);
+      render(v);
+      await sleep(450);
+      z = primerDesbalanceado(root, v);
+    }
+    limpiarEstados();
+    render(v);
+    setSalida('✓ Árbol reequilibrado: todos los |FE| ≤ 1.', []);
+  }
+
+  // Inserta una secuencia en modo AVL, pausando en cada desequilibrio.
+  async function insertarSecuenciaAVL(seq) {
+    if (animando) return;
+    setDisabled(true);
+    root = null; mostrarFE = true; render();
+    for (const v of seq) {
+      await agregarValorAVL(v);
+      await sleep(360);
+    }
+    setDisabled(false);
+  }
+
+  // Inserta un único valor en modo AVL (envuelve el bloqueo de controles).
+  async function insertarUnoAVL(v) {
+    if (animando || v == null) return;
+    setDisabled(true);
+    await agregarValorAVL(v);
+    setDisabled(false);
+  }
 
   async function insertarSecuencia(seq) {
     if (animando) return;
@@ -198,16 +388,48 @@
 
   // ---- Eventos ----
   function leer(input) { const v = parseInt(input.value, 10); return Number.isFinite(v) ? v : null; }
-  mount.querySelector('.lab-insertar').onclick = () => { const v = leer(numInput); if (v != null) { agregarValor(v, true); numInput.value = ''; numInput.focus(); } };
+  mount.querySelector('.lab-insertar').onclick = () => {
+    if (animando) return;
+    const v = leer(numInput);
+    if (v == null) return;
+    numInput.value = '';
+    if (modoAVL) { insertarUnoAVL(v); numInput.focus(); }
+    else { agregarValor(v, true); numInput.focus(); }
+  };
   numInput.addEventListener('keydown', e => { if (e.key === 'Enter') mount.querySelector('.lab-insertar').click(); });
   mount.querySelector('.lab-azar').onclick = () => {
-    for (let i = 0; i < 30; i++) { const v = Math.floor(Math.random() * 99) + 1; if (!existe(root, v)) { agregarValor(v, true); return; } }
+    if (animando) return;
+    for (let i = 0; i < 40; i++) {
+      const v = Math.floor(Math.random() * 99) + 1;
+      if (!existe(root, v)) { if (modoAVL) insertarUnoAVL(v); else agregarValor(v, true); return; }
+    }
   };
-  mount.querySelector('.lab-vaciar').onclick = () => { if (animando) return; root = null; render(); setSalida('Árbol vacío', []); };
-  mount.querySelectorAll('.lab-preset').forEach(b => { b.onclick = () => insertarSecuencia(b.dataset.seq.split(',').map(Number)); });
+  mount.querySelector('.lab-vaciar').onclick = () => { if (animando) return; root = null; render(); setSalida(modoAVL ? 'Árbol AVL vacío' : 'Árbol vacío', []); };
+  mount.querySelectorAll('.lab-preset').forEach(b => { b.onclick = () => { if (animando) return; const seq = b.dataset.seq.split(',').map(Number); if (modoAVL) insertarSecuenciaAVL(seq); else insertarSecuencia(seq); }; });
+  mount.querySelectorAll('.lab-preset-avl').forEach(b => { b.onclick = () => { if (animando) return; insertarSecuenciaAVL(b.dataset.seq.split(',').map(Number)); }; });
+  rotBtns.forEach(b => { b.onclick = () => { if (esperarRotacion) esperarRotacion(b.dataset.rot); }; });
   mount.querySelectorAll('.lab-rec').forEach(b => { b.onclick = () => animarRecorrido(b.dataset.rec); });
   mount.querySelector('.lab-buscar').onclick = () => { const v = leer(buscarInput); if (v != null) animarBusqueda(v); };
   buscarInput.addEventListener('keydown', e => { if (e.key === 'Enter') mount.querySelector('.lab-buscar').click(); });
+
+  // Toggle Modo AVL: muestra los controles de rotación y reconstruye el árbol equilibrando.
+  avlCheck.onchange = () => {
+    if (animando) { avlCheck.checked = modoAVL; return; }
+    modoAVL = avlCheck.checked;
+    avlFila.hidden = !modoAVL;
+    rotEnabled(false);
+    if (modoAVL) {
+      mostrarFE = true;
+      const vals = []; preorden(root, vals); // mantener el orden de inserción aproximado
+      root = null; render();
+      setSalida('Modo AVL activado. Insertá valores o probá un caso (LL/RR/LR/RL): cuando algún |FE| > 1, vas a elegir la rotación.', []);
+      if (vals.length) { insertarSecuenciaAVL(vals.map(n => n.v)); }
+    } else {
+      mostrarFE = false;
+      render();
+      setSalida('Modo AVL desactivado: vuelve a comportarse como un ABB común.', []);
+    }
+  };
 
   // arranque con un ejemplo
   [50, 30, 70, 20, 40, 60].forEach(insertar);

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cómo se rinde (Monzón) · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="como-rinde-monzon">
+<main>
+<article>
+  <h1>Cómo se rinde (Monzón)</h1>
+
+  <p>Esta página <strong>no es un TDA</strong>: es la <strong>metodología</strong> del examen de la cátedra
+     de Monzón. La mayoría de los puntos no se pierden por no saber el algoritmo, sino por
+     <strong>no cumplir reglas de entrega</strong> (usar genéricos, no escribir precondiciones, no mandar
+     las estrategias). Usala como <strong>checklist</strong>: leela el día antes y otra vez al terminar, antes de
+     comprimir y enviar.</p>
+
+  <h2>1. Qué tipo de examen es</h2>
+  <p>Es un examen <strong>basado en un proyecto</strong> (<em>project-based</em>), no un cuestionario de opción
+     múltiple ni un papel con teoría. Tenés varias horas (el integrador, por ejemplo, da
+     <strong>3 horas y 30 minutos</strong>) y entregás un <strong>proyecto Java que compila y corre</strong>.</p>
+  <p>Lo que se corrige es <strong>código fuente real</strong> más todo lo que lo acompaña:</p>
+  <ul>
+    <li>El <strong>código</strong> que resuelve cada ejercicio (clases, TDAs, métodos).</li>
+    <li>Un <strong>set de prueba en el <code>main</code></strong> que demuestra que funciona.</li>
+    <li>Las <strong>estrategias</strong> escritas de cada método (carpeta <code>strategies</code>).</li>
+    <li>Las <strong>precondiciones</strong> (y en integradores también postcondiciones e invariantes) escritas en la firma de cada método.</li>
+  </ul>
+  <div class="callout"><span class="et">🎯 La idea</span>
+    No alcanza con que el algoritmo sea correcto: tenés que <strong>documentar el contrato</strong> de cada
+    método y <strong>probarlo</strong>. El examen evalúa que pienses como quien diseña una estructura, no solo
+    que sepas codear. Manejá el tiempo: dejá un rato al final solo para precondiciones, estrategias,
+    el set de prueba y la entrega.</div>
+
+  <h2>2. Prohibiciones (¡esto desaprueba!)</h2>
+  <div class="callout error"><span class="et">⛔ Suficiente para desaprobar</span>
+    El enunciado lo dice textual: <em>«Solo podrá utilizar técnicas vistas en este curso. Está prohibido
+    el uso de librerías y genéricos, incluyendo estructuras que vienen con la JRE. No respetar este
+    punto es suficiente para desaprobar el examen.»</em> No importa cuán bien resuelto esté el resto.</div>
+  <p>Concretamente, en el examen <strong>NO</strong> podés:</p>
+  <ul>
+    <li><strong>Usar genéricos</strong>: nada de <code>List&lt;Integer&gt;</code>, <code>Stack&lt;String&gt;</code>,
+        <code>Set&lt;T&gt;</code>, ni declarar clases con <code>&lt;T&gt;</code>. Tus TDAs trabajan con tipos
+        concretos (típicamente <code>int</code>; el integrador deja elegir <code>int</code> o <code>String</code>).</li>
+    <li><strong>Usar estructuras de datos de la JRE</strong>: nada de <code>ArrayList</code>, <code>LinkedList</code>,
+        <code>HashMap</code>, <code>HashSet</code>, <code>java.util.Stack</code>, <code>TreeMap</code>, etc.</li>
+    <li><strong>Importar librerías externas</strong> ni técnicas que no se vieron en clase.</li>
+  </ul>
+  <p>Lo que <strong>sí</strong> podés usar: <code>arreglos</code> crudos (<code>int[]</code>), nodos enlazados que vos
+     mismo definís, y los <strong>TDAs de la cursada</strong> que implementás a mano
+     (<code>Stack</code>, <code>Queue</code>, <code>Set</code>, <code>Dictionary</code>, <code>BinaryTree</code>,
+     <code>Graph</code>, …), en versión <strong>estática</strong> (arreglo) o <strong>dinámica</strong> (nodos).</p>
+  <pre><code class="java">// ❌ PROHIBIDO en el examen (genéricos + estructura de la JRE):
+import java.util.ArrayList;
+ArrayList&lt;Integer&gt; lista = new ArrayList&lt;&gt;();
+
+// ✅ PERMITIDO: arreglo crudo de tipo concreto...
+int[] datos = new int[100];
+int cantidad = 0;
+
+// ...o un TDA propio implementado a mano, sin genéricos:
+Set s = new StaticSet();   // tu propia clase, trabaja con int
+s.add(7);</code></pre>
+  <div class="callout error"><span class="et">⚠️ La trampa del apunte</span>
+    El <strong>apunte y los ejemplos de Monzón usan genéricos</strong> (vas a ver <code>Stack&lt;T&gt;</code> y
+    similares en el material). <strong>Eso es solo para explicar</strong>: el <strong>examen los prohíbe</strong>. No
+    copies el estilo genérico del apunte en tu entrega. Cuando programes para el examen, escribí los
+    TDAs con tipos <strong>concretos</strong> (<code>int</code>).</div>
+
+  <h2>3. Entregables que dan puntos</h2>
+  <p>Más allá del algoritmo, hay entregables <strong>obligatorios</strong>. Faltar a varios de ellos puede
+     desaprobar; cumplirlos es puntaje casi gratis. Checklist:</p>
+  <div class="callout tip"><span class="et">✅ Precondiciones en cada firma</span>
+    En la firma de <strong>cada método</strong> tenés que escribir sus <strong>precondiciones</strong>. En los
+    <strong>integradores</strong> se pide además <strong>postcondiciones</strong> y los <strong>invariantes</strong> de la
+    estructura (qué debe cumplirse siempre para que la estructura sea válida). Se documentan con
+    Javadoc arriba del método (ver sección 4).</div>
+  <div class="callout tip"><span class="et">✅ Carpeta <code>strategies</code></span>
+    Por <strong>cada ejercicio y método</strong> que escribís, va la <strong>estrategia en palabras</strong> (cómo lo
+    pensaste y resolviste) dentro de la carpeta <code>strategies</code>, en formato <code>txt</code>,
+    <code>MD</code> o <code>pdf</code>. <strong>Cualquier otro formato no se corrige.</strong></div>
+  <div class="callout tip"><span class="et">✅ Set de prueba en el <code>main</code></span>
+    Tenés que <strong>demostrar que tu código funciona</strong> con un set de prueba. <strong>No se piden tests
+    unitarios</strong>: alcanza con armar pruebas en el método <code>main</code> del proyecto (crear la
+    estructura, ejecutar los métodos, imprimir/verificar resultados).</div>
+  <pre><code class="java">// Ejemplo de set de prueba en el main (NO test unitario, solo pruebas en main):
+public static void main(String[] args) {
+    Dictionary d = new StaticDictionary();
+    d.add(1, 100);
+    d.add(2, 200);
+
+    System.out.println("getValue(1) = " + d.getValue(1));  // espero 100
+    System.out.println("getValue(2) = " + d.getValue(2));  // espero 200
+
+    d.remove(1, 100);
+    // eliminar una clave inexistente NO debe romper:
+    d.remove(99, 0);                                        // no pasa nada (correcto)
+    System.out.println("Pruebas OK");
+}</code></pre>
+  <div class="callout tip"><span class="et">✅ Comprimir <code>src</code> y nombrar bien el archivo</span>
+    Comprimís la <strong>carpeta <code>src</code></strong> (junto a los <code>txt</code> de estrategias). El nombre del
+    comprimido depende del examen:
+    <ul>
+      <li><strong>Final (individual)</strong>: <code>APELLIDO_NOMBRE</code> (apellido y nombre, en ese orden).</li>
+      <li><strong>Integrador (grupal)</strong>: el <strong>número de grupo</strong>.</li>
+    </ul>
+    El propio enunciado avisa: <em>«verificar que cumpla con todas, en particular con los nombres de
+    carpetas.»</em> Un nombre mal puesto es puntaje regalado.</div>
+  <div class="callout tip"><span class="et">✅ Entregar bien</span>
+    Según el examen, el comprimido se <strong>coloca en la unidad compartida</strong> de UADE Labs y se
+    <strong>verifica con el docente</strong> que se pudo abrir, o se <strong>envía por mail</strong> (en el integrador,
+    a la casilla del profesor). <strong>Confirmá que el archivo llegó y se puede descomprimir</strong> antes de
+    irte: una entrega que no abre es como no entregar.</div>
+
+  <h2>4. Plantilla de contrato (Javadoc) por método</h2>
+  <p>Cada método se documenta con un <strong>contrato</strong>: qué exige para funcionar (<strong>precondición</strong>),
+     qué garantiza al terminar (<strong>postcondición</strong>) y, para una estructura entera, qué propiedad se
+     mantiene siempre (<strong>invariante</strong>). Una plantilla que sirve para casi todo:</p>
+  <pre><code class="java">/**
+ * Recupera el valor asociado a la clave k.
+ * Pre:  el diccionario está inicializado y k es una clave existente.
+ * Post: devuelve el valor v tal que el par (k, v) está en el diccionario.
+ *       El diccionario no se modifica.
+ * Invariante (de la estructura): no hay claves repetidas.
+ * Manejo de error: si k no existe -> lanza RuntimeException (es un caso inválido).
+ */
+public int getValue(int k) { ... }</code></pre>
+
+  <h3>La decisión clave: ¿qué hago si se viola la precondición?</h3>
+  <p>Para cada método tenés que <strong>decidir y dejar escrito</strong> qué pasa cuando lo llaman mal. Hay
+     tres respuestas posibles, y elegir la correcta es parte del diseño:</p>
+  <table class="costo">
+    <thead><tr><th>Decisión</th><th>Cuándo conviene</th><th>Ejemplo</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Lanzar</strong> <code>RuntimeException</code></td>
+        <td>Cuando la llamada es <strong>realmente inválida</strong> y seguir daría un resultado sin sentido.</td>
+        <td><code>getValue(clave)</code> de una clave que no está: no hay valor que devolver.</td>
+      </tr>
+      <tr>
+        <td><strong>Devolver un centinela</strong> (<code>-1</code>, <code>null</code>, <code>false</code>)</td>
+        <td>Cuando "no encontrado / no aplica" es un resultado <strong>esperable</strong> que el llamador puede chequear.</td>
+        <td>Un <code>buscarPosicion(x)</code> que devuelve <code>-1</code> si <code>x</code> no está.</td>
+      </tr>
+      <tr>
+        <td><strong>No hacer nada</strong> (operación idempotente)</td>
+        <td>Cuando el efecto pedido <strong>ya está logrado</strong> o la operación no tiene sentido sobre ese estado.</td>
+        <td><code>remove(clave)</code> de una clave inexistente: el objetivo era que no esté, y no está.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout"><span class="et">📌 El ejemplo canónico: eliminar vs recuperar</span>
+    Es la pregunta clásica. <strong>Eliminar una clave que no existe NO es un error</strong>: pediste que esa
+    clave no esté, y efectivamente no está — la operación simplemente no hace nada. En cambio,
+    <strong>recuperar una clave que no existe SÍ rompe el contrato</strong>: te pidieron un valor que no
+    existe, no hay nada coherente para devolver, así que se lanza una excepción.</div>
+  <p>Mirá cómo aparece esto en el <code>StaticDictionary</code> real de la cátedra:</p>
+  <pre><code class="java">// remove: si la clave NO está, recorre todo y termina sin hacer nada. No es error.
+public void remove(int k, int v) {
+    for (int i = 0; i &lt; count; i++) {
+        if (keys[i] == k) {
+            keys[i] = keys[count - 1];   // tapo el hueco con el último...
+            values[i] = values[count - 1];
+            count--;                     // ...y achico.
+            return;
+        }
+    }
+    // clave inexistente -> no hace nada (correcto)
+}
+
+// getValue: si la clave NO está, NO hay valor que devolver -> lanza excepción.
+public int getValue(int k) {
+    for (int i = 0; i &lt; count; i++) {
+        if (keys[i] == k) return values[i];
+    }
+    throw new RuntimeException("No se encontró la clave");
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Cómo elegir rápido</span>
+    Preguntate: <em>«¿el estado que pide ya quedó logrado?»</em> Si sí (eliminar algo que no estaba),
+    no hagas nada. <em>«¿Me piden devolver algo que no existe?»</em> Si sí (recuperar lo ausente),
+    lanzá excepción. <em>«¿"no encontrado" es un resultado normal que el llamador va a chequear?»</em>
+    Entonces devolvé un centinela. Sea cual sea, <strong>escribilo en el Javadoc</strong>.</div>
+
+  <h2>5. Umbrales de aprobación y alcance por examen</h2>
+  <p>Cada tipo de examen tiene su <strong>nota mínima</strong> y su <strong>alcance de temas</strong>. Saber el alcance
+     te dice <strong>qué priorizar al estudiar</strong>.</p>
+  <table class="costo">
+    <thead><tr><th>Examen</th><th>Para aprobar</th><th>Hasta qué tema entra</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Parcial</strong></td>
+        <td>~<strong>60 %</strong></td>
+        <td>Hasta <strong>árboles</strong> (pila, cola, listas, conjunto, diccionario, árboles).</td>
+      </tr>
+      <tr>
+        <td><strong>Final regular</strong></td>
+        <td><strong>60 / 100</strong></td>
+        <td>Todo el programa, incluidos <strong>grafos</strong> y <strong>AVL / Árbol B</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Final previo</strong></td>
+        <td><strong>80 / 140</strong> (≈ 57 %)</td>
+        <td>Todo el programa (grafos, AVL, Árbol B, etc.).</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout tip"><span class="et">🧭 Cómo te ayuda el alcance</span>
+    Si vas a <strong>parcial</strong>, <strong>grafos y AVL/Árbol B NO entran</strong>: clavá pila, cola, conjunto,
+    diccionario y árboles binarios/ABB. Si vas a <strong>final</strong>, sí o sí sumá <strong>grafos</strong> y los
+    árboles balanceados (<strong>AVL / Árbol B</strong>), que es donde están los ejercicios de más puntaje.</div>
+  <div class="callout"><span class="et">📊 Sobre la escala</span>
+    El integrador aclara que se mide con una <strong>escala logarítmica</strong> donde llegar a
+    <strong>60 puntos equivale a un 4</strong> (aprobado). En todos los casos, además del puntaje, hay que
+    <strong>cumplir TODAS las reglas de entrega</strong> de la sección 3: si fallás una, el examen queda
+    desaprobado <em>«sin excepción»</em>, tengas el puntaje que tengas.</div>
+
+  <h2>6. El predicado por legajo</h2>
+  <p>Muchos enunciados eligen <strong>la variante del ejercicio según tu legajo</strong>. El predicado es:</p>
+  <pre><code class="java">// En el final (individual): n = tu L.U. (legajo)
+P(n) = (tu legajo) % 3      // da 0, 1 o 2 -> elegís el caso P que te toca
+
+// En el integrador (grupal): se suman los legajos de TODO el grupo
+P(a) = (suma de legajos del grupo) % 3 == 0
+P(b) = (suma de legajos del grupo) % 3 == 1
+P(c) = (suma de legajos del grupo) % 3 == 2</code></pre>
+  <p>El enunciado lo plantea así: <em>«Si el examen utiliza predicados, use la siguiente definición:
+     P(n) = Su LU, módulo 3, es n.»</em> En el integrador, en cambio, se basa en la
+     <strong>suma de los legajos del grupo módulo 3</strong> para repartir <code>P(a)</code>, <code>P(b)</code> o
+     <code>P(c)</code>.</p>
+  <div class="callout tip"><span class="et">💡 Antes de arrancar</span>
+    Calculá tu <strong>P</strong> <em>primero</em>: <code>legajo % 3</code> (o la suma del grupo <code>% 3</code>).
+    Ese número te dice <strong>cuál de las variantes del ejercicio tenés que resolver</strong>. Resolver la
+    variante equivocada no suma puntos, aunque esté impecable. Dejalo anotado para no confundirte
+    a mitad del examen.</div>
+
+  <h2>7. Resumen (checklist final)</h2>
+  <ul>
+    <li>Examen <strong>project-based</strong>: entregás código + estrategias + set de prueba, en varias horas.</li>
+    <li><strong>Prohibido</strong>: genéricos y estructuras de la JRE. Solo técnicas de la cursada. (El apunte usa genéricos; el examen no.)</li>
+    <li><strong>Precondiciones</strong> en cada firma; en integradores también <strong>postcondiciones e invariantes</strong>.</li>
+    <li>Carpeta <code>strategies</code> con la estrategia de cada método (<code>txt</code>/<code>MD</code>/<code>pdf</code>).</li>
+    <li><strong>Set de prueba en el <code>main</code></strong> (no tests unitarios).</li>
+    <li>Comprimir <code>src</code>; nombre <code>APELLIDO_NOMBRE</code> (final) o nº de grupo (integrador); entregar y <strong>verificar</strong>.</li>
+    <li>Para cada método, decidir el <strong>manejo de error</strong>: excepción / centinela / no hacer nada (eliminar inexistente = no error; recuperar inexistente = error).</li>
+    <li>Umbrales: parcial ~60 %; final regular 60/100; final previo 80/140. Parcial llega hasta <strong>árboles</strong>; grafos y AVL/Árbol B son de <strong>final</strong>.</li>
+    <li>Calculá tu predicado <strong>P = legajo % 3</strong> (o suma del grupo % 3) para saber qué variante hacer.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">Cargando…</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

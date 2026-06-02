@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Árbol genérico (n-ario) · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="arbol-nario">
+<main>
+<article>
+  <h1>Árbol genérico (n-ario)</h1>
+
+  <h2>1. ¿Qué es un árbol n-ario (genérico)?</h2>
+  <p>Hasta ahora vimos el <strong>árbol binario</strong>, donde cada nodo tiene <strong>a lo sumo dos
+     hijos</strong> (izquierdo y derecho). Un <strong>árbol n-ario</strong> —también llamado
+     <strong>árbol genérico</strong> o simplemente <em>árbol</em> a secas— levanta esa restricción:
+     cada nodo puede tener <strong>cualquier cantidad de hijos</strong> (cero, uno, dos, cinco,
+     veinte…). No hay un máximo fijo.</p>
+  <p>Es la estructura jerárquica más general. Aparece todo el tiempo en la vida real:</p>
+  <ul>
+    <li><strong>Árbol de directorios</strong>: una carpeta puede contener muchas subcarpetas y archivos.
+        La carpeta raíz no tiene un límite de "dos hijos".</li>
+    <li><strong>Organigrama de una empresa</strong>: un gerente puede tener a su cargo a varias personas;
+        cada una, a su vez, puede dirigir a otras tantas.</li>
+    <li>El <strong>árbol de comentarios</strong> de una publicación, el <strong>menú</strong> de una
+        aplicación, la estructura de un documento HTML (cada etiqueta puede tener N etiquetas hijas)…</li>
+  </ul>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">raíz: 2</span><span class="flecha">→</span>
+    <span class="nodo">hijo: 7</span><span class="flecha">→</span>
+    <span class="nodo">hijo: 21</span><span class="flecha">→</span>
+    <span class="nodo">hijo: 8</span>
+  </div>
+  <p>En este ejemplo, la raíz <code>2</code> tiene <strong>tres</strong> hijos (<code>7</code>,
+     <code>21</code> y <code>8</code>): algo imposible en un árbol binario. Toda la terminología que ya
+     conocés —<strong>raíz, hoja, nodo interno, padre/hijo, ancestros/descendientes, profundidad,
+     altura, subárbol</strong>— vale igual acá; lo único que cambia es que un nodo ya no está limitado a
+     dos hijos.</p>
+
+  <h2>2. Representación "hijo-mayor / hermano-siguiente"</h2>
+  <p>Acá aparece el truco central de la unidad. Si un nodo puede tener <strong>N hijos</strong>, lo
+     ingenuo sería que cada nodo guardara una <em>lista</em> de referencias a hijos de tamaño variable.
+     Pero hay una idea más elegante que reutiliza todo lo que ya sabemos de árboles binarios: la
+     representación <strong>hijo-mayor / hermano-siguiente</strong> (en inglés,
+     <em>left-child right-sibling</em>).</p>
+  <p>La idea: cada nodo guarda <strong>solo 2 referencias</strong>, igual que un árbol binario, pero con
+     un significado distinto:</p>
+  <ul>
+    <li><strong>HijoMayor</strong>: apunta al <strong>primer hijo</strong> del nodo (el subárbol que está
+        más a la izquierda). Es el "hijo principal".</li>
+    <li><strong>HermanoSiguiente</strong>: apunta al <strong>próximo hermano</strong>, es decir, al
+        siguiente nodo que tiene <em>el mismo padre</em> y está a su derecha.</li>
+  </ul>
+  <p>Con esas dos referencias alcanza para representar cualquier cantidad de hijos: el <strong>primer
+     hijo</strong> se llega por <code>HijoMayor</code>, y a los <strong>demás hijos</strong> se llega
+     encadenándolos como <strong>hermanos</strong>, uno detrás de otro, vía <code>HermanoSiguiente</code>.
+     Así, un árbol n-ario se <strong>reduce a un árbol binario</strong>: la rama "izquierda" pasa a ser
+     "primer hijo" y la rama "derecha" pasa a ser "hermano siguiente".</p>
+
+  <h3>Cómo se mapea, paso a paso</h3>
+  <p>Tomemos la raíz <code>2</code> con sus tres hijos <code>7</code>, <code>21</code> y <code>8</code>.
+     En la cabeza lo dibujamos "ancho":</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">2</span>
+    <span class="flecha">┬→ 7</span>
+    <span class="flecha">├→ 21</span>
+    <span class="flecha">└→ 8</span>
+  </div>
+  <p>Pero <strong>internamente</strong>, con hijo-mayor / hermano-siguiente, se guarda así: el
+     <code>2</code> apunta por <strong>HijoMayor</strong> solo al primero (<code>7</code>); y
+     <code>7</code> apunta por <strong>HermanoSiguiente</strong> a <code>21</code>, que a su vez apunta
+     por <strong>HermanoSiguiente</strong> a <code>8</code>. Los tres hijos forman una
+     <strong>cadena de hermanos</strong>:</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">2</span><span class="flecha">⬎ hijoMayor</span>
+    <span class="nodo">7</span><span class="flecha">→ hermSig</span>
+    <span class="nodo">21</span><span class="flecha">→ hermSig</span>
+    <span class="nodo">8</span><span class="flecha">→ null</span>
+  </div>
+  <p>Leído como árbol binario: la referencia <strong>"baja" (hijoMayor)</strong> hace de
+     <em>izquierda</em> y la referencia <strong>"a la derecha" (hermanoSiguiente)</strong> hace de
+     <em>derecha</em>. Por eso el nodo de la implementación se ve idéntico al de un binario, solo cambian
+     los nombres:</p>
+  <pre><code class="java">class Nodo {
+    int valor;          // El dato que guarda el nodo.
+    Nodo hijoMayor;     // Primer hijo (más a la izquierda); null si es hoja.
+    Nodo hermanoSig;    // Próximo hermano (mismo padre, a la derecha); null si es el último.
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 La clave de la unidad</span>
+    Esta representación es la razón por la que el TDA árbol genérico se estudia <strong>justo antes</strong>
+    o junto con los binarios: convierte un problema "de N hijos" en uno "de 2 referencias". Si sabés
+    recorrer un binario, sabés recorrer un n-ario; solo cambia <em>qué significan</em> las dos referencias
+    (<code>hijoMayor</code> en vez de <code>izq</code>, <code>hermanoSig</code> en vez de <code>der</code>).</div>
+
+  <h2>3. Interfaz del TDA Árbol N-ario (ANaTDA)</h2>
+  <p>El apunte define el TDA del árbol genérico <strong>solo a nivel de especificación</strong> (no se ve
+     una implementación concreta, a diferencia de pila o cola). La interfaz se llama
+     <code>ANaTDA</code> (Árbol N-ario TDA). Sus operaciones:</p>
+  <ul>
+    <li><strong>Valor()</strong>: recupera el valor de la <strong>raíz</strong> del árbol.</li>
+    <li><strong>HijoMayor()</strong>: devuelve el <strong>subárbol</strong> del hijo más a la izquierda
+        (otro <code>ANaTDA</code>).</li>
+    <li><strong>HermanoSiguiente()</strong>: devuelve el <strong>subárbol</strong> del hermano siguiente
+        (otro <code>ANaTDA</code>).</li>
+    <li><strong>arbolVacío()</strong>: indica con un <code>boolean</code> si el árbol está vacío.</li>
+    <li><strong>inicializarArbol()</strong>: inicializa la estructura (deja el árbol vacío).</li>
+    <li><strong>crearArbol(valor)</strong>: asigna ese <code>valor</code> como raíz del árbol.</li>
+    <li><strong>agregarHijoMayor(valor)</strong>: agrega el valor dado como raíz del nuevo
+        <strong>subárbol hijo</strong> (queda como primer hijo).</li>
+    <li><strong>eliminarHijoMayorConDescendientes()</strong>: elimina el subárbol del hijo más a la
+        izquierda <strong>con todos sus descendientes</strong> (poda esa rama entera).</li>
+    <li><strong>eliminarHermanoSiguienteConDescendientes()</strong>: elimina el hermano siguiente del
+        árbol dado <strong>con todos sus descendientes</strong>.</li>
+  </ul>
+  <p>Fijate que, igual que en el <code>BinaryTree</code> recursivo, <code>HijoMayor()</code> y
+     <code>HermanoSiguiente()</code> <strong>no devuelven un valor</strong>, sino <strong>otro árbol</strong>
+     (un <code>ANaTDA</code>): el subárbol completo. Para leer el dato del primer hijo harías
+     <code>arbol.HijoMayor().Valor()</code>.</p>
+  <pre><code class="java">public interface ANaTDA {
+    int Valor();                                 // Valor de la raíz.
+    ANaTDA HijoMayor();                           // Subárbol del primer hijo.
+    ANaTDA HermanoSiguiente();                    // Subárbol del hermano siguiente.
+    boolean arbolVacío();                         // ¿Está vacío?
+    void inicializarArbol();                      // Inicializa (árbol vacío).
+    void crearArbol(int valor);                   // Asigna 'valor' como raíz.
+    void agregarHijoMayor(int valor);             // Agrega 'valor' como primer hijo.
+    void eliminarHijoMayorConDescendientes();     // Poda el primer hijo y su subárbol.
+    void eliminarHermanoSiguienteConDescendientes(); // Poda el hermano siguiente y su subárbol.
+}</code></pre>
+  <div class="equiv"><span class="et">Equivalencia con el apunte (nombres originales)</span>
+    <table>
+      <thead><tr><th>Esta guía (nombres descriptivos)</th><th>Apunte — ANaTDA (nombres originales)</th></tr></thead>
+      <tbody>
+        <tr><td class="es"><code>Valor()</code></td><td><code>Valor()</code></td></tr>
+        <tr><td class="es"><code>HijoMayor()</code></td><td><code>HijoMayor()</code></td></tr>
+        <tr><td class="es"><code>HermanoSiguiente()</code></td><td><code>HermanoSig()</code></td></tr>
+        <tr><td class="es"><code>arbolVacío()</code></td><td><code>ArbolVacio()</code></td></tr>
+        <tr><td class="es"><code>inicializarArbol()</code></td><td><code>InicializarArbol()</code></td></tr>
+        <tr><td class="es"><code>crearArbol(r)</code></td><td><code>CrearArbol(int r)</code></td></tr>
+        <tr><td class="es"><code>agregarHijoMayor(h)</code></td><td><code>AgregarHijoM(int p, int h)</code></td></tr>
+        <tr><td class="es"><code>eliminarHijoMayorConDescendientes()</code></td><td><code>ElimHijoMConDesc(int x)</code></td></tr>
+        <tr><td class="es"><code>eliminarHermanoSiguienteConDescendientes()</code></td><td><code>ElimHermSConDesc(int x)</code></td></tr>
+      </tbody>
+    </table>
+    <p class="nota">Solo cambian los nombres: la semántica es idéntica. En el apunte el árbol n-ario se ve
+      <strong>solo como especificación</strong> (no hay implementación concreta), porque su valor didáctico
+      es mostrar cómo un árbol de N hijos se reduce a 2 referencias.</p>
+  </div>
+
+  <h2>4. Recorridos sobre la representación hijo-mayor / hermano-siguiente</h2>
+  <p>Como cada nodo tiene exactamente dos referencias (<code>hijoMayor</code> y <code>hermanoSig</code>),
+     recorrer un árbol n-ario es <strong>recursión doble</strong>, muy parecida a la de un árbol binario.
+     En cada nodo:</p>
+  <ul>
+    <li>recursás por <strong>HijoMayor</strong> para bajar a los <strong>hijos</strong> de ese nodo;</li>
+    <li>recursás por <strong>HermanoSiguiente</strong> para seguir con los <strong>hermanos</strong> (los
+        otros hijos del mismo padre).</li>
+  </ul>
+  <p>El <strong>caso base</strong> es siempre el mismo: un árbol/nodo vacío (<code>null</code>), que corta
+     la recursión.</p>
+  <pre><code class="java">// Imprime TODOS los valores del árbol n-ario (recorre todo el árbol).
+void recorrer(Nodo nodo) {
+    if (nodo == null) return;           // Caso base: subárbol vacío.
+    System.out.print(nodo.valor + " "); // Proceso este nodo.
+    recorrer(nodo.hijoMayor);           // Bajo a sus hijos (empezando por el primero)...
+    recorrer(nodo.hermanoSig);          // ...y sigo con sus hermanos (los demás hijos del padre).
+}</code></pre>
+  <p>Una sola llamada a <code>recorrer(raiz)</code> visita el árbol entero: la recursión por
+     <code>hermanoSig</code> barre toda la cadena de hermanos de cada nivel, y la recursión por
+     <code>hijoMayor</code> baja un nivel desde cada nodo.</p>
+
+  <h3>Contar nodos, contar hojas</h3>
+  <p>El mismo esquema sirve para casi cualquier cálculo. Para <strong>contar todos los nodos</strong>,
+     sumás 1 (por el nodo actual) más lo que aporten su hijo-mayor y su hermano-siguiente:</p>
+  <pre><code class="java">// Cantidad total de nodos del árbol.
+int contarNodos(Nodo nodo) {
+    if (nodo == null) return 0;                 // Vacío: aporta 0.
+    return 1                                    // Este nodo cuenta 1...
+         + contarNodos(nodo.hijoMayor)          // ...más todos sus descendientes...
+         + contarNodos(nodo.hermanoSig);        // ...más todos sus hermanos (y los de ellos).
+}</code></pre>
+  <p>Para <strong>contar hojas</strong> hay que tener cuidado con qué es una hoja en esta representación:
+     una hoja es un nodo <strong>sin hijos</strong>, es decir, con <code>hijoMayor == null</code>.
+     ¡Que tenga <code>hermanoSig</code> no importa! Un hermano siguiente no es un hijo, es otro nodo del
+     mismo nivel.</p>
+  <pre><code class="java">// Cantidad de hojas (nodos sin hijos: hijoMayor == null).
+int contarHojas(Nodo nodo) {
+    if (nodo == null) return 0;
+    int aca = (nodo.hijoMayor == null) ? 1 : 0; // Es hoja si NO tiene hijo mayor.
+    return aca
+         + contarHojas(nodo.hijoMayor)          // Hojas que cuelgan de sus hijos...
+         + contarHojas(nodo.hermanoSig);        // ...y hojas entre sus hermanos.
+}</code></pre>
+  <div class="callout error"><span class="et">⚠️ El error clásico del n-ario</span>
+    Confundir <strong>hijo</strong> con <strong>hermano</strong>. En esta representación,
+    <code>hijoMayor</code> baja un nivel (son los hijos reales) y <code>hermanoSig</code> se queda en el
+    <strong>mismo nivel</strong> (otros hijos del mismo padre). Un nodo es <strong>hoja</strong> si
+    <code>hijoMayor == null</code>, sin importar si tiene o no <code>hermanoSig</code>. Tratar el hermano
+    siguiente como si fuera un hijo cuenta mal los niveles, la altura y las hojas.</div>
+
+  <div class="callout"><span class="et">📕 Versión con el TDA recursivo (ANaTDA)</span>
+    Si en vez del modelo "<code>Nodo</code> con referencias" usás el TDA <code>ANaTDA</code>, la lógica es
+    la misma pero viajan <strong>subárboles</strong> en la recursión (igual que con <code>BinaryTree</code>):
+    <pre><code class="java">void recorrer(ANaTDA arbol) {
+    if (arbol == null || arbol.arbolVacío()) return;  // Caso base.
+    System.out.print(arbol.Valor() + " ");
+    recorrer(arbol.HijoMayor());          // Subárbol del primer hijo.
+    recorrer(arbol.HermanoSiguiente());   // Subárbol del hermano siguiente.
+}</code></pre>
+    Cambia <strong>quién</strong> viaja (un subárbol entero en lugar de una referencia a nodo), pero el
+    patrón "proceso la raíz, recurso por hijo-mayor, recurso por hermano-siguiente" es idéntico.</div>
+
+  <h2>5. Costo y cuándo usarlo</h2>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Costo</th></tr></thead>
+    <tbody>
+      <tr><td><code>Valor</code>, <code>HijoMayor</code>, <code>HermanoSiguiente</code>, <code>arbolVacío</code></td><td>O(1)</td></tr>
+      <tr><td><code>crearArbol</code>, <code>agregarHijoMayor</code></td><td>O(1)</td></tr>
+      <tr><td>Recorrer / contar nodos / contar hojas</td><td>O(n)</td></tr>
+    </tbody>
+  </table>
+  <p>Acceder a una referencia o leer el valor de la raíz es <strong>O(1)</strong>: son operaciones
+     directas sobre el nodo. Cualquier recorrido que visite todo el árbol es <strong>O(n)</strong> (con
+     <code>n</code> = cantidad de nodos), porque toca cada nodo exactamente una vez.</p>
+  <p><strong>Cuándo usarlo:</strong> siempre que la jerarquía a representar tenga nodos con una
+     <strong>cantidad de hijos variable o desconocida de antemano</strong> —directorios, organigramas,
+     menús, árboles de categorías—. Si en cambio cada nodo nunca pasa de dos hijos y querés búsqueda
+     ordenada, lo natural es un árbol binario (o un ABB). La representación hijo-mayor / hermano-siguiente
+     es valiosa además como <strong>idea conceptual</strong>: muestra que toda esa variedad de árboles
+     "anchos" se puede guardar con la misma estructura de 2 referencias de un binario.</p>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li>Un <strong>árbol n-ario (genérico)</strong> permite que cada nodo tenga <strong>cualquier cantidad
+        de hijos</strong>, no solo dos. Modela directorios, organigramas, menús, etc.</li>
+    <li>La representación <strong>hijo-mayor / hermano-siguiente</strong> guarda en cada nodo solo
+        <strong>2 referencias</strong>: <code>hijoMayor</code> (primer hijo) y <code>hermanoSig</code>
+        (próximo hermano). Así un árbol n-ario <strong>se reduce a un binario</strong>.</li>
+    <li>El TDA <strong><code>ANaTDA</code></strong> ofrece <code>Valor()</code>, <code>HijoMayor()</code>,
+        <code>HermanoSiguiente()</code>, <code>arbolVacío()</code>, <code>crearArbol</code>,
+        <code>agregarHijoMayor</code> y las eliminaciones con descendientes. Se ve solo como
+        <strong>especificación</strong>.</li>
+    <li>Los <strong>recorridos</strong> son recursión doble: por <code>hijoMayor</code> (bajar a los hijos)
+        y por <code>hermanoSig</code> (seguir con los hermanos). Una <strong>hoja</strong> es un nodo con
+        <code>hijoMayor == null</code> (el hermano siguiente no cuenta como hijo).</li>
+    <li>Accesos O(1); recorrer todo el árbol O(n).</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">Cargando…</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

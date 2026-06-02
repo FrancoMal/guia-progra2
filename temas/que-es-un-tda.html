@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Qué es un TDA? · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="que-es-un-tda">
+<main>
+<article>
+  <h1>¿Qué es un TDA?</h1>
+  <p>Esta es la <strong>primera idea</strong> de toda la materia, y la que sostiene todo lo demás:
+     la pila, la cola, el conjunto, el árbol… todos son <strong>Tipos de Dato Abstractos</strong>.
+     Entender bien qué significa eso te va a ahorrar muchísimas confusiones más adelante.</p>
+
+  <h2>1. ¿Qué es un Tipo de Dato Abstracto?</h2>
+  <p>Un <strong>Tipo de Dato Abstracto</strong> (TDA, o en inglés <em>ADT</em>) es un modelo de dato
+     definido por su <strong>comportamiento</strong>: <em>qué</em> operaciones ofrece y <em>qué hace</em>
+     cada una, vistas desde afuera. Lo importante es que <strong>oculta la implementación</strong>:
+     no decís cómo están guardados los datos por dentro, solo qué se puede hacer con ellos.</p>
+  <p>Comparalo con un <strong>tipo de dato común</strong> como <code>int</code>. Un <code>int</code> también
+     se define por sus valores admisibles (los enteros) y sus operaciones (<code>+</code>, <code>-</code>,
+     <code>*</code>…), pero vos no sabés ni te importa cómo guarda el procesador esos 32 bits. Un TDA es
+     la misma idea, pero para estructuras más ricas (una pila, un conjunto) que vos mismo especificás.</p>
+  <div class="callout"><span class="et">🚗 La analogía del auto</span>
+    Cuando manejás un auto usás su <strong>interfaz</strong>: volante, pedales, palanca. No necesitás
+    saber cómo funciona el motor por dentro para llegar a destino. Es más: el mecánico podría cambiarte
+    el motor entero por otro y vos seguirías manejando igual, sin notarlo. Un TDA es eso: vos usás las
+    <strong>operaciones</strong> (la interfaz) y te <strong>abstraés</strong> de cómo están implementadas
+    por dentro. El control remoto del televisor sirve igual: apretás "subir volumen" sin saber qué
+    circuito se activa.</div>
+  <p>En palabras de la cátedra: <em>«un TDA es un modelo en el que un tipo de dato queda definido por su
+     comportamiento (semántica) desde el punto de vista del usuario; la abstracción es sobre los detalles
+     de la implementación, que permanecen ocultos»</em>. Nos concentramos en <strong>qué hace</strong>,
+     no en <strong>cómo lo hace</strong>.</p>
+
+  <h2>2. Especificación vs. implementación</h2>
+  <p>Esta es la separación central. Un TDA tiene dos caras que conviene no mezclar:</p>
+  <ul>
+    <li>La <strong>especificación</strong> (el <strong>«qué»</strong>): la interfaz —qué operaciones hay—
+        más la <strong>semántica</strong> de cada una (qué hace) y sus <strong>precondiciones</strong>
+        (qué hay que cumplir para invocarla). Es el contrato.</li>
+    <li>La <strong>implementación</strong> (el <strong>«cómo»</strong>): el código concreto que consigue
+        ese comportamiento. Acá aparecen los arreglos, las listas enlazadas, los índices, etc.</li>
+  </ul>
+  <p>Lo potente es que el «qué» es <strong>independiente</strong> del «cómo». Por eso una misma
+     especificación admite <strong>varias implementaciones</strong> distintas, y todas son correctas
+     mientras respeten el contrato. En Java, esto se modela con una <strong>interfaz</strong> (la
+     especificación) y una o más <strong>clases</strong> que la implementan:</p>
+  <pre><code class="java">// ESPECIFICACIÓN: el "qué". Una interfaz con las operaciones y sus precondiciones.
+public interface PilaTDA {
+    void inicializarPila();   // Sin precondiciones.
+    void apilar(int x);       // Precondición: pila inicializada.
+    void desapilar();         // Precondición: pila inicializada y NO vacía.
+    int  tope();              // Precondición: pila inicializada y NO vacía.
+    boolean pilaVacia();      // Precondición: pila inicializada.
+}
+
+// IMPLEMENTACIÓN A: el "cómo", con un arreglo.
+public class PilaConArreglo implements PilaTDA { /* ... usa int[] ... */ }
+
+// IMPLEMENTACIÓN B: el "cómo", con una lista enlazada.
+public class PilaConLista   implements PilaTDA { /* ... usa Nodo ... */ }</code></pre>
+  <p>Quien <em>usa</em> la pila programa contra <code>PilaTDA</code>, no contra una clase concreta. Por eso
+     se puede cambiar <code>PilaConArreglo</code> por <code>PilaConLista</code> sin tocar el código que la
+     usa: <strong>cambia el cómo, no el qué</strong>.</p>
+  <div class="callout tip"><span class="et">💡 La regla de oro</span>
+    Si una decisión se puede cambiar sin que el usuario del TDA se entere, entonces es parte del
+    <strong>cómo</strong> (implementación) y <strong>no</strong> del <strong>qué</strong> (especificación).
+    "Uso un arreglo de tamaño 100" es un cómo; "<code>desapilar</code> saca el último que entró" es un qué.</div>
+
+  <h2>3. Las 3 vistas de un TDA</h2>
+  <p>La cátedra describe un TDA con un esquema de <strong>tres piezas</strong> que se conectan. Según
+     <em>desde dónde</em> lo mires, hablás de una vista distinta:</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">Usuario (usa el TDA)</span><span class="flecha">→</span>
+    <span class="nodo">Interfaz (el contrato)</span><span class="flecha">→</span>
+    <span class="nodo">Implementador (programa el TDA)</span>
+  </div>
+  <ul>
+    <li><strong>Vista del usuario</strong>: solo le interesa <em>qué operaciones invoco</em> y qué obtengo.
+        Ve la interfaz y nada más; la implementación le queda oculta. Es el nivel de abstracción
+        <strong>más alto</strong> (el que maneja el auto).</li>
+    <li><strong>Vista del implementador</strong>: le interesa <em>cómo lo programo</em> para que cumpla el
+        contrato. Trabaja con arreglos, nodos, índices. Es el nivel de abstracción
+        <strong>más bajo</strong> (el mecánico que conoce el motor).</li>
+    <li><strong>Vista de la interfaz</strong>: es el <em>contrato</em> que une a las otras dos. Le promete
+        al usuario qué va a poder hacer y le exige al implementador qué tiene que cumplir.</li>
+  </ul>
+  <p>La clave: las implementaciones son <strong>intercambiables</strong>. Mientras la interfaz no cambie,
+     el implementador puede reemplazar una implementación por otra y el usuario <strong>no lo percibe</strong>.
+     Esa es justamente la ventaja de separar las vistas.</p>
+
+  <h2>4. Estado vs. comportamiento (y qué significa "correcto")</h2>
+  <p>Un TDA tiene, en todo momento, un <strong>estado</strong> y un <strong>comportamiento</strong>:</p>
+  <ul>
+    <li>El <strong>estado</strong> son los valores que guarda en ese instante. En una cuenta bancaria,
+        el saldo; en una pila, los elementos apilados y cuál es el tope.</li>
+    <li>El <strong>comportamiento</strong> (su <em>semántica</em>) es <em>qué hacen</em> sus operaciones.
+        En la cuenta: depositar suma al saldo, retirar lo resta; en la pila: apilar pone arriba,
+        desapilar saca el de arriba.</li>
+  </ul>
+  <p>Con esto podemos definir con precisión qué quiere decir que una implementación sea
+     <strong>correcta</strong>:</p>
+  <div class="callout"><span class="et">✅ Definición de corrección</span>
+    Una implementación es <strong>correcta</strong> si el TDA se comporta como se espera para
+    <strong>cualquier estado válido posible</strong>. No alcanza con que ande en un caso; tiene que
+    cumplir el contrato siempre: con la pila vacía, con un solo elemento, con la pila llena, después de
+    mil apilar y desapilar… para <em>todo</em> estado que el contrato admita.</div>
+  <p>Por eso en un parcial, cuando te piden "implementá tal TDA", no basta con que compile: tiene que
+     respetar la semántica en todos los casos (¡ojo con los bordes!).</p>
+
+  <h2>5. Las precondiciones como contrato</h2>
+  <p>No toda operación se puede invocar en cualquier momento. Cada operación de un TDA puede exigir
+     <strong>precondiciones</strong>: condiciones que deben cumplirse <em>antes</em> de llamarla.
+     Las precondiciones son parte de la <strong>especificación</strong>: forman el contrato.</p>
+  <p>El ejemplo clásico es la pila. La operación <code>desapilar()</code> tiene como precondición que la
+     <strong>pila no esté vacía</strong>: no tiene sentido sacar el de arriba si no hay nada. Lo mismo
+     <code>tope()</code>. De hecho, así están escritos los TDA de Monzón que vas a usar en el examen:</p>
+  <pre><code class="java">/**
+ * Precondición: La pila debe estar inicializada para usar cada uno de los métodos.
+ */
+public interface Stack {
+    void add(int a);
+    /** Precondición: La pila no puede estar vacía. */
+    void remove();
+    /** Precondición: La pila no puede estar vacía. */
+    int getTop();
+    boolean isEmpty();
+}</code></pre>
+  <div class="callout error"><span class="et">⚠️ Violar la precondición = romper el contrato</span>
+    Si llamás a una operación <strong>sin</strong> cumplir su precondición (por ejemplo
+    <code>desapilar()</code> con la pila vacía), estás <strong>rompiendo el contrato</strong>. El TDA
+    <em>no garantiza</em> nada en ese caso: puede explotar con un <code>NullPointerException</code>, dar
+    un índice <code>-1</code>, o devolver basura. La responsabilidad de chequear la precondición es del
+    <strong>usuario</strong>, no del implementador. Por eso el patrón de parcial es:
+    <pre><code class="java">if (!p.pilaVacia()) {   // Primero verifico la precondición...
+    int t = p.tope();   // ...y recién entonces invoco la operación.
+    p.desapilar();
+}</code></pre></div>
+  <div class="callout tip"><span class="et">💡 Por qué conviene</span>
+    Poner la responsabilidad de la precondición en el usuario mantiene al TDA <strong>simple y eficiente</strong>:
+    el implementador no tiene que andar revisando ni lanzando excepciones en cada llamada. El contrato es
+    claro: "vos cumplís la precondición, yo cumplo lo prometido".</div>
+
+  <h2>6. Implementación estática vs. dinámica</h2>
+  <p>Cuando llega el momento de implementar un TDA (la vista del implementador), casi siempre tenés que
+     elegir <strong>dónde guardar</strong> los datos. Hay dos grandes familias:</p>
+  <h3>Estática (con arreglo)</h3>
+  <p>Se reserva un <strong>arreglo de tamaño fijo</strong> (un <code>MAX</code> definido de antemano) y se
+     lleva un índice con la cantidad de elementos. La memoria se pide <strong>toda junta al principio</strong>.</p>
+  <pre><code class="java">public class PilaConArreglo implements PilaTDA {
+    int[] datos;
+    int   tope;   // Cantidad de elementos; el último válido está en datos[tope - 1].
+
+    public void inicializarPila() { datos = new int[100]; tope = 0; }  // MAX = 100, fijo.
+    public void apilar(int x)     { datos[tope] = x; tope++; }
+    public void desapilar()       { tope--; }
+    public int  tope()            { return datos[tope - 1]; }
+    public boolean pilaVacia()    { return tope == 0; }
+}</code></pre>
+  <h3>Dinámica (con lista enlazada)</h3>
+  <p>Se usan <strong>nodos enlazados</strong>: cada uno guarda un valor y apunta al siguiente. La memoria
+     se pide <strong>de a poco, a demanda</strong>, con cada <code>new Nodo()</code>. La estructura
+     <strong>crece y se achica</strong> según haga falta.</p>
+  <pre><code class="java">public class PilaConLista implements PilaTDA {
+    class Nodo { int valor; Nodo sig; }
+    Nodo tope;
+
+    public void inicializarPila() { tope = null; }              // Lista vacía.
+    public void apilar(int x) {
+        Nodo nuevo = new Nodo();
+        nuevo.valor = x;
+        nuevo.sig = tope;   // El nuevo nodo se "engancha" adelante...
+        tope = nuevo;       // ...y pasa a ser el tope. Memoria pedida a demanda.
+    }
+    public void desapilar()    { tope = tope.sig; }
+    public int  tope()         { return tope.valor; }
+    public boolean pilaVacia() { return tope == null; }
+}</code></pre>
+  <table class="costo">
+    <thead><tr><th>Eje</th><th>Estática (arreglo)</th><th>Dinámica (lista)</th></tr></thead>
+    <tbody>
+      <tr><td>Tamaño</td><td>Fijo (<code>MAX</code> de antemano)</td><td>Crece a demanda</td></tr>
+      <tr><td>Memoria</td><td>Toda al inicio, aunque sobre</td><td>Solo lo que se usa, nodo por nodo</td></tr>
+      <tr><td>Riesgo</td><td>Se puede <strong>llenar</strong> (overflow)</td><td>No se llena (salvo agotar la RAM)</td></tr>
+      <tr><td>Nombre en Monzón</td><td><code>StaticSet</code>, <code>StaticGraph</code>…</td><td><code>DynamicSBT</code>, <code>DynamicBinaryTree</code>…</td></tr>
+    </tbody>
+  </table>
+  <div class="callout error"><span class="et">⚠️ El límite de lo estático</span>
+    El arreglo tiene <strong>tamaño fijo</strong>: si la pila ya está llena
+    (<code>tope == datos.length</code>) y apilás, <code>datos[tope] = x</code> revienta con
+    <code>ArrayIndexOutOfBoundsException</code>. Es una nueva precondición ("hay lugar") que la versión
+    dinámica no necesita, porque siempre puede pedir otro nodo.</div>
+  <p>Lo importante: estática y dinámica son dos <strong>implementaciones</strong> distintas del
+     <em>mismo</em> TDA. Desde la vista del usuario son indistinguibles: la pila se comporta igual.</p>
+
+  <h2>7. Los 4 ejes para describir un TDA</h2>
+  <p>Cuando definís o describís un TDA (algo que Monzón pide declarar explícitamente), conviene ubicarlo
+     en estos <strong>cuatro ejes</strong>. Cada uno es una pregunta sí/no que caracteriza la estructura:</p>
+  <table class="costo">
+    <thead><tr><th>Eje</th><th>Pregunta clave</th><th>Ejemplos</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Lineal vs. no lineal</strong></td>
+        <td>¿Los elementos van uno detrás de otro, o hay ramificación/jerarquía?</td>
+        <td>Pila y cola son <strong>lineales</strong>; un árbol es <strong>no lineal</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Destructiva vs. no destructiva</strong></td>
+        <td>¿Recorrerla la consume? ¿Para leer todo hay que ir sacando elementos?</td>
+        <td>La pila es <strong>destructiva</strong> (solo la leés desapilando); un conjunto con iterador es <strong>no destructiva</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Estática vs. dinámica</strong></td>
+        <td>¿La implementación tiene tamaño fijo (arreglo) o crece a demanda (lista)?</td>
+        <td><code>StaticSet</code> vs. <code>DynamicSBT</code> (el eje de la sección 6).</td>
+      </tr>
+      <tr>
+        <td><strong>Mutable vs. inmutable</strong></td>
+        <td>¿Sus operaciones modifican el estado, o cada operación devuelve una copia nueva?</td>
+        <td>Una pila que cambia con <code>apilar</code> es <strong>mutable</strong>; un <code>String</code> de Java es <strong>inmutable</strong>.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout tip"><span class="et">💡 Para qué sirve</span>
+    Estos ejes son un <strong>checklist</strong>. Antes de implementar un TDA, declarar dónde cae en cada
+    eje te obliga a tener claras decisiones que después se notan en el código: si es <em>destructiva</em>,
+    no vas a poder recorrerla sin copiarla; si la querés <em>estática</em>, vas a tener que manejar el
+    <em>overflow</em>; si es <em>no lineal</em>, las operaciones probablemente sean recursivas.</div>
+
+  <h2>8. Conexión con el resto de la guía</h2>
+  <p>Todo lo que viene en la materia es una aplicación de esta idea. Cada TDA concreto es una
+     especificación (un contrato con precondiciones) que vas a poder implementar de forma estática o
+     dinámica:</p>
+  <ul>
+    <li>La <strong>Pila</strong> (LIFO) y la <strong>Cola</strong> (FIFO): TDAs lineales y destructivos.</li>
+    <li>El <strong>Conjunto</strong> (<code>Set</code>) y el <strong>Diccionario</strong>: lineales, no destructivos.</li>
+    <li>Los <strong>Árboles</strong> (binario, ABB, AVL): TDAs <em>no lineales</em>, casi siempre dinámicos y recursivos.</li>
+    <li>El <strong>Grafo</strong>: no lineal, con versión <code>StaticGraph</code> (matriz) y dinámica.</li>
+  </ul>
+  <p>Cuando estudies cada uno, fijate siempre en lo mismo: <strong>¿cuál es su interfaz? ¿qué
+     precondiciones tiene cada operación? ¿cómo se ubica en los 4 ejes?</strong> Esa es la "ficha" de un TDA.</p>
+
+  <h2>9. Resumen</h2>
+  <ul>
+    <li>Un <strong>TDA</strong> es un modelo definido por su <strong>comportamiento</strong> (qué operaciones
+        ofrece y qué hacen) que <strong>oculta la implementación</strong>.</li>
+    <li>Separamos la <strong>especificación</strong> (el «qué»: interfaz + semántica + precondiciones) de la
+        <strong>implementación</strong> (el «cómo»). Un mismo TDA admite <strong>varias implementaciones</strong>.</li>
+    <li>Tres <strong>vistas</strong> intercambiables: usuario (qué invoco), implementador (cómo lo programo),
+        interfaz (el contrato que las une).</li>
+    <li><strong>Estado</strong> (valores actuales) vs. <strong>comportamiento</strong> (qué hacen las operaciones).
+        Una implementación es <strong>correcta</strong> si cumple el contrato para <em>todo</em> estado válido.</li>
+    <li>Las <strong>precondiciones</strong> son parte del contrato: violarlas (ej.: desapilar vacía) es
+        responsabilidad del usuario y deja al TDA sin garantías.</li>
+    <li>Implementación <strong>estática</strong> (arreglo, tamaño fijo) vs. <strong>dinámica</strong> (lista, crece a demanda).</li>
+    <li>Los <strong>4 ejes</strong> para describir un TDA: lineal/no lineal, destructiva/no destructiva,
+        estática/dinámica, mutable/inmutable.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">Cargando…</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

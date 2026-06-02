@@ -232,6 +232,19 @@ while (i &lt; n) {              // Parece el bucle externo...
         <strong>O(2n) = O(n)</strong>; y Big-O es el peor caso, no el mejor.</li>
   </ul>
 
+  <h2>7. Laboratorio: curvas de costo</h2>
+  <p>Una cosa es leer que O(n²) "crece rápido" y otra es <strong>verlo</strong>. Abajo están dibujadas
+     las seis curvas más comunes en un mismo gráfico. Mové el <strong>slider</strong> para elegir un
+     <code>n</code> y mirá cuántos pasos pide cada orden en ese punto: vas a notar cómo lo polinómico
+     se mantiene domable mientras lo <strong>exponencial</strong> se dispara hacia la zona intratable.
+     Probá también el ejemplo de <strong>lavar los platos</strong>, donde un algoritmo con una constante
+     grande le gana a otro con un <code>n²</code>… pero solo hasta cierto <code>n</code>.</p>
+  <div class="callout tip"><span class="et">💡 Cómo leerlo</span>
+    El eje vertical está en <strong>escala logarítmica</strong> (si no, O(2ⁿ) se saldría del lienzo y el
+    resto se vería plano). La línea punteada de arriba marca la <strong>frontera tratable / intratable</strong>:
+    todo lo polinómico vive abajo; lo exponencial trepa hasta cruzarla.</div>
+  <div id="curvas-visual" class="lab-box"></div>
+
   <section class="actividades" data-actividades>
     <h2>Actividades</h2>
     <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
@@ -241,5 +254,6 @@ while (i &lt; n) {              // Parece el bucle externo...
 </main>
 <script src="../assets/data.js"></script>
 <script src="../assets/app.js"></script>
+<script src="../assets/visual-curvas.js"></script>
 </body>
 </html>

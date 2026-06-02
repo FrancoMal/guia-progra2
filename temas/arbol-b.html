@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Árbol B · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="arbol-b">
+<main>
+<article>
+  <h1>Árbol B</h1>
+
+  <h2>1. ¿Qué es un Árbol B y para qué?</h2>
+  <p>Un <strong>Árbol B</strong> es un <strong>árbol de búsqueda balanceado</strong> que, a diferencia
+     del ABB o el AVL (un valor por nodo), guarda <strong>muchas claves por nodo</strong> y tiene
+     <strong>muchos hijos por nodo</strong>. La idea es que cada nodo sea "gordo": en vez de bajar de a
+     una clave por nivel, en cada nodo comparás contra un puñado de claves y bajás un nivel entero.</p>
+  <p>¿Para qué sirve eso? Para <strong>minimizar la cantidad de accesos</strong>. El árbol B se inventó
+     pensando en datos guardados en <strong>disco</strong> (bases de datos, índices, sistemas de archivos):
+     leer un nodo del disco es <em>carísimo</em> comparado con comparar claves en memoria. Si cada acceso
+     a disco te trae un nodo con cientos de claves, con poquísimos accesos (la <strong>altura</strong> del
+     árbol) llegás a cualquier valor. <strong>Menos altura ⇒ menos accesos a disco</strong>.</p>
+  <div class="callout"><span class="et">📦 La intuición clave</span>
+    En un ABB cada nodo tiene 1 clave y 2 hijos: para n valores la altura ronda <code>log₂ n</code>.
+    En un árbol B cada nodo puede tener, por ejemplo, 100 claves y 101 hijos: la altura ronda
+    <code>log₁₀₁ n</code>, <strong>muchísimo menor</strong>. Cada nivel que bajás te ahorra un acceso a
+    disco, y por eso un árbol B con millones de claves tiene altura 3 o 4.</div>
+
+  <h3>Orden q y parámetro t</h3>
+  <p>El árbol B se define con un parámetro <strong><code>t</code></strong> (a veces llamado <em>grado
+     mínimo</em>). A partir de <code>t</code> sale el <strong>orden</strong>:</p>
+  <pre><code class="java">q = 2*t + 1   // orden del árbol B</code></pre>
+  <p>El orden <code>q</code> es el <strong>máximo de referencias a hijos</strong> que puede tener un nodo.
+     Un nodo con <code>q</code> hijos tiene <code>q − 1 = 2t</code> claves. Por eso decimos que un nodo
+     guarda <strong>como mucho <code>2t</code> claves</strong> (y como mucho <code>2t + 1</code> hijos).</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">P₁</span><span class="flecha">·</span>
+    <span class="nodo">K₁</span><span class="flecha">·</span>
+    <span class="nodo">P₂</span><span class="flecha">·</span>
+    <span class="nodo">K₂</span><span class="flecha">·</span>
+    <span class="nodo">…</span><span class="flecha">·</span>
+    <span class="nodo">K_q-1</span><span class="flecha">·</span>
+    <span class="nodo">P_q</span>
+  </div>
+  <p>Dentro del nodo, las claves <code>K₁ &lt; K₂ &lt; … &lt; K_{q-1}</code> están <strong>ordenadas</strong>
+     y se intercalan con las referencias a hijos <code>P₁, P₂, …, P_q</code>. La referencia <code>P_i</code>
+     apunta al subárbol cuyas claves están <strong>entre <code>K_{i-1}</code> y <code>K_i</code></strong>:
+     <code>P₁</code> guarda lo menor que <code>K₁</code>, <code>P_q</code> lo mayor que <code>K_{q-1}</code>.
+     Es la misma idea del ABB (izquierda menor, derecha mayor) pero generalizada a varios cortes por nodo.</p>
+
+  <h2>2. Invariantes</h2>
+  <p>Lo que convierte un árbol de búsqueda cualquiera en un <strong>árbol B</strong> son sus
+     <strong>invariantes</strong>: reglas que se cumplen <em>siempre</em>, antes y después de cada
+     operación. Son la garantía de que el árbol queda balanceado y de que no se desperdicia espacio.</p>
+  <ul>
+    <li><strong>Claves por nodo</strong>: cada nodo (salvo la raíz) tiene entre <strong><code>t</code> y
+        <code>2t</code> claves</strong>. La <strong>raíz</strong> es la excepción: puede tener desde
+        <strong>1</strong> clave (o ninguna si el árbol está vacío) hasta <code>2t</code>.</li>
+    <li><strong>Hijos = claves + 1</strong>: un nodo con <code>k</code> claves tiene exactamente
+        <strong><code>k + 1</code> hijos</strong> (los huecos entre las claves, más los dos extremos).
+        Las hojas son la excepción: no tienen hijos (sus referencias son nulas).</li>
+    <li><strong>Claves ordenadas</strong>: dentro de un nodo, las claves están <strong>ordenadas de menor
+        a mayor</strong> (<code>K₁ &lt; K₂ &lt; … &lt; K_{q-1}</code>), y todo el subárbol entre dos claves
+        cae justo en ese rango de valores.</li>
+    <li><strong>Hojas al mismo nivel</strong>: <strong>TODAS las hojas están a la misma profundidad</strong>.
+        El árbol está perfectamente balanceado por construcción: no hay una rama más larga que otra.</li>
+    <li><strong>Crece y decrece por la RAÍZ</strong>: a diferencia del ABB (que crece por las hojas), el
+        árbol B aumenta su altura <strong>partiendo la raíz</strong> y la disminuye <strong>fusionando hacia
+        la raíz</strong>. Por eso todas las hojas se mantienen siempre al mismo nivel.</li>
+  </ul>
+  <div class="callout tip"><span class="et">💡 Por qué entre t y 2t</span>
+    El tope <code>2t</code> evita que un nodo crezca sin control. El piso <code>t</code> evita nodos
+    <strong>casi vacíos</strong>: si un nodo pudiera quedar con 1 sola clave, desperdiciaría espacio y
+    obligaría a más niveles (más accesos a disco). Mantener cada nodo al menos medio lleno es lo que
+    garantiza que la altura quede acotada en <code>O(log_t n)</code>.</div>
+  <div class="callout error"><span class="et">⚠️ Underflow vs. overflow</span>
+    Un nodo con <strong>más de <code>2t</code></strong> claves está en <strong>overflow</strong> (se pasó):
+    hay que <strong>dividirlo</strong>. Un nodo (que no sea la raíz) con <strong>menos de <code>t</code></strong>
+    claves está en <strong>underflow</strong> (quedó pobre): hay que <strong>pedir prestado o fusionar</strong>.
+    Toda la maquinaria de inserción y eliminación gira alrededor de reparar estos dos casos.</div>
+
+  <h2>3. Inserción</h2>
+  <p>La inserción en un árbol B <strong>siempre ocurre en una hoja</strong>, y el árbol
+     <strong>crece hacia la raíz</strong>. El procedimiento:</p>
+  <ol>
+    <li><strong>Buscar</strong> la hoja donde debería ir la clave (bajando por las referencias, igual que en
+        una búsqueda). Si la clave ya existe, no se hace nada: el árbol B <strong>no admite repetidos</strong>.</li>
+    <li><strong>Insertar ordenado</strong> en esa hoja, corriendo las claves mayores para hacerle lugar.</li>
+    <li>Si la hoja <strong>NO se pasó de <code>2t</code></strong>, listo: el proceso termina.</li>
+    <li>Si la hoja <strong>se pasó de <code>2t</code></strong> (overflow), hay que <strong>DIVIDIR</strong>:
+      <ul>
+        <li>La <strong>clave del medio sube al padre</strong> (se "promociona").</li>
+        <li>El nodo se <strong>parte en dos</strong>: las claves menores quedan en un nodo, las mayores en
+            otro. Esos dos nodos pasan a ser los hijos izquierdo y derecho de la clave que subió.</li>
+        <li>Si al subir la clave del medio el <strong>padre también se pasa</strong> de <code>2t</code>, se
+            repite la división <strong>hacia arriba</strong>.</li>
+      </ul>
+    </li>
+  </ol>
+  <div class="callout"><span class="et">📦 Cuándo aumenta la ALTURA</span>
+    Si la división se propaga hasta la <strong>raíz</strong> y la raíz también hay que dividirla, la clave
+    del medio sube a un <strong>nodo nuevo que se crea como nueva raíz</strong>. Recién <strong>ahí</strong>
+    el árbol aumenta su altura en 1. Una inserción que <em>no</em> llega a partir la raíz <strong>no cambia
+    la altura</strong>.</div>
+
+  <h3>Ejemplo paso a paso (t = 2, máximo 4 claves)</h3>
+  <p>Con <code>t = 2</code>: cada nodo guarda entre 2 y 4 claves. Partamos de esta hoja, que ya tiene las
+     4 claves (está <strong>llena</strong>):</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">[ 50 · 60 · 65 · 70 ]</span>
+  </div>
+  <p><strong>Insertamos el 52.</strong> Lo metemos ordenado como si entrara: la hoja queda con 5 claves
+     (<strong>overflow</strong>, se pasó de 4):</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">[ 50 · 52 · 60 · 65 · 70 ]</span>
+  </div>
+  <p>Hay que <strong>dividir</strong>. La clave del medio (la 3ª de 5) es el <strong>60</strong>:
+     <strong>sube al padre</strong> y el nodo se parte en dos:</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">padre: [ … 60 … ]</span><span class="flecha">→</span>
+    <span class="nodo">izq: [ 50 · 52 ]</span><span class="flecha">·</span>
+    <span class="nodo">der: [ 65 · 70 ]</span>
+  </div>
+  <p>Si el padre tenía lugar para el <strong>60</strong>, el proceso <strong>termina ahí</strong> y la
+     altura <strong>no cambia</strong>. Pero si la división se propagara nivel por nivel hasta partir la
+     raíz, se crearía una raíz nueva con la clave promocionada y la <strong>altura aumentaría en 1</strong>.</p>
+  <p>Así se vería en pseudocódigo Java la lógica de "insertar en hoja y dividir si hace falta":</p>
+  <pre><code class="java">// Esquema de inserción en un árbol B de grado mínimo t (máximo 2t claves por nodo).
+class NodoB {
+    int[] claves = new int[2*t + 1];   // 1 lugar extra para detectar el overflow.
+    NodoB[] hijos = new NodoB[2*t + 2];
+    int n = 0;                          // Cantidad de claves usadas.
+    boolean hoja = true;
+}
+
+void insertar(int x) {
+    if (raiz.n == 2*t) {               // La raíz está llena: hay que partirla ANTES de bajar.
+        NodoB nueva = new NodoB();     // Se crea una raíz nueva (el árbol CRECE por la raíz).
+        nueva.hoja = false;
+        nueva.hijos[0] = raiz;
+        dividirHijo(nueva, 0);         // Sube la clave del medio de la vieja raíz a la nueva.
+        raiz = nueva;                  // La altura aumentó en 1.
+    }
+    insertarNoLleno(raiz, x);          // Baja hasta la hoja y mete x sin que nadie se pase.
+}
+
+// Divide el hijo i de 'padre' (que está lleno): la clave del medio sube a 'padre'.
+void dividirHijo(NodoB padre, int i) {
+    NodoB lleno = padre.hijos[i];
+    NodoB nuevo = new NodoB();
+    nuevo.hoja = lleno.hoja;
+    // 'nuevo' se queda con las t claves mayores; 'lleno' con las t menores;
+    // la clave del medio (la t-ésima) sube a 'padre' en la posición i.
+    // ...corrimiento de claves e hijos...
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Pre-split: dividir al bajar</span>
+    Una variante muy usada (la de Cormen) <strong>parte cualquier nodo lleno mientras baja</strong>, antes
+    de llegar a la hoja. Así, cuando llega abajo, garantiza que hay lugar y nunca tiene que "rebotar" la
+    división hacia arriba. Es la misma idea: la clave del medio sube y el nodo se parte en dos.</div>
+
+  <h2>4. Eliminación</h2>
+  <p>La eliminación es la operación más delicada. La regla de oro: <strong>siempre se elimina de una
+     hoja</strong>. El procedimiento:</p>
+  <ol>
+    <li><strong>Buscar</strong> la clave. Si está en un <strong>nodo interno</strong>, no se borra ahí: se
+        <strong>reemplaza por su antecesor o sucesor</strong> (que <em>sí</em> vive en una hoja) y el
+        problema se reduce a borrar esa clave de la hoja.</li>
+    <li><strong>Borrar de la hoja.</strong> Si la hoja queda con <strong>al menos <code>t</code></strong>
+        claves, listo: no hay nada que reparar.</li>
+    <li>Si la hoja queda con <strong>menos de <code>t</code></strong> claves (<strong>underflow</strong>),
+        hay que reparar, y hay dos opciones:
+      <ul>
+        <li><strong>PRÉSTAMO de un hermano</strong>: si un hermano (izquierdo o derecho) tiene
+            <strong>más de <code>t</code></strong> claves (le sobra), <strong>cede una</strong>. La donación
+            pasa por el padre: la clave del hermano sube al padre, y la clave del padre baja al nodo pobre.
+            La altura <strong>no cambia</strong>.</li>
+        <li><strong>FUSIÓN con un hermano</strong>: si ningún hermano puede prestar (todos tienen el mínimo
+            <code>t</code>), se <strong>fusionan</strong> el nodo pobre, un hermano y la clave del padre que
+            los separa, formando un solo nodo. Como el padre pierde una clave, puede quedar en underflow y
+            <strong>el proceso se propaga hacia arriba</strong>.</li>
+      </ul>
+    </li>
+  </ol>
+  <div class="callout"><span class="et">📦 Cuándo DECRECE la altura</span>
+    Si la fusión se propaga hasta la <strong>raíz</strong> y la raíz se queda <strong>sin claves</strong>
+    (porque su última clave bajó en la fusión), esa raíz vacía se <strong>elimina</strong> y su único hijo
+    pasa a ser la nueva raíz. Recién <strong>ahí</strong> el árbol <strong>decrece su altura</strong> en 1.
+    El árbol B se acorta desde la raíz, igual que crece desde la raíz, y así todas las hojas siguen al
+    mismo nivel.</div>
+
+  <h3>Ejemplo: eliminar con fusión (t = 2, mínimo 2 claves)</h3>
+  <p>Con <code>t = 2</code>: cada nodo (salvo la raíz) debe tener al menos 2 claves. Tenemos esta hoja con
+     el mínimo (2 claves) y su hermano derecho también en el mínimo:</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">padre: [ … 25 … ]</span><span class="flecha">→</span>
+    <span class="nodo">hoja: [ 10 · 12 ]</span><span class="flecha">·</span>
+    <span class="nodo">hno der: [ 30 · 40 ]</span>
+  </div>
+  <p><strong>Eliminamos el 12</strong> de la hoja. La hoja queda con 1 sola clave
+     (<strong>underflow</strong>: menos de 2):</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">hoja: [ 10 ]  ⚠ underflow</span>
+  </div>
+  <p>Miramos al hermano derecho: <strong>tiene justo el mínimo (2)</strong>, así que <strong>no puede
+     prestar</strong>. Toca <strong>FUSIONAR</strong>: juntamos la hoja, la clave del padre que las separa
+     (<strong>25</strong>) y el hermano derecho en un solo nodo, y eliminamos el hermano:</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">nodo fusionado: [ 10 · 25 · 30 · 40 ]</span>
+  </div>
+  <p>Como el padre perdió su clave <strong>25</strong>, hay que <strong>chequearlo</strong>: si quedó con
+     menos de <code>t</code>, la reparación se propaga hacia arriba. Y si esa propagación vacía la raíz, el
+     árbol <strong>decrece su altura</strong>.</p>
+  <div class="callout tip"><span class="et">💡 Préstamo vs. fusión, en una frase</span>
+    <strong>Préstamo</strong> = "hay un hermano que tiene de más, que te dé una" (rota una clave a través
+    del padre, no cambia la altura). <strong>Fusión</strong> = "ningún hermano puede dar, juntémonos en uno
+    solo" (baja una clave del padre, y puede propagarse y decrecer la altura). Siempre se intenta primero
+    el préstamo; la fusión es el plan B.</div>
+
+  <h2>5. Complejidad y comparación con AVL</h2>
+  <p>En un árbol B la altura es <strong>O(log_t n)</strong> (logaritmo en base <code>t</code>, no en base 2).
+     En cada nodo que visitás hacés una búsqueda lineal entre sus claves, que cuesta <strong>O(t)</strong>.
+     Como recorrés un nodo por nivel y hay <code>O(log_t n)</code> niveles, el costo total de buscar,
+     insertar o eliminar es:</p>
+  <pre><code class="java">O(t · log_t n)</code></pre>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Árbol B (orden q = 2t+1)</th><th>AVL</th></tr></thead>
+    <tbody>
+      <tr><td><code>buscar</code></td><td>O(t · log_t n)</td><td>O(log₂ n)</td></tr>
+      <tr><td><code>insertar</code></td><td>O(t · log_t n)</td><td>O(log₂ n)</td></tr>
+      <tr><td><code>eliminar</code></td><td>O(t · log_t n)</td><td>O(log₂ n)</td></tr>
+      <tr><td>accesos a disco</td><td>O(log_t n) — <strong>muy pocos</strong></td><td>O(log₂ n) — muchos más</td></tr>
+    </tbody>
+  </table>
+  <p>En términos de <em>comparaciones</em> ambos son logarítmicos, y el AVL incluso hace menos cuentas en
+     memoria. Pero esa no es la pregunta que importa cuando los datos están en <strong>disco</strong>:</p>
+  <div class="callout"><span class="et">📦 Por qué el árbol B le gana al AVL en disco</span>
+    Lo caro no es comparar claves, es <strong>cada acceso a disco</strong> (miles de veces más lento que la
+    memoria). El AVL tiene altura <code>log₂ n</code>: para millones de valores, eso son ~20 niveles ⇒ ~20
+    accesos a disco. El árbol B mete cientos de claves por nodo, así que su altura <code>log_t n</code> es
+    de 3 o 4 niveles ⇒ <strong>3 o 4 accesos a disco</strong>. El factor <code>t</code> de la búsqueda
+    lineal dentro del nodo ocurre <em>en memoria</em>, así que no pesa. Por eso las bases de datos y los
+    sistemas de archivos usan árboles B (y B+), no AVL.</div>
+  <div class="callout tip"><span class="et">💡 Regla mnemotécnica</span>
+    <strong>AVL = un valor por nodo, ideal en memoria</strong> (mínimas comparaciones).
+    <strong>Árbol B = muchos valores por nodo, ideal en disco</strong> (mínimos accesos). Ambos son
+    balanceados y logarítmicos; lo que cambia es <em>qué</em> recurso minimizan.</div>
+
+  <h2>6. Laboratorio interactivo</h2>
+  <p>Insertá valores y mirá cómo el árbol B se llena, <strong>divide nodos</strong> cuando hay overflow y
+     <strong>crece hacia la raíz</strong>. Probá también eliminar para ver el <strong>préstamo</strong> y la
+     <strong>fusión</strong> en acción, y observá cuándo cambia (o no) la altura.</p>
+  <div id="arbolb-visual" class="lab-box"></div>
+
+  <h2>7. Resumen</h2>
+  <ul>
+    <li><strong>Árbol B</strong>: árbol de búsqueda balanceado con <strong>muchas claves por nodo</strong>,
+        pensado para <strong>minimizar accesos a disco</strong>. Orden <code>q = 2t + 1</code>, parámetro
+        <code>t</code>.</li>
+    <li><strong>Invariantes</strong>: cada nodo (salvo la raíz) tiene entre <code>t</code> y <code>2t</code>
+        claves; un nodo con <code>k</code> claves tiene <code>k+1</code> hijos; las claves van ordenadas;
+        <strong>todas las hojas al mismo nivel</strong>; crece y decrece por la <strong>raíz</strong>.</li>
+    <li><strong>Inserción</strong>: siempre en una hoja; si hay overflow (más de <code>2t</code>), se
+        <strong>divide</strong> y la clave del medio <strong>sube</strong>. Si se parte la raíz, la
+        <strong>altura aumenta</strong>.</li>
+    <li><strong>Eliminación</strong>: siempre de una hoja (si la clave está en un interno, se reemplaza por
+        antecesor/sucesor); si hay underflow (menos de <code>t</code>), <strong>préstamo</strong> de un
+        hermano o <strong>fusión</strong>. La fusión puede <strong>decrecer la altura</strong>.</li>
+    <li><strong>Costo</strong> <code>O(t · log_t n)</code>; vs. AVL <code>O(log₂ n)</code> en comparaciones,
+        pero el árbol B gana en <strong>accesos a disco</strong> por su altura mínima.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">Cargando…</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+<script src="../assets/visual-arbolb.js"></script>
+</body>
+</html>
