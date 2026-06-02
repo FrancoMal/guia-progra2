@@ -46,8 +46,9 @@
     return out + esc(src.slice(last));
   }
   function resaltar() {
-    document.querySelectorAll('pre>code.java, code.lang-java').forEach(c => { c.innerHTML = highlightJava(c.textContent); });
+    document.querySelectorAll('code.java, code.lang-java').forEach(c => { c.innerHTML = highlightJava(c.textContent); });
   }
+  window.resaltarJava = resaltar;   // lo usa el motor de actividades (Fase 2)
 
   // ---- Header ----
   function construirHeader() {
@@ -131,4 +132,18 @@
   navTema();
   portada();
   resaltar();
+
+  // ---- Fase 2: cargar actividades de práctica del tema (si existen) ----
+  if (slugActual) {
+    const cargar = (src, cb) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = cb; s.onerror = () => {};
+      document.body.appendChild(s);
+    };
+    cargar(base + 'assets/actividades.js', () => {
+      cargar(base + 'assets/actividades/' + slugActual + '.js', () => {
+        if (window.renderActividades) window.renderActividades();
+      });
+    });
+  }
 })();

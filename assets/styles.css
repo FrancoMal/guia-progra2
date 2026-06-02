@@ -87,6 +87,36 @@ p code,li code,td code{background:var(--code-bg);padding:.1em .35em;border-radiu
 .proximamente{color:var(--muted);font-style:italic}
 .actividades{margin-top:2.5rem;border-top:1px dashed var(--border);padding-top:1rem}
 
+/* ===== Actividades de práctica (Fase 2) ===== */
+.act-score{font-weight:700;margin:.4rem 0 1rem;color:var(--acento)}
+.actividad{background:var(--surface);border:1px solid var(--border);border-radius:var(--radio);padding:1rem 1.1rem;margin:1rem 0}
+.act-tipo{display:inline-block;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;
+  background:var(--acento-suave);color:var(--acento);border-radius:99px;padding:.15rem .6rem;margin-bottom:.5rem;font-weight:700}
+.act-enunciado{margin:.3rem 0 .6rem;font-weight:600}
+.act-opciones{display:flex;flex-direction:column;gap:.5rem}
+.act-op{text-align:left;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:.55rem .8rem;cursor:pointer;font:inherit;color:var(--fg)}
+.act-op:hover:not(:disabled){border-color:var(--acento)}
+.act-op.correcta{background:rgba(31,157,91,.16);border-color:var(--ok);font-weight:600}
+.act-op.incorrecta{background:rgba(216,69,59,.13);border-color:var(--err)}
+.act-op:disabled{cursor:default}
+.act-exp{margin-top:.7rem;padding:.6rem .8rem;border-radius:8px;border-left:4px solid var(--acento);background:var(--bg)}
+.act-exp.ok{border-color:var(--ok)} .act-exp.mal{border-color:var(--warn)}
+.act-verificar{margin-top:.6rem;background:var(--acento);color:#fff;border:0;border-radius:8px;
+  padding:.5rem .9rem;cursor:pointer;font:inherit}
+.ordenar-lista,.corregir-lista{display:flex;flex-direction:column;gap:.35rem;margin:.5rem 0}
+.ordenar-linea,.corregir-linea{display:flex;align-items:center;gap:.6rem;background:var(--code-bg);
+  border:1px solid var(--border);border-radius:8px;padding:.35rem .6rem}
+.ordenar-linea code,.corregir-linea code{font-family:var(--mono);font-size:.9em}
+.corregir-linea{cursor:pointer}
+.corregir-linea:hover{border-color:var(--acento)}
+.corregir-linea.correcta{border-color:var(--ok);background:rgba(31,157,91,.13)}
+.corregir-linea.incorrecta{border-color:var(--err);background:rgba(216,69,59,.1)}
+.ord-ctrl{display:flex;flex-direction:column;gap:2px}
+.ord-ctrl button{background:var(--surface);border:1px solid var(--border);border-radius:5px;
+  cursor:pointer;line-height:1;font-size:.8rem;color:var(--fg);padding:0 .3rem}
+.ordenar-lista.todo-bien .ordenar-linea{border-color:var(--ok)}
+
 /* Diagrama simple reutilizable (cajas para nodos/celdas) */
 .diagrama{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:1rem 0}
 .diagrama .nodo{border:1px solid var(--border);background:var(--surface);border-radius:8px;
