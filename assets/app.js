@@ -6,11 +6,11 @@
   const base = enTemas ? '../' : '';
   const slugActual = document.body.dataset.tema || null;
 
-  // Favicon vacío: evita el 404 de favicon.ico y mantiene la consola limpia (sigue siendo offline).
+  // Favicon SVG embebido (offline, sin pedido de red): marca de la guía.
   if (!document.querySelector('link[rel="icon"]')) {
     const fav = document.createElement('link');
     fav.rel = 'icon';
-    fav.href = 'data:,';
+    fav.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b1421d'/%3E%3Cg fill='%23fdf3e6'%3E%3Crect x='8' y='9' width='16' height='3.4' rx='1.7'/%3E%3Crect x='8' y='14.3' width='16' height='3.4' rx='1.7'/%3E%3Crect x='8' y='19.6' width='10' height='3.4' rx='1.7'/%3E%3C/g%3E%3C/svg%3E";
     document.head.appendChild(fav);
   }
 
@@ -51,23 +51,40 @@
   window.resaltarJava = resaltar;   // lo usa el motor de actividades (Fase 2)
 
   // ---- Header ----
+  const SVG_MARCA = '<svg viewBox="0 0 32 32" aria-hidden="true">' +
+    '<rect width="32" height="32" rx="7"></rect>' +
+    '<g class="m-bars"><rect x="8" y="9" width="16" height="3.4" rx="1.7"></rect>' +
+    '<rect x="8" y="14.3" width="16" height="3.4" rx="1.7"></rect>' +
+    '<rect x="8" y="19.6" width="10" height="3.4" rx="1.7"></rect></g></svg>';
+  function etiquetaTema() {
+    return tema === 'oscuro'
+      ? '<span class="t-ico" aria-hidden="true">☀</span><span class="t-lbl">Claro</span>'
+      : '<span class="t-ico" aria-hidden="true">☾</span><span class="t-lbl">Oscuro</span>';
+  }
   function construirHeader() {
     const h = document.createElement('header');
     h.className = 'app-header';
     h.innerHTML =
-      '<button class="hamburguesa" aria-label="Abrir menú">☰</button>' +
-      '<h1><a href="' + base + 'index.html" style="color:inherit;text-decoration:none">📘 Programación 2</a></h1>' +
+      '<button class="hamburguesa" aria-label="Abrir o cerrar el menú" aria-expanded="false"><span></span><span></span><span></span></button>' +
+      '<a class="marca" href="' + base + 'index.html">' +
+        '<span class="marca-glifo">' + SVG_MARCA + '</span>' +
+        '<span class="marca-txt">Programación&nbsp;<b>2</b></span>' +
+      '</a>' +
       '<span class="spacer"></span>' +
-      '<button class="btn" id="toggle-tema">' + (tema === 'oscuro' ? '☀️ Claro' : '🌙 Oscuro') + '</button>';
+      '<button class="btn btn-tema" id="toggle-tema" aria-label="Cambiar tema claro u oscuro">' + etiquetaTema() + '</button>';
     document.body.prepend(h);
     const btn = h.querySelector('#toggle-tema');
     btn.onclick = () => {
       tema = tema === 'oscuro' ? 'claro' : 'oscuro';
       localStorage.setItem(LS_TEMA, tema);
       aplicarTema(tema);
-      btn.textContent = tema === 'oscuro' ? '☀️ Claro' : '🌙 Oscuro';
+      btn.innerHTML = etiquetaTema();
     };
-    h.querySelector('.hamburguesa').onclick = () => document.getElementById('sidebar').classList.toggle('abierto');
+    const ham = h.querySelector('.hamburguesa');
+    ham.onclick = () => {
+      const abierto = document.body.classList.toggle('menu-open');
+      ham.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    };
   }
 
   // ---- Sidebar ----
@@ -84,7 +101,20 @@
       return '<details class="nav-bloque"' + abierto + '><summary>' + b.titulo + '</summary><ul>' + items + '</ul></details>';
     }).join('');
     document.body.appendChild(aside);
+    aside.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', cerrarMenu); });
+    if (!document.querySelector('.menu-backdrop')) {
+      const bd = document.createElement('div');
+      bd.className = 'menu-backdrop';
+      bd.addEventListener('click', cerrarMenu);
+      document.body.appendChild(bd);
+    }
   }
+  function cerrarMenu() {
+    document.body.classList.remove('menu-open');
+    const ham = document.querySelector('.hamburguesa');
+    if (ham) ham.setAttribute('aria-expanded', 'false');
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrarMenu(); });
 
   // ---- Navegación de tema (prev/next + marcar leído) ----
   function navTema() {
@@ -122,8 +152,11 @@
       b.temas.map(t => '<li><a href="temas/' + t.archivo + '">' + t.titulo + (prog[t.slug] ? ' ✓' : '') + '</a></li>').join('') +
       '</ul></div>').join('');
     cont.innerHTML =
-      '<div class="progreso"><strong>Progreso:</strong> ' + hechos + '/' + TEMAS.length + ' temas leídos' +
-      '<div class="barra"><span style="width:' + pct + '%"></span></div></div>' +
+      '<div class="progreso">' +
+        '<div class="prog-top"><strong>Tu progreso</strong>' +
+        '<span class="prog-pct">' + hechos + ' / ' + TEMAS.length + ' temas · ' + pct + '%</span></div>' +
+        '<div class="barra"><span style="width:' + pct + '%"></span></div>' +
+      '</div>' +
       '<div class="cards">' + cards + '</div>';
   }
 
