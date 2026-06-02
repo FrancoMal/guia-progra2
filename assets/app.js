@@ -160,10 +160,67 @@
       '<div class="cards">' + cards + '</div>';
   }
 
+  // ---- Índice de la página ("En esta página", estilo Notion) ----
+  function slugificar(s) {
+    return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'sec';
+  }
+  function construirTOC() {
+    if (!slugActual) return;                       // solo en páginas de tema
+    const article = document.querySelector('main article');
+    if (!article) return;
+    const heads = Array.prototype.filter.call(article.children,
+      el => el.tagName === 'H2' || el.tagName === 'H3');
+    const usados = {};
+    function idDe(el, base2) {
+      if (el.id) return el.id;
+      let s = slugificar(base2), id = s, k = 1;
+      while (usados[id] || document.getElementById(id)) id = s + '-' + (k++);
+      usados[id] = 1; el.id = id; return id;
+    }
+    const entradas = [];
+    heads.forEach(h => {
+      const txt = h.textContent.replace(/^\s*\d+\.\s*/, '').trim();   // saca "3. "
+      if (txt) entradas.push({ id: idDe(h, txt), txt: txt, lvl: h.tagName === 'H3' ? 3 : 2, el: h });
+    });
+    const act = document.querySelector('section.actividades');
+    if (act) { if (!act.id) act.id = 'actividades'; entradas.push({ id: act.id, txt: 'Actividades', lvl: 2, el: act }); }
+    if (entradas.length < 3) return;               // un índice de 1-2 ítems no aporta
+    const nav = document.createElement('nav');
+    nav.id = 'toc'; nav.setAttribute('aria-label', 'Índice de esta página');
+    const tit = document.createElement('p'); tit.className = 'toc-titulo'; tit.textContent = 'En esta página';
+    nav.appendChild(tit);
+    const links = {};
+    entradas.forEach(e => {
+      const a = document.createElement('a');
+      a.href = '#' + e.id; a.className = 'toc-l toc-l' + e.lvl; a.textContent = e.txt;
+      a.addEventListener('click', cerrarMenu);
+      nav.appendChild(a); links[e.id] = a;
+    });
+    document.body.appendChild(nav);
+    document.body.classList.add('con-toc');
+    // Scroll-spy: resalta la sección visible más cercana al tope.
+    let activo = null;
+    function marcar(id) {
+      if (activo === id) return;
+      if (activo && links[activo]) links[activo].classList.remove('activo');
+      activo = id; if (links[id]) links[id].classList.add('activo');
+    }
+    if ('IntersectionObserver' in window) {
+      const obs = new IntersectionObserver(es => {
+        const vis = es.filter(x => x.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (vis.length) marcar(vis[0].target.id);
+      }, { rootMargin: '-66px 0px -65% 0px', threshold: 0 });
+      entradas.forEach(e => obs.observe(e.el));
+    }
+  }
+
   construirHeader();
   construirSidebar();
   navTema();
   portada();
+  construirTOC();
   resaltar();
 
   // ---- Fase 2: cargar actividades de práctica del tema (si existen) ----
