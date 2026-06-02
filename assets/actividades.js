@@ -1,7 +1,7 @@
 /* Motor de actividades de práctica (Fase 2).
    Lee window.ACTIVIDADES (definido por assets/actividades/<tema>.js) y las renderiza
    dentro de <section class="actividades">. Sin dependencias; usa window.resaltarJava
-   (de app.js) para resaltar el código. Tipos: quiz | trazar | costo | ordenar.
+   (de app.js) para resaltar el código. Tipos: quiz | trazar | costo | ordenar | mapear.
    Las opciones de quiz/trazar/costo se barajan en cada render.
    En los datos, el código va como string normal (sin escapar HTML): se inserta con
    textContent, así que < > & se manejan solos. */
@@ -10,7 +10,7 @@
 
   const ETIQUETAS = {
     quiz: 'Quiz', trazar: 'Trazá / Predecí la salida', costo: 'Análisis de costo',
-    ordenar: 'Ordená el código'
+    ordenar: 'Ordená el código', mapear: 'Emparejá español ↔ inglés'
   };
 
   function badge(tipo) {
@@ -128,6 +128,49 @@
     cont.appendChild(card);
   }
 
+  // ---- Mapear: emparejar términos español ↔ inglés (TDA Wehbe ↔ Monzón) ----
+  // Datos: { tipo:'mapear', enunciado, pares:[['apilar(x)','Stack.add(x)'],...], explicacion }
+  // pares[i][0] = término en español (columna fija); pares[i][1] = equivalente en inglés.
+  function renderMapear(act, cont) {
+    sumarTotal();
+    const card = document.createElement('div'); card.className = 'actividad';
+    card.appendChild(badge('mapear'));
+    card.appendChild(enunciado(act.enunciado));
+    const pre = bloqueCodigo(act.codigo); if (pre) card.appendChild(pre);
+    const opcionesDer = shuffle(act.pares.map(p => p[1]).slice());
+    const lista = document.createElement('div'); lista.className = 'map-lista';
+    const filas = [];
+    act.pares.forEach((par) => {
+      const fila = document.createElement('div'); fila.className = 'map-fila';
+      const es = document.createElement('code'); es.className = 'java map-es'; es.textContent = par[0];
+      const fl = document.createElement('span'); fl.className = 'map-flecha'; fl.textContent = '→';
+      const sel = document.createElement('select'); sel.className = 'map-sel';
+      const ph = document.createElement('option'); ph.value = ''; ph.textContent = '— elegí —'; sel.appendChild(ph);
+      opcionesDer.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; sel.appendChild(o); });
+      fila.appendChild(es); fila.appendChild(fl); fila.appendChild(sel);
+      lista.appendChild(fila);
+      filas.push({ fila, sel, correcto: par[1] });
+    });
+    card.appendChild(lista);
+    let ok = false;
+    const verif = document.createElement('button');
+    verif.type = 'button'; verif.className = 'act-verificar'; verif.textContent = 'Verificar';
+    verif.onclick = () => {
+      let bien = true;
+      filas.forEach(f => {
+        const acierta = f.sel.value === f.correcto;
+        f.fila.classList.toggle('map-ok', acierta);
+        f.fila.classList.toggle('map-mal', !acierta);
+        if (!acierta) bien = false;
+      });
+      if (bien && !ok) { ok = true; acertar(); }
+      explicacion(card, bien, bien ? act.explicacion : 'Todavía no: revisá los emparejamientos marcados en rojo.');
+    };
+    card.appendChild(verif);
+    cont.appendChild(card);
+    if (window.resaltarJava) window.resaltarJava();
+  }
+
   window.renderActividades = function () {
     if (!Array.isArray(window.ACTIVIDADES) || !window.ACTIVIDADES.length) return;
     const sec = document.querySelector('section.actividades');
@@ -141,6 +184,7 @@
     window.ACTIVIDADES.forEach(act => {
       if (act.tipo === 'corregir') return;   // las de "Encontrá el error" se retiraron
       if (act.tipo === 'ordenar') renderOrdenar(act, cont);
+      else if (act.tipo === 'mapear') renderMapear(act, cont);
       else renderOpcion(act, cont);   // quiz | trazar | costo
     });
     actualizarScore();
