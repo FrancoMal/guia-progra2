@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pila · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="pila">
+<main>
+<article>
+  <h1>Pila (Stack)</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>Una <strong>pila</strong> es una colección <strong>LIFO</strong> (<em>Last In, First Out</em>):
+     el último elemento en entrar es el primero en salir. Analogía: una pila de platos —
+     solo podés agarrar el de arriba, y para llegar a uno de abajo tenés que sacar los de encima.</p>
+  <p>Se usa para: deshacer/rehacer (undo), evaluación de expresiones y balanceo de paréntesis,
+     y para entender cómo el sistema maneja las <strong>llamadas recursivas</strong> (la pila de ejecución).</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">tope → 7</span><span class="flecha">→</span>
+    <span class="nodo">3</span><span class="flecha">→</span>
+    <span class="nodo">5</span><span class="flecha">→</span>
+    <span class="nodo">null</span>
+  </div>
+
+  <h2>2. Interfaz del TDA</h2>
+  <p>Las operaciones del TDA Pila y sus <strong>precondiciones</strong>:</p>
+  <pre><code class="java">public interface PilaTDA {
+    void inicializarPila();   // Sin precondiciones.
+    void apilar(int x);       // Pila inicializada.
+    void desapilar();         // Pila inicializada y no vacía.
+    int tope();               // Pila inicializada y no vacía.
+    boolean pilaVacia();      // Pila inicializada.
+}</code></pre>
+
+  <h2>3. Implementaciones</h2>
+  <h3>Con lista dinámica (LD)</h3>
+  <p>El tope de la pila es el primer nodo de la lista enlazada. Apilar inserta adelante y
+     desapilar saca el primero, así que <strong>todas las operaciones son O(1)</strong>.</p>
+  <pre><code class="java">public class PilaLD implements PilaTDA {
+    class Nodo { int valor; Nodo sig; }   // Cada nodo guarda un valor y apunta al siguiente.
+    Nodo tope;                            // Referencia al primer nodo (el tope).
+
+    public void inicializarPila() { tope = null; }      // Pila vacía = lista vacía (null).
+
+    public void apilar(int x) {
+        Nodo nuevo = new Nodo();
+        nuevo.valor = x;
+        nuevo.sig = tope;   // El nuevo apunta al viejo tope...
+        tope = nuevo;       // ...y pasa a ser el nuevo tope.
+    }
+
+    public void desapilar() { tope = tope.sig; }        // El segundo nodo pasa a ser el tope.
+    public int tope() { return tope.valor; }
+    public boolean pilaVacia() { return tope == null; }
+}</code></pre>
+
+  <h3>Con arreglo (A)</h3>
+  <p>Se guarda un arreglo y un entero <code>tope</code> que indica la cantidad de elementos
+     (y por lo tanto la próxima posición libre).</p>
+  <pre><code class="java">public class PilaA implements PilaTDA {
+    int[] datos;
+    int tope;   // Cantidad de elementos; el último válido está en datos[tope - 1].
+
+    public void inicializarPila() { datos = new int[100]; tope = 0; }
+    public void apilar(int x) { datos[tope] = x; tope++; }
+    public void desapilar() { tope--; }
+    public int tope() { return datos[tope - 1]; }
+    public boolean pilaVacia() { return tope == 0; }
+}</code></pre>
+
+  <h2>4. Costo</h2>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Lista dinámica (LD)</th><th>Arreglo (A)</th></tr></thead>
+    <tbody>
+      <tr><td><code>inicializarPila</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>apilar</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>desapilar</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>tope</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>pilaVacia</code></td><td>O(1)</td><td>O(1)</td></tr>
+    </tbody>
+  </table>
+  <p>La pila es eficiente porque siempre trabaja sobre un solo extremo: no hay que recorrer nada.</p>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Violar la precondición</span>
+    Llamar <code>desapilar()</code> o <code>tope()</code> con la pila vacía rompe el programa:
+    <code>NullPointerException</code> en LD, o índice <code>-1</code> en arreglo.</div>
+  <div class="callout error"><span class="et">⚠️ No inicializar</span>
+    Usar la pila sin llamar antes a <code>inicializarPila()</code> deja <code>tope</code> en un
+    estado inválido.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Antes de <code>desapilar()</code> o <code>tope()</code>, verificá siempre
+    <code>if (!pilaVacia())</code>.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li><strong>LIFO</strong>: el último en entrar es el primero en salir.</li>
+    <li>Operaciones: <code>apilar</code>, <code>desapilar</code>, <code>tope</code>, <code>pilaVacia</code>, <code>inicializarPila</code>.</li>
+    <li>Todas <strong>O(1)</strong> tanto en lista dinámica como en arreglo.</li>
+    <li>Se trabaja siempre por un solo extremo (el tope).</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá la pila y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
