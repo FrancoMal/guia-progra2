@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memoria dinámica y listas enlazadas · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="listas">
+<main>
+<article>
+  <h1>Memoria dinámica y listas enlazadas</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>La <strong>memoria dinámica</strong> es la que pedimos <em>en tiempo de ejecución</em>: cada vez que
+     hacemos <code>new</code> creamos un objeto nuevo y obtenemos una <strong>referencia</strong> a él.
+     No hace falta saber de antemano cuántos vamos a necesitar; los vamos creando a medida que el
+     programa corre.</p>
+  <p>Sobre esa idea se construye la <strong>lista enlazada</strong>: una cadena de <strong>nodos</strong>
+     donde cada nodo guarda un <strong>valor</strong> y una <strong>referencia al siguiente</strong>. El
+     último nodo apunta a <code>null</code>, que marca el final de la lista.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">5</span><span class="flecha">→</span>
+    <span class="nodo">3</span><span class="flecha">→</span>
+    <span class="nodo">8</span><span class="flecha">→</span>
+    <span class="nodo">null</span>
+  </div>
+  <p>Se usa cuando el tamaño cambia mucho (insertar y borrar sin reservar de más) y como base para
+     implementar muchos TDAs. De hecho, las implementaciones <strong>"LD"</strong> (lista dinámica) de
+     <strong>Pila</strong>, <strong>Cola</strong>, <strong>Conjunto</strong> y <strong>Diccionario</strong>
+     se arman con exactamente esta idea de nodos enlazados.</p>
+
+  <h2>2. Ideas clave</h2>
+  <ul>
+    <li><strong>Referencia al primero</strong>: la lista "es" su primer nodo. Guardamos una sola variable
+        (por convención del curso, <code>origen</code>) que apunta al primer nodo; desde ahí llegamos a
+        todos los demás siguiendo los <code>sig</code>.</li>
+    <li><strong>El turista</strong>: para recorrer la lista <em>no</em> movemos <code>origen</code> (si lo
+        perdemos, perdemos la lista entera). Usamos un nodo auxiliar — el <strong>turista</strong> — que
+        arranca en <code>origen</code> y va "caminando" con <code>turista = turista.sig</code> hasta llegar
+        a <code>null</code>.</li>
+    <li><strong>Diferencia con un arreglo</strong>: el arreglo tiene <strong>tamaño fijo</strong> y permite
+        <strong>acceso directo</strong> por índice (<code>datos[i]</code> es O(1)). La lista tiene
+        <strong>tamaño dinámico</strong> (crece y se achica nodo a nodo) pero solo permite
+        <strong>acceso secuencial</strong>: para llegar al elemento <em>i</em> hay que recorrer los
+        anteriores.</li>
+  </ul>
+  <div class="callout info"><span class="et">📌 Convención del curso</span>
+    El nodo es una clase interna <code>class Nodo { int valor; Nodo sig; }</code> y la referencia al
+    primer nodo se suele llamar <code>origen</code>. El nodo que usamos para recorrer es el
+    <strong>turista</strong>.</div>
+
+  <h2>3. Operaciones (Java)</h2>
+  <p>Definimos el nodo y la lista. Todas las operaciones trabajan sobre la referencia al primero
+     (<code>origen</code>):</p>
+  <pre><code class="java">public class ListaLD {
+    class Nodo { int valor; Nodo sig; }   // Cada nodo: un valor y una referencia al siguiente.
+    Nodo origen;                          // Referencia al primer nodo de la lista.
+
+    // Inicializar: lista vacía = referencia en null.
+    public void inicializar() {
+        origen = null;
+    }
+
+    // Agregar adelante: O(1). El nuevo nodo pasa a ser el primero.
+    public void agregarAdelante(int x) {
+        Nodo nuevo = new Nodo();
+        nuevo.valor = x;
+        nuevo.sig = origen;   // El nuevo apunta al viejo primero...
+        origen = nuevo;       // ...y pasa a ser el nuevo primero.
+    }
+
+    // Recorrer e imprimir con el turista.
+    public void imprimir() {
+        Nodo turista = origen;                // El turista arranca en el primero.
+        while (turista != null) {             // Mientras no llegue al final...
+            System.out.println(turista.valor);
+            turista = turista.sig;            // ...avanza al siguiente.
+        }
+    }
+
+    // Buscar un valor: devuelve true si está. O(n).
+    public boolean buscar(int x) {
+        Nodo turista = origen;
+        while (turista != null &amp;&amp; turista.valor != x)
+            turista = turista.sig;
+        return (turista != null);             // Si no es null, lo encontró.
+    }
+
+    // Eliminar el nodo que contiene x.
+    public void eliminar(int x) {
+        if (origen != null) {
+            if (origen.valor == x) {
+                origen = origen.sig;          // Caso especial: borrar el primero.
+            } else {
+                Nodo turista = origen;
+                // Avanzo hasta el nodo ANTERIOR al que quiero borrar.
+                while (turista.sig != null &amp;&amp; turista.sig.valor != x)
+                    turista = turista.sig;
+                if (turista.sig != null)
+                    turista.sig = turista.sig.sig;   // Salteo el nodo: lo desengancho.
+            }
+        }
+    }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Por qué el turista en <code>eliminar</code> mira <code>sig</code></span>
+    Para borrar un nodo necesitamos al <strong>anterior</strong>, porque hay que cambiar su
+    <code>sig</code> para que saltee al borrado. Por eso el <code>while</code> avanza mientras
+    <code>turista.sig.valor != x</code>, no <code>turista.valor</code>.</div>
+
+  <h2>4. Costo</h2>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Lista enlazada</th></tr></thead>
+    <tbody>
+      <tr><td><code>inicializar</code></td><td>O(1)</td></tr>
+      <tr><td><code>agregarAdelante</code></td><td>O(1)</td></tr>
+      <tr><td><code>imprimir</code> / recorrer</td><td>O(n)</td></tr>
+      <tr><td><code>buscar</code></td><td>O(n)</td></tr>
+      <tr><td>acceder al elemento <em>i</em></td><td>O(n)</td></tr>
+    </tbody>
+  </table>
+  <p>Insertar adelante es <strong>O(1)</strong> porque solo enganchamos un nodo, sin recorrer nada. En
+     cambio buscar, recorrer o acceder a una posición son <strong>O(n)</strong>: en el peor caso hay que
+     pasar por todos los nodos. Esa es la contracara del acceso directo O(1) del arreglo.</p>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Perder la referencia al primero</span>
+    Si pisás <code>origen</code> mientras recorrés (por ejemplo <code>origen = origen.sig</code> en lugar
+    de mover el turista), perdés el acceso a todos los nodos anteriores: la lista se "pierde".</div>
+  <div class="callout error"><span class="et">⚠️ <code>NullPointerException</code> al recorrer</span>
+    Hacer <code>turista.sig</code> o <code>turista.valor</code> sin chequear antes
+    <code>turista != null</code> revienta cuando el turista ya llegó al final. Por eso la condición
+    siempre es <code>while (turista != null &amp;&amp; ...)</code> — y en ese orden, para cortar antes de
+    desreferenciar.</div>
+  <div class="callout error"><span class="et">⚠️ Olvidar enganchar el <code>sig</code></span>
+    Al insertar hay que setear <code>nuevo.sig</code> <em>antes</em> de mover <code>origen</code>; al
+    borrar hay que reasignar el <code>sig</code> del anterior. Si olvidás un enganche, partís la lista o
+    dejás nodos colgados.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li><strong>Memoria dinámica</strong>: creamos nodos con <code>new</code> en tiempo de ejecución.</li>
+    <li>Cada <strong>nodo</strong> guarda un <code>valor</code> y un <code>sig</code>; el último apunta a
+        <code>null</code>.</li>
+    <li>La lista se accede por su <strong>primer nodo</strong> (<code>origen</code>) y se recorre con un
+        <strong>turista</strong> auxiliar.</li>
+    <li>Insertar adelante es <strong>O(1)</strong>; buscar, recorrer y acceder son <strong>O(n)</strong>.</li>
+    <li>Es la base de las implementaciones <strong>LD</strong> de Pila, Cola, Conjunto y Diccionario.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá la lista y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

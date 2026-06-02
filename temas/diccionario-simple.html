@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diccionario Simple · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="diccionario-simple">
+<main>
+<article>
+  <h1>Diccionario Simple</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>Un <strong>diccionario simple</strong> asocia cada <strong>clave</strong> con <strong>un</strong>
+     valor (<code>clave → valor</code>). No puede haber <strong>claves repetidas</strong>: cada clave
+     identifica a lo sumo un valor. Analogía: una <strong>agenda</strong> de contactos, donde cada
+     nombre (clave) tiene un teléfono (valor); no tendría sentido que el mismo nombre apareciera dos
+     veces con teléfonos distintos.</p>
+  <p>Se usa cuando necesitás <strong>buscar un valor a partir de una clave</strong>: legajo → alumno,
+     DNI → persona, código de producto → precio. La operación central es <em>recuperar</em>: dada una
+     clave, devolver su valor.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">7 → 100</span><span class="flecha">→</span>
+    <span class="nodo">3 → 250</span><span class="flecha">→</span>
+    <span class="nodo">5 → 80</span><span class="flecha">→</span>
+    <span class="nodo">null</span>
+  </div>
+
+  <h2>2. Interfaz del TDA</h2>
+  <p>Las operaciones del TDA Diccionario Simple y sus <strong>precondiciones</strong>. Notá que
+     <code>agregar</code> recibe <strong>dos</strong> parámetros (la clave y el valor) y que
+     <code>claves</code> devuelve un <code>ConjuntoTDA</code> con todas las claves cargadas:</p>
+  <pre><code class="java">public interface DiccionarioSimpleTDA {
+    void inicializarDiccionario();      // Sin precondiciones.
+    void agregar(int clave, int x);     // Diccionario inicializado.
+    void eliminar(int clave);           // Diccionario inicializado.
+    int recuperar(int clave);           // Diccionario inicializado y clave existente.
+    ConjuntoTDA claves();               // Diccionario inicializado.
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Ojo</span>
+    <code>recuperar</code> exige que la <strong>clave exista</strong>. Para saber qué claves hay (y
+    así recorrer el diccionario o validar antes de recuperar) se usa <code>claves()</code>, que
+    devuelve el conjunto de todas las claves cargadas.</div>
+
+  <h2>3. Implementaciones</h2>
+  <h3>Con lista dinámica (LD)</h3>
+  <p>Cada <strong>nodo</strong> guarda una <code>clave</code>, su <code>valor</code> y la referencia
+     al siguiente. Para agregar primero se busca la clave: si <strong>ya existe</strong> se actualiza
+     su valor; si no existe se crea un nodo nuevo al inicio. Como hay que recorrer la lista buscando
+     la clave, las operaciones son <strong>O(n)</strong>.</p>
+  <pre><code class="java">public class DicSimpleLD implements DiccionarioSimpleTDA {
+    class Nodo { int clave; int valor; Nodo sig; }   // Clave + valor + referencia al siguiente.
+    Nodo inicio;                                     // Referencia al primer nodo de la lista.
+
+    public void inicializarDiccionario() { inicio = null; }   // Diccionario vacío = lista vacía.
+
+    public void agregar(int clave, int x) {
+        Nodo nuevo = clave2Nodo(clave);   // Se busca si la clave ya está.
+        if (nuevo == null) {              // Si NO existe, se crea un nodo nuevo al inicio.
+            nuevo = new Nodo();
+            nuevo.clave = clave;
+            nuevo.sig = inicio;
+            inicio = nuevo;
+        }
+        nuevo.valor = x;                  // Exista o no, se (re)asigna el valor: si existía, lo actualiza.
+    }
+
+    public int recuperar(int clave) {
+        Nodo nodo = clave2Nodo(clave);    // Precondición: la clave existe, así que nodo != null.
+        return nodo.valor;
+    }
+
+    private Nodo clave2Nodo(int clave) {  // Devuelve el nodo de esa clave, o null si no está.
+        Nodo turista = inicio;
+        while (turista != null &amp;&amp; turista.clave != clave)
+            turista = turista.sig;
+        return turista;
+    }
+}</code></pre>
+
+  <h3>Con arreglo (A)</h3>
+  <p>Se guarda un arreglo de objetos <code>Elemento</code> (cada uno con su <code>clave</code> y su
+     <code>valor</code>) y un entero <code>cant</code> con la cantidad de pares cargados. La lógica de
+     <code>agregar</code> es la misma: si la clave ya está, se actualiza el valor; si no, se agrega un
+     elemento nuevo en la posición libre.</p>
+  <pre><code class="java">public class DicSimpleA implements DiccionarioSimpleTDA {
+    class Elemento { int clave; int valor; }   // Un par clave-valor agrupado.
+    Elemento[] elementos;
+    int cant;   // Cantidad de pares; apunta a la primera posición libre del arreglo.
+
+    public void inicializarDiccionario() {
+        elementos = new Elemento[55];   // Capacidad máxima fijada arbitrariamente.
+        cant = 0;
+    }
+
+    public void agregar(int clave, int x) {
+        int i = clave2indice(clave);    // Se busca el índice de la clave.
+        if (i == -1) {                  // Si NO existe, se crea un elemento nuevo al final.
+            i = cant;
+            elementos[i] = new Elemento();
+            elementos[i].clave = clave;
+            cant++;
+        }
+        elementos[i].valor = x;         // Se asigna el valor: si la clave ya estaba, lo actualiza.
+    }
+
+    public int recuperar(int clave) {
+        int i = clave2indice(clave);    // Precondición: la clave existe, así que i != -1.
+        return elementos[i].valor;
+    }
+
+    private int clave2indice(int clave) {   // Devuelve el índice de la clave, o -1 si no está.
+        int i = cant - 1;
+        while (i &gt;= 0 &amp;&amp; elementos[i].clave != clave)
+            i--;
+        return i;
+    }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Patrón común</span>
+    En las dos implementaciones <code>agregar</code> primero <strong>busca</strong> la clave y recién
+    después decide: si la encuentra actualiza el valor, si no la encuentra crea el par. Por eso una
+    clave nunca queda duplicada.</div>
+
+  <h2>4. Costo</h2>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Lista dinámica (LD)</th><th>Arreglo (A)</th></tr></thead>
+    <tbody>
+      <tr><td><code>inicializarDiccionario</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>agregar</code></td><td>O(n)</td><td>O(n)</td></tr>
+      <tr><td><code>eliminar</code></td><td>O(n)</td><td>O(n)</td></tr>
+      <tr><td><code>recuperar</code></td><td>O(n)</td><td>O(n)</td></tr>
+      <tr><td><code>claves</code></td><td>O(n²)</td><td>O(n²)</td></tr>
+    </tbody>
+  </table>
+  <p><code>agregar</code>, <code>eliminar</code> y <code>recuperar</code> son <strong>O(n)</strong>
+     porque todas necesitan <strong>buscar la clave</strong> recorriendo la estructura. Si tuviéramos
+     una operación tipo <em>diccionarioVacío</em>, sería <strong>O(1)</strong> (solo mira si la
+     estructura está vacía, sin recorrer). <code>claves</code> queda en O(n²) porque por cada clave
+     llama al <code>agregar</code> del conjunto, que ya es lineal.</p>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Recuperar una clave inexistente</span>
+    <code>recuperar(clave)</code> tiene como <strong>precondición</strong> que la clave exista. Si no
+    existe, en LD <code>clave2Nodo</code> devuelve <code>null</code> y explota con
+    <code>NullPointerException</code>; en arreglo el índice da <code>-1</code> y rompe el acceso. Validá
+    antes con <code>claves()</code> si no estás seguro.</div>
+  <div class="callout error"><span class="et">⚠️ Agregar una clave existente sin actualizar</span>
+    Como las claves no se repiten, <code>agregar</code> sobre una clave ya cargada debe
+    <strong>reemplazar</strong> el valor viejo, no crear un par nuevo. Olvidar la búsqueda previa
+    duplica la clave y deja el diccionario inconsistente.</div>
+  <div class="callout error"><span class="et">⚠️ Confundir clave con valor</span>
+    En <code>agregar(int clave, int x)</code> el primer parámetro es la <strong>clave</strong> y el
+    segundo el <strong>valor</strong>. Invertirlos guarda los datos cruzados y después
+    <code>recuperar</code> devuelve cualquier cosa.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li>Asocia <code>clave → valor</code>, <strong>sin claves repetidas</strong> (una clave, un valor).</li>
+    <li>Operaciones: <code>inicializarDiccionario</code>, <code>agregar(clave, x)</code>,
+        <code>eliminar(clave)</code>, <code>recuperar(clave)</code> y <code>claves()</code>.</li>
+    <li><code>recuperar</code> requiere que la <strong>clave exista</strong> (precondición).</li>
+    <li><code>agregar</code> busca primero: si la clave existe <strong>actualiza</strong> el valor, si no la crea.</li>
+    <li>Buscar la clave hace que <code>agregar</code>/<code>eliminar</code>/<code>recuperar</code> sean <strong>O(n)</strong> tanto en lista dinámica como en arreglo.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá el diccionario y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

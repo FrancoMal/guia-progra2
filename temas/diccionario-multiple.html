@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diccionario Múltiple · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="diccionario-multiple">
+<main>
+<article>
+  <h1>Diccionario Múltiple</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>Un <strong>diccionario múltiple</strong> asocia cada <strong>clave</strong> con un
+     <strong>conjunto de valores</strong> (clave → varios valores). Es la generalización del
+     diccionario simple, donde cada clave tenía <strong>un solo</strong> valor (clave → 1 valor).</p>
+  <p>Analogía: una <strong>materia</strong> (la clave) tiene asociado un <strong>conjunto de alumnos</strong>
+     (sus valores). La materia "Programación 2" no apunta a un único alumno, sino a todos los que la cursan.
+     Como los valores forman un <strong>conjunto</strong>, no hay repetidos ni importa el orden.</p>
+  <p>Se usa cuando una entidad se relaciona con muchas otras: un autor con sus libros, un día con sus
+     turnos, una categoría con sus productos.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">clave 7 → {1, 4, 9}</span><span class="flecha">→</span>
+    <span class="nodo">clave 3 → {2}</span><span class="flecha">→</span>
+    <span class="nodo">null</span>
+  </div>
+
+  <h2>2. Interfaz del TDA</h2>
+  <p>Las operaciones del TDA Diccionario Múltiple y sus <strong>precondiciones</strong>. Notá que
+     <code>recuperar</code> y <code>claves</code> devuelven un <code>ConjuntoTDA</code>, porque los valores
+     de una clave (y las claves entre sí) forman conjuntos:</p>
+  <pre><code class="java">public interface DiccionarioMúltipleTDA {
+    void inicializarDiccionario();              // Sin precondiciones.
+    void agregar(int clave, int valor);         // Diccionario inicializado.
+    void eliminar(int clave);                   // Diccionario inicializado.
+    void eliminarValor(int clave, int valor);   // Diccionario inicializado.
+    ConjuntoTDA recuperar(int clave);           // Diccionario inicializado.
+    ConjuntoTDA claves();                       // Diccionario inicializado.
+}</code></pre>
+  <p>Cosas importantes para el parcial:</p>
+  <ul>
+    <li><code>agregar(clave, valor)</code> agrega <strong>un</strong> valor al conjunto de esa clave.
+        Si la clave no existía, la crea.</li>
+    <li><code>eliminar(clave)</code> borra la clave <strong>entera</strong> (con todos sus valores).</li>
+    <li><code>eliminarValor(clave, valor)</code> saca <strong>un solo</strong> valor del conjunto de esa clave.</li>
+    <li><code>recuperar(clave)</code> devuelve el conjunto de valores de esa clave. Si la clave no existe,
+        devuelve un conjunto <strong>vacío</strong> (no rompe).</li>
+    <li><code>claves()</code> devuelve el conjunto de todas las claves del diccionario.</li>
+  </ul>
+
+  <h2>3. Implementaciones</h2>
+  <h3>Con lista dinámica (LD)</h3>
+  <p>Conviven <strong>dos tipos de nodos</strong>. <code>NodoClave</code> es la columna vertebral:
+     forma una lista de claves. Cada <code>NodoClave</code> arranca su propia lista de
+     <code>NodoValor</code>, que guarda su conjunto de valores. Es decir, una lista de listas.</p>
+  <pre><code class="java">public class DicMúltipleLD implements DiccionarioMúltipleTDA {
+
+    class NodoClave {        // Una clave, su lista de valores y la siguiente clave.
+        int clave;
+        NodoClave sigClave;
+        NodoValor valores;   // Inicio de la lista de valores de esta clave.
+    }
+
+    class NodoValor {        // Un valor del conjunto y el siguiente valor.
+        int valor;
+        NodoValor sigValor;
+    }
+
+    NodoClave inicio;        // Inicio de la lista de claves (toda la estructura).
+
+    public void inicializarDiccionario() { inicio = null; }   // Diccionario vacío = lista vacía.
+
+    public void agregar(int clave, int valor) {
+        NodoClave nodo = clave2NodoClave(clave);   // Busca la clave...
+        if (nodo == null) {                        // ...si no existe, la crea al inicio.
+            nodo = new NodoClave();
+            nodo.clave = clave;
+            nodo.sigClave = inicio;
+            inicio = nodo;
+        }
+        NodoValor turista = nodo.valores;          // Busca el valor en el conjunto de la clave.
+        while (turista != null &amp;&amp; turista.valor != valor)
+            turista = turista.sigValor;
+        if (turista == null) {                     // Si no estaba, lo agrega adelante (sin repetir).
+            NodoValor nuevo = new NodoValor();
+            nuevo.valor = valor;
+            nuevo.sigValor = nodo.valores;
+            nodo.valores = nuevo;
+        }
+    }
+}</code></pre>
+  <p>El método privado <code>clave2NodoClave</code> recorre la lista de claves y devuelve el
+     <code>NodoClave</code> buscado, o <code>null</code> si no existe:</p>
+  <pre><code class="java">private NodoClave clave2NodoClave(int clave) {
+    NodoClave turista = inicio;
+    while (turista != null &amp;&amp; turista.clave != clave)
+        turista = turista.sigClave;
+    return turista;   // El nodo de la clave, o null si no está.
+}</code></pre>
+  <p><code>recuperar</code> ubica la clave y vuelca todos sus valores en un <code>ConjuntoTDA</code>
+     nuevo. Si la clave no existe, devuelve el conjunto vacío:</p>
+  <pre><code class="java">public ConjuntoTDA recuperar(int clave) {
+    ConjuntoTDA valores = new ConjuntoAR();
+    valores.inicializarConjunto();
+    NodoClave nodo = clave2NodoClave(clave);
+    if (nodo != null) {                       // Si existe, copia su lista de valores al conjunto.
+        NodoValor turista = nodo.valores;
+        while (turista != null) {
+            valores.agregar(turista.valor);
+            turista = turista.sigValor;
+        }
+    }
+    return valores;
+}</code></pre>
+  <p>Al borrar un valor, si la clave queda con el conjunto <strong>vacío</strong>, se elimina la clave entera:</p>
+  <pre><code class="java">public void eliminarValor(int clave, int valor) {
+    NodoClave nodo = clave2NodoClave(clave);
+    if (nodo.valores.valor == valor) {        // Caso especial: es el primer valor de la lista.
+        nodo.valores = nodo.valores.sigValor;
+    } else {
+        NodoValor turista = nodo.valores;     // Busca el valor mirando hacia adelante.
+        while (turista.sigValor != null &amp;&amp; turista.sigValor.valor != valor)
+            turista = turista.sigValor;
+        if (turista.sigValor != null)         // Si lo encuentra, lo circunvala.
+            turista.sigValor = turista.sigValor.sigValor;
+    }
+    if (nodo.valores == null)                 // Si la clave quedó sin valores, se la elimina.
+        this.eliminar(clave);
+}</code></pre>
+
+  <h3>Con arreglo (A)</h3>
+  <p>El diccionario es un arreglo de objetos <code>Elemento</code>. Cada <code>Elemento</code> tiene
+     una <code>clave</code>, su propio arreglo de <code>valores</code> y un contador
+     <code>cantValores</code>. Una variable <code>cantClaves</code> indica cuántos elementos (claves)
+     hay cargados.</p>
+  <pre><code class="java">public class DicMúltipleA implements DiccionarioMúltipleTDA {
+
+    class Elemento {       // Una clave con su colección de valores.
+        int clave;
+        int[] valores;     // Arreglo con los valores de esta clave.
+        int cantValores;   // Cantidad de valores cargados.
+    }
+
+    Elemento[] elementos;  // Arreglo de claves.
+    int cantClaves;        // Cantidad de claves del diccionario.
+
+    public void inicializarDiccionario() {
+        elementos = new Elemento[55];   // Tamaño arbitrario, suficientemente grande.
+        cantClaves = 0;
+    }
+
+    public void agregar(int clave, int valor) {
+        int posClave = clave2Índice(clave);    // Busca la clave en el arreglo.
+        if (posClave == -1) {                  // Si no existe, crea un Elemento nuevo al final.
+            posClave = cantClaves;
+            elementos[posClave] = new Elemento();
+            elementos[posClave].clave = clave;
+            elementos[posClave].valores = new int[33];
+            elementos[posClave].cantValores = 0;
+            cantClaves++;
+        }
+        int posValor = valor2Índice(elementos[posClave], valor);
+        if (posValor == -1) {                  // Si el valor no estaba, lo agrega al final.
+            elementos[posClave].valores[elementos[posClave].cantValores] = valor;
+            elementos[posClave].cantValores++;
+        }
+    }
+}</code></pre>
+  <p>Para eliminar (clave o valor) se usa el truco de <strong>reemplazar con el último</strong> y
+     decrementar el contador, evitando correr todo el arreglo:</p>
+  <pre><code class="java">public void eliminar(int clave) {
+    int posClave = clave2Índice(clave);
+    if (posClave != -1) {                          // Sobreescribe la clave con la última y achica.
+        elementos[posClave] = elementos[cantClaves - 1];
+        cantClaves--;
+    }
+}</code></pre>
+
+  <h2>4. Costo</h2>
+  <p>Con <strong>n</strong> claves y <strong>m</strong> valores por clave. Ubicar la clave es siempre
+     lineal (hay que recorrer la lista o el arreglo de claves), y a eso se le suma el costo de operar
+     sobre su conjunto de valores.</p>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Lista dinámica (LD)</th><th>Arreglo (A)</th></tr></thead>
+    <tbody>
+      <tr><td><code>inicializarDiccionario</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>agregar</code></td><td>O(n + m)</td><td>O(n + m)</td></tr>
+      <tr><td><code>eliminar</code></td><td>O(n)</td><td>O(n)</td></tr>
+      <tr><td><code>eliminarValor</code></td><td>O(n + m)</td><td>O(n + m)</td></tr>
+      <tr><td><code>recuperar</code></td><td>O(n + m²)</td><td>O(n + m²)</td></tr>
+      <tr><td><code>claves</code></td><td>O(n²)</td><td>O(n²)</td></tr>
+    </tbody>
+  </table>
+  <p>Detalle: <code>recuperar</code> y <code>claves</code> usan el <code>agregar</code> del conjunto,
+     que es lineal porque chequea repetidos. Por eso aparece el término cuadrático
+     (<strong>m²</strong> al armar los valores, <strong>n²</strong> al armar las claves).</p>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Recuperar de una clave inexistente</span>
+    No asumas que la clave existe. En estas implementaciones <code>recuperar</code> de una clave que no
+    está devuelve un conjunto <strong>vacío</strong>; no rompe, pero si tu lógica espera valores vas a
+    leer un conjunto vacío sin darte cuenta.</div>
+  <div class="callout error"><span class="et">⚠️ Olvidar borrar la clave sin valores</span>
+    Al hacer <code>eliminarValor</code> del <strong>último</strong> valor de una clave, hay que decidir
+    qué pasa. Acá la convención es: si la clave queda con el conjunto vacío, se elimina la clave entera
+    (<code>if (nodo.valores == null) eliminar(clave)</code>). Si no lo hacés, te quedan claves "fantasma"
+    sin valores.</div>
+  <div class="callout error"><span class="et">⚠️ Mezclar clave y valor</span>
+    En <code>agregar(int clave, int valor)</code> el orden importa: el primer parámetro es la clave, el
+    segundo el valor. Invertirlos rompe toda la estructura sin dar error de compilación.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Pensalo como "lista de listas": la lista de claves por afuera y, colgando de cada clave, su conjunto
+    de valores. <code>agregar</code> primero resuelve la clave y recién después toca el conjunto.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li>Asocia cada <strong>clave</strong> con un <strong>conjunto de valores</strong> (clave → varios valores).</li>
+    <li>Operaciones: <code>agregar</code>, <code>eliminar</code>, <code>eliminarValor</code>,
+        <code>recuperar</code>, <code>claves</code>, <code>inicializarDiccionario</code>.</li>
+    <li><code>recuperar</code> y <code>claves</code> devuelven un <code>ConjuntoTDA</code>.</li>
+    <li>LD: lista de <code>NodoClave</code>, cada una con su lista de <code>NodoValor</code>. A: arreglo de
+        <code>Elemento</code>, cada uno con su arreglo de valores.</li>
+    <li>Costo: <strong>O(n)</strong> para ubicar la clave, más el costo de operar su conjunto de valores.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá el diccionario y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

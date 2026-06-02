@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complejidad y Big-O · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="complejidad">
+<main>
+<article>
+  <h1>Complejidad y Big-O</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>La <strong>complejidad</strong> es una forma de medir cómo crece el <strong>costo</strong> de un
+     algoritmo (la cantidad de operaciones, y por lo tanto el tiempo) a medida que crece el tamaño
+     de la entrada, que llamamos <code>n</code>. La notación <strong>Big-O</strong> (o "O grande")
+     describe ese crecimiento en el <strong>peor caso</strong>.</p>
+  <p>Se usa para <strong>comparar algoritmos</strong> sin tener que ejecutarlos: nos dice si una
+     solución va a seguir siendo rápida cuando <code>n</code> sea grande (mil, un millón de datos)
+     o si se va a volver impracticable. Analogía: no importa cuánto tarde en buscar en una agenda de
+     10 contactos; importa qué pasa cuando tenés 10 millones.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">O(1)</span><span class="flecha">→</span>
+    <span class="nodo">O(log n)</span><span class="flecha">→</span>
+    <span class="nodo">O(n)</span><span class="flecha">→</span>
+    <span class="nodo">O(n²)</span><span class="flecha">→</span>
+    <span class="nodo">O(2ⁿ)</span>
+  </div>
+
+  <h2>2. Ideas clave</h2>
+  <p>Big-O no mide el tiempo exacto en segundos, sino el <strong>ritmo de crecimiento</strong>.
+     Por eso hacemos dos simplificaciones:</p>
+  <ul>
+    <li><strong>Se ignoran las constantes</strong>: <code>3n</code> y <code>n</code> crecen igual de
+        rápido, así que ambos son <strong>O(n)</strong>. Da lo mismo el "3".</li>
+    <li><strong>Se ignoran los términos de menor orden</strong>: en <code>3n + 5</code>, cuando
+        <code>n</code> es grande el <code>+5</code> es despreciable ⇒ queda <strong>O(n)</strong>.
+        En <code>n² + n</code> manda el <code>n²</code> ⇒ <strong>O(n²)</strong>.</li>
+    <li>Lo que importa es <strong>el término que más crece</strong>, no el valor exacto del conteo.</li>
+  </ul>
+  <div class="callout tip"><span class="et">💡 Regla práctica</span>
+    Contá las operaciones, quedate con el término dominante y borrá los números que lo multiplican o
+    suman: <code>5n² + 100n + 30</code> ⇒ <strong>O(n²)</strong>.</div>
+
+  <h2>3. Órdenes comunes (con ejemplos)</h2>
+  <p>Estos son los órdenes que más aparecen, de más rápido (mejor) a más lento (peor):</p>
+  <table class="costo">
+    <thead><tr><th>Orden</th><th>Nombre</th><th>Ejemplo típico</th><th>Qué tan rápido crece</th></tr></thead>
+    <tbody>
+      <tr><td>O(1)</td><td>Constante</td><td>Acceder a <code>arr[i]</code>, tope de una pila</td><td>No crece: siempre el mismo costo</td></tr>
+      <tr><td>O(log n)</td><td>Logarítmico</td><td>Búsqueda binaria en un arreglo ordenado</td><td>Muy lento: duplicar <code>n</code> suma 1 paso</td></tr>
+      <tr><td>O(n)</td><td>Lineal</td><td>Recorrer una lista buscando un valor</td><td>Proporcional: el doble de datos, el doble de trabajo</td></tr>
+      <tr><td>O(n log n)</td><td>Lineal-logarítmico</td><td>Ordenamientos eficientes (mergesort)</td><td>Algo más que lineal, pero manejable</td></tr>
+      <tr><td>O(n²)</td><td>Cuadrático</td><td>Dos bucles anidados (comparar todos contra todos)</td><td>Rápido: el doble de datos, cuatro veces el trabajo</td></tr>
+      <tr><td>O(2ⁿ)</td><td>Exponencial</td><td>Probar todos los subconjuntos (fuerza bruta)</td><td>Explota: un dato más duplica el trabajo</td></tr>
+    </tbody>
+  </table>
+  <p>Para que se note la diferencia: con <code>n = 1.000.000</code>, un algoritmo O(n) hace un millón
+     de pasos, pero uno O(n²) haría un billón. El O(log n), en cambio, hace apenas unos 20.</p>
+
+  <h2>4. Cómo calcular el costo</h2>
+  <p>La idea es contar cuántas veces se ejecuta lo que está adentro de los bucles, en función de
+     <code>n</code>. Tres reglas alcanzan para la mayoría de los casos del parcial.</p>
+
+  <h3>Un bucle simple → O(n)</h3>
+  <p>Un bucle que recorre los <code>n</code> elementos una vez ejecuta el cuerpo <code>n</code> veces.</p>
+  <pre><code class="java">int suma = 0;
+for (int i = 0; i &lt; n; i++) {   // Se repite n veces.
+    suma = suma + i;             // Operación O(1) hecha n veces ⇒ O(n).
+}</code></pre>
+
+  <h3>Bucles anidados → se MULTIPLICAN → O(n²)</h3>
+  <p>Si un bucle de <code>n</code> está adentro de otro bucle de <code>n</code>, el cuerpo se ejecuta
+     <code>n × n = n²</code> veces. Los costos anidados se <strong>multiplican</strong>.</p>
+  <pre><code class="java">for (int i = 0; i &lt; n; i++) {       // n veces...
+    for (int j = 0; j &lt; n; j++) {   // ...por cada i, otras n veces.
+        System.out.println(i + &quot;,&quot; + j);   // Se ejecuta n * n = n² veces ⇒ O(n²).
+    }
+}</code></pre>
+
+  <h3>Dividir a la mitad en cada paso → O(log n)</h3>
+  <p>Cuando en cada vuelta el problema se reduce a la mitad (como en la búsqueda binaria), la cantidad
+     de pasos es <code>log₂(n)</code>: de 1.000.000 a 1 hay solo unas 20 divisiones por 2.</p>
+  <pre><code class="java">int ini = 0, fin = n - 1;
+while (ini &lt;= fin) {                 // Se repite log₂(n) veces.
+    int medio = (ini + fin) / 2;
+    if (arr[medio] == buscado) return medio;
+    if (arr[medio] &lt; buscado) ini = medio + 1;   // Descarto la mitad de abajo.
+    else fin = medio - 1;                         // Descarto la mitad de arriba.
+}   // En cada paso el rango se parte al medio ⇒ O(log n).</code></pre>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Sumar en vez de multiplicar bucles anidados</span>
+    Si un bucle está <strong>adentro</strong> de otro, los costos se <strong>multiplican</strong>
+    (<code>n × n = n²</code>), no se suman. La suma (<code>n + n = 2n</code>, que es O(n)) corresponde
+    a dos bucles <strong>uno después del otro</strong>, no anidados.</div>
+  <div class="callout error"><span class="et">⚠️ Confundir mejor caso con peor caso</span>
+    Big-O describe el <strong>peor caso</strong>. Una búsqueda lineal puede encontrar el valor en el
+    primer intento (mejor caso, O(1)), pero su complejidad es <strong>O(n)</strong> porque en el peor
+    caso recorre todo.</div>
+  <div class="callout error"><span class="et">⚠️ Creer que O(2n) ≠ O(n)</span>
+    Las constantes no cambian el orden: <strong>O(2n) = O(n)</strong>, igual que
+    <code>O(n/2)</code> o <code>O(100n)</code>. Lo único que importa es cómo crece, no el factor que
+    lo multiplica.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Frente a un código: contá los bucles. Anidados ⇒ multiplicá. En secuencia ⇒ quedate con el más
+    costoso. Algo que se divide a la mitad ⇒ <code>log n</code>.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li><strong>Big-O</strong> mide cómo crece el costo según <code>n</code>, en el <strong>peor caso</strong>.</li>
+    <li>Se <strong>ignoran constantes y términos menores</strong>: <code>3n + 5</code> ⇒ <strong>O(n)</strong>.</li>
+    <li>Órdenes de mejor a peor: <strong>O(1) → O(log n) → O(n) → O(n log n) → O(n²) → O(2ⁿ)</strong>.</li>
+    <li>Bucle simple ⇒ <strong>O(n)</strong>; bucles anidados ⇒ <strong>se multiplican (O(n²))</strong>; dividir a la mitad ⇒ <strong>O(log n)</strong>.</li>
+    <li>Recordá: <strong>O(2n) = O(n)</strong> y Big-O es el peor caso, no el mejor.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá la pila y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

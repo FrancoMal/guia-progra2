@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conjunto · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="conjunto">
+<main>
+<article>
+  <h1>Conjunto (Set)</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>Un <strong>conjunto</strong> es una colección de elementos con dos reglas clave:
+     <strong>no hay repetidos</strong> (cada elemento aparece a lo sumo una vez) y
+     <strong>no hay orden</strong> (no existe "el primero" ni "el último"). Es la misma idea que
+     el conjunto matemático: lo único que importa es si un elemento <em>pertenece</em> o no.</p>
+  <p>Se usa cuando querés modelar pertenencia sin que importe la posición ni la cantidad de veces:
+     marcar nodos ya visitados en un grafo, llevar la lista de elementos únicos de una colección,
+     o representar relaciones (un diccionario que asocia una clave a un <em>conjunto</em> de valores).</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">{ 7</span><span class="flecha">,</span>
+    <span class="nodo">3</span><span class="flecha">,</span>
+    <span class="nodo">5 }</span><span class="flecha">≡</span>
+    <span class="nodo">{ 5, 7, 3 }</span>
+  </div>
+  <p>Los dos conjuntos del diagrama son <strong>iguales</strong>: como no hay orden, da lo mismo
+     en qué secuencia estén los elementos.</p>
+
+  <h2>2. Interfaz del TDA</h2>
+  <p>Las operaciones del TDA Conjunto y sus <strong>precondiciones</strong>:</p>
+  <pre><code class="java">public interface ConjuntoTDA {
+    void inicializarConjunto();   // Sin precondiciones.
+    void agregar(int x);          // Conjunto inicializado.
+    void sacar(int x);            // Conjunto inicializado.
+    int elegir();                 // Conjunto inicializado y no vacío.
+    boolean pertenece(int x);     // Conjunto inicializado.
+    boolean conjuntoVacío();      // Conjunto inicializado.
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Sobre <code>elegir()</code></span>
+    Como no hay orden, no tiene sentido pedir "el primero". <code>elegir()</code> devuelve
+    <strong>algún</strong> elemento del conjunto (cuál, depende de la implementación), pero
+    <strong>no lo saca</strong>. Su precondición es que el conjunto <strong>no esté vacío</strong>.</div>
+
+  <h2>3. Implementaciones</h2>
+  <p>En ambas implementaciones la clave es la misma: para no tener repetidos, <strong>antes de agregar
+     se chequea <code>pertenece</code></strong>. Si el elemento ya está, no se hace nada. Por eso
+     <code>agregar</code>, <code>sacar</code> y <code>pertenece</code> necesitan recorrer la estructura
+     buscando el elemento.</p>
+
+  <h3>Con lista dinámica (LD)</h3>
+  <p>Cada elemento es un nodo de una lista enlazada simple. Como el orden no importa, se agrega siempre
+     adelante (en <code>origen</code>). <code>pertenece</code> recorre la lista buscando el valor, y
+     <code>sacar</code> reengancha los nodos para saltearse el que se quita.</p>
+  <pre><code class="java">public class ConjuntoLD implements ConjuntoTDA {
+    class Nodo { int valor; Nodo sig; }   // Cada nodo guarda un valor y apunta al siguiente.
+    Nodo origen;                          // Referencia al primer nodo de la lista.
+
+    public void inicializarConjunto() { origen = null; }   // Conjunto vacío = lista vacía.
+
+    public void agregar(int x) {
+        if (!this.pertenece(x)) {   // Sólo se agrega si NO está ya en el conjunto.
+            Nodo nuevo = new Nodo();
+            nuevo.valor = x;
+            nuevo.sig = origen;     // El nuevo apunta al viejo origen...
+            origen = nuevo;         // ...y pasa a ser el nuevo origen.
+        }
+    }
+
+    public void sacar(int x) {
+        if (origen != null) {
+            if (origen.valor == x) {            // Caso 1: el elemento está en el primer nodo.
+                origen = origen.sig;
+            } else {                            // Caso 2: lo busco con un "turista".
+                Nodo turista = origen;
+                while (turista.sig != null &amp;&amp; turista.sig.valor != x)
+                    turista = turista.sig;
+                if (turista.sig != null)        // Si lo encontré, lo salteo.
+                    turista.sig = turista.sig.sig;
+            }
+        }
+    }
+
+    public int elegir() { return origen.valor; }   // Devuelve algún elemento (el primero). No lo saca.
+
+    public boolean pertenece(int x) {
+        Nodo turista = origen;
+        while (turista != null &amp;&amp; turista.valor != x)   // Recorre buscando x.
+            turista = turista.sig;
+        return (turista != null);                       // true si lo encontró.
+    }
+
+    public boolean conjuntoVacío() { return (origen == null); }
+}</code></pre>
+
+  <h3>Con arreglo (AR)</h3>
+  <p>Los elementos se guardan en un arreglo y un entero <code>cant</code> indica cuántos hay (y, por lo
+     tanto, la próxima posición libre). Como el orden es irrelevante, <code>agregar</code> pone el
+     elemento al final. El truco está en <code>sacar</code>: en vez de mover todo, <strong>se reemplaza
+     el elemento por el último</strong> y se decrementa <code>cant</code>.</p>
+  <pre><code class="java">public class ConjuntoAR implements ConjuntoTDA {
+    int[] arr;   // Acá se guardan los números del conjunto. El orden es irrelevante.
+    int cant;    // Cantidad de elementos. Apunta a la primera posición libre de "arr".
+
+    public void inicializarConjunto() {
+        arr = new int[20];   // Tamaño máximo del conjunto.
+        cant = 0;            // Inicialmente no hay elementos.
+    }
+
+    public void agregar(int x) {
+        if (!this.pertenece(x)) {   // Sólo se agrega si NO está ya en el arreglo.
+            arr[cant] = x;
+            cant++;
+        }
+    }
+
+    public void sacar(int x) {
+        int i = buscar(x);
+        if (i != -1) {
+            arr[i] = arr[cant - 1];   // Se sobreescribe con el último elemento...
+            cant--;                   // ...y se decrementa "cant".
+        }
+    }
+
+    public int elegir() {                   // Devuelve algún elemento, elegido al azar. No lo saca.
+        double num = Math.random() * cant;
+        int inx = (int) Math.floor(num);
+        return arr[inx];
+    }
+
+    public boolean pertenece(int x) {
+        int i = buscar(x);
+        return (i != -1);   // Si es -1 no se lo encontró; en caso contrario, sí.
+    }
+
+    public boolean conjuntoVacío() { return (cant == 0); }
+
+    private int buscar(int x) {   // Recorre el arreglo y devuelve la posición de x, o -1 si no está.
+        int i = cant - 1;
+        while (i &gt;= 0 &amp;&amp; arr[i] != x)
+            i--;
+        return i;
+    }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Cómo se evita el duplicado</span>
+    En las dos implementaciones, <code>agregar(x)</code> empieza con
+    <code>if (!pertenece(x))</code>. Esa verificación es lo único que garantiza la regla
+    "sin repetidos" del conjunto. Si la sacaras, el TDA dejaría de ser un conjunto.</div>
+
+  <h2>4. Costo</h2>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Lista dinámica (LD)</th><th>Arreglo (AR)</th></tr></thead>
+    <tbody>
+      <tr><td><code>inicializarConjunto</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>agregar</code></td><td>O(n)</td><td>O(n)</td></tr>
+      <tr><td><code>sacar</code></td><td>O(n)</td><td>O(n)</td></tr>
+      <tr><td><code>pertenece</code></td><td>O(n)</td><td>O(n)</td></tr>
+      <tr><td><code>elegir</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>conjuntoVacío</code></td><td>O(1)</td><td>O(1)</td></tr>
+    </tbody>
+  </table>
+  <p><code>agregar</code>, <code>sacar</code> y <code>pertenece</code> son <strong>O(n)</strong> porque
+     hay que <strong>buscar</strong> el elemento recorriendo toda la estructura (y <code>agregar</code>,
+     además, llama internamente a <code>pertenece</code>). En cambio, <code>conjuntoVacío</code> y
+     <code>elegir</code> son <strong>O(1)</strong>: no recorren nada.</p>
+  <div class="callout tip"><span class="et">💡 ¿Y si quiero que sea rápido?</span>
+    Estas implementaciones son comparativamente ineficientes justamente por esa búsqueda lineal.
+    Para conjuntos grandes, la estructura ideal es un <strong>hashmap</strong>, que lleva
+    <code>agregar</code>, <code>sacar</code> y <code>pertenece</code> a O(1) promedio.</div>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Agregar sin chequear pertenece</span>
+    Si <code>agregar</code> no verifica <code>if (!pertenece(x))</code>, entran duplicados y se rompe
+    la definición de conjunto. La verificación no es opcional: es <em>parte</em> de la operación.</div>
+  <div class="callout error"><span class="et">⚠️ Violar la precondición de <code>elegir</code> / <code>sacar</code></span>
+    Llamar <code>elegir()</code> con el conjunto vacío rompe el programa
+    (<code>NullPointerException</code> en LD; en arreglo, <code>cant</code> es 0 y el índice queda mal).
+    La precondición de <code>elegir()</code> es <strong>conjunto no vacío</strong>.</div>
+  <div class="callout error"><span class="et">⚠️ En arreglo: no "compactar" al sacar</span>
+    En <code>ConjuntoAR.sacar</code>, hay que mover el último elemento a la posición liberada
+    (<code>arr[i] = arr[cant-1]</code>) y bajar <code>cant</code>. Si te olvidás de pisar el hueco o de
+    decrementar <code>cant</code>, te quedan basura o repetidos en el arreglo.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Como no hay orden, mover el último al hueco es válido y barato: no hace falta desplazar el resto
+    del arreglo. Aprovechalo.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li><strong>Sin repetidos</strong> y <strong>sin orden</strong>: lo único que importa es la pertenencia.</li>
+    <li>Operaciones: <code>agregar</code>, <code>sacar</code>, <code>pertenece</code>, <code>elegir</code>, <code>conjuntoVacío</code>, <code>inicializarConjunto</code>.</li>
+    <li>Para evitar duplicados, <code>agregar</code> chequea <code>pertenece</code> antes de insertar.</li>
+    <li><code>agregar</code>, <code>sacar</code> y <code>pertenece</code> son <strong>O(n)</strong> (hay que buscar); <code>conjuntoVacío</code> y <code>elegir</code> son <strong>O(1)</strong>.</li>
+    <li>En arreglo, al sacar se reemplaza por el último elemento: no hace falta desplazar nada.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá el conjunto y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

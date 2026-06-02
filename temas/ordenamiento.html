@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ordenamiento · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="ordenamiento">
+<main>
+<article>
+  <h1>Ordenamiento (Sorting)</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p><strong>Ordenar</strong> es reacomodar los elementos de un arreglo siguiendo un criterio,
+     típicamente de <strong>menor a mayor</strong>. Analogía: tenés cartas mezcladas en la mano
+     y las vas acomodando hasta que quedan en orden.</p>
+  <p>Se usa para: dejar datos listos para una <strong>búsqueda binaria</strong>, mostrar resultados
+     ordenados (rankings, listados), detectar duplicados o calcular la mediana. Es una de las
+     operaciones más frecuentes, así que conviene saber qué algoritmo elegir según el caso.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">5 1 4 2 8</span><span class="flecha">→</span>
+    <span class="nodo">1 2 4 5 8</span>
+  </div>
+
+  <h2>2. Ideas clave</h2>
+  <p>Casi todos los algoritmos se apoyan en dos operaciones básicas:</p>
+  <ul>
+    <li><strong>Comparar</strong> dos elementos para saber cuál va antes (<code>a[i] &gt; a[j]</code>).</li>
+    <li><strong>Intercambiar</strong> (<em>swap</em>) dos posiciones cuando están desordenadas.</li>
+  </ul>
+  <p>Otras ideas importantes:</p>
+  <ul>
+    <li><strong>In-place</strong>: ordenar reusando el mismo arreglo, sin pedir memoria extra
+        proporcional a <em>n</em>. Selección, inserción y burbuja son in-place; mergesort no.</li>
+    <li><strong>Cuadráticos O(n²)</strong> (selección, inserción, burbuja): simples, pero lentos
+        cuando <em>n</em> crece.</li>
+    <li><strong>O(n log n)</strong> (quicksort, mergesort): basados en <em>dividir y vencer</em>,
+        mucho más rápidos para arreglos grandes.</li>
+  </ul>
+  <pre><code class="java">// Operación auxiliar usada por varios algoritmos: intercambia a[i] con a[j].
+static void swap(int[] a, int i, int j) {
+    int tmp = a[i];
+    a[i] = a[j];
+    a[j] = tmp;
+}</code></pre>
+
+  <h2>3. Algoritmos (Java)</h2>
+
+  <h3>Selección (Selection Sort)</h3>
+  <p>En cada vuelta busca el <strong>mínimo del tramo no ordenado</strong> y lo pone al principio.
+     Hace pocos intercambios (uno por vuelta), pero siempre recorre todo para encontrar el mínimo.</p>
+  <pre><code class="java">static void seleccion(int[] a) {
+    int n = a.length;
+    for (int i = 0; i &lt; n - 1; i++) {       // i marca el inicio del tramo desordenado.
+        int min = i;                          // Suponemos que el mínimo está en i.
+        for (int j = i + 1; j &lt; n; j++) {     // Buscamos un valor menor en el resto.
+            if (a[j] &lt; a[min]) {
+                min = j;                      // Encontramos un nuevo mínimo.
+            }
+        }
+        swap(a, i, min);                      // Llevamos el mínimo a su posición final.
+    }
+}</code></pre>
+
+  <h3>Inserción (Insertion Sort)</h3>
+  <p>Toma cada elemento y lo <strong>inserta en su lugar</strong> dentro del tramo ya ordenado de la
+     izquierda, corriendo hacia la derecha los que son mayores. Es muy bueno cuando el arreglo ya
+     está <em>casi</em> ordenado.</p>
+  <pre><code class="java">static void insercion(int[] a) {
+    int n = a.length;
+    for (int i = 1; i &lt; n; i++) {            // a[0..i-1] ya está ordenado.
+        int actual = a[i];                    // Valor a insertar.
+        int j = i - 1;
+        // Corremos a la derecha los mayores que 'actual'.
+        while (j &gt;= 0 &amp;&amp; a[j] &gt; actual) {
+            a[j + 1] = a[j];
+            j--;
+        }
+        a[j + 1] = actual;                    // Hueco encontrado: insertamos.
+    }
+}</code></pre>
+
+  <h3>Burbuja (Bubble Sort)</h3>
+  <p>Compara <strong>pares adyacentes</strong> y los intercambia si están desordenados. En cada
+     pasada el mayor "burbujea" hasta el final. La bandera <code>huboSwap</code> permite cortar
+     antes si ya quedó ordenado.</p>
+  <pre><code class="java">static void burbuja(int[] a) {
+    int n = a.length;
+    for (int i = 0; i &lt; n - 1; i++) {        // Cantidad de pasadas.
+        boolean huboSwap = false;
+        for (int j = 0; j &lt; n - 1 - i; j++) { // El tramo final ya está ordenado.
+            if (a[j] &gt; a[j + 1]) {
+                swap(a, j, j + 1);
+                huboSwap = true;
+            }
+        }
+        if (!huboSwap) break;                 // Sin cambios ⇒ ya está ordenado.
+    }
+}</code></pre>
+
+  <h3>Quicksort</h3>
+  <p>Elige un <strong>pivote</strong>, <em>particiona</em> el arreglo en menores y mayores que él, y
+     se llama recursivamente sobre cada parte. Promedio <strong>O(n log n)</strong>; el peor caso
+     O(n²) aparece con pivotes muy desbalanceados (por ejemplo, arreglo ya ordenado).</p>
+  <pre><code class="java">static void quicksort(int[] a, int desde, int hasta) {
+    if (desde &gt;= hasta) return;              // Caso base: 0 o 1 elemento.
+    int p = particion(a, desde, hasta);      // Deja el pivote en su lugar definitivo.
+    quicksort(a, desde, p - 1);              // Ordena la parte izquierda (menores).
+    quicksort(a, p + 1, hasta);              // Ordena la parte derecha (mayores).
+}
+
+// Esquema de Lomuto: usa el último elemento como pivote.
+static int particion(int[] a, int desde, int hasta) {
+    int pivote = a[hasta];
+    int i = desde - 1;                        // 'i' marca el final de los menores.
+    for (int j = desde; j &lt; hasta; j++) {
+        if (a[j] &lt;= pivote) {
+            i++;
+            swap(a, i, j);                    // Mandamos el menor al sector izquierdo.
+        }
+    }
+    swap(a, i + 1, hasta);                    // Colocamos el pivote tras los menores.
+    return i + 1;                             // Posición final del pivote.
+}</code></pre>
+
+  <h3>Mergesort</h3>
+  <p>Divide el arreglo a la mitad, ordena cada mitad por recursión y luego las <strong>combina</strong>
+     (<em>merge</em>) en orden. Es <strong>O(n log n) siempre</strong>, pero necesita un arreglo
+     auxiliar (no es in-place).</p>
+  <pre><code class="java">static void mergesort(int[] a, int desde, int hasta) {
+    if (desde &gt;= hasta) return;              // Caso base: 0 o 1 elemento.
+    int medio = (desde + hasta) / 2;
+    mergesort(a, desde, medio);              // Ordena la mitad izquierda.
+    mergesort(a, medio + 1, hasta);          // Ordena la mitad derecha.
+    combinar(a, desde, medio, hasta);        // Mezcla las dos mitades ordenadas.
+}
+
+static void combinar(int[] a, int desde, int medio, int hasta) {
+    int[] aux = new int[hasta - desde + 1];   // Arreglo auxiliar.
+    int i = desde;        // Recorre la mitad izquierda.
+    int j = medio + 1;    // Recorre la mitad derecha.
+    int k = 0;            // Recorre el auxiliar.
+    // Tomamos el menor de las dos mitades hasta agotar una.
+    while (i &lt;= medio &amp;&amp; j &lt;= hasta) {
+        if (a[i] &lt;= a[j]) aux[k++] = a[i++];
+        else              aux[k++] = a[j++];
+    }
+    while (i &lt;= medio)  aux[k++] = a[i++];     // Sobrantes de la izquierda.
+    while (j &lt;= hasta)  aux[k++] = a[j++];     // Sobrantes de la derecha.
+    // Copiamos el resultado ordenado de vuelta al arreglo original.
+    for (k = 0; k &lt; aux.length; k++) {
+        a[desde + k] = aux[k];
+    }
+}</code></pre>
+
+  <h2>4. Costo</h2>
+  <table class="costo">
+    <thead><tr><th>Algoritmo</th><th>Mejor caso</th><th>Promedio</th><th>Peor caso</th><th>In-place</th></tr></thead>
+    <tbody>
+      <tr><td><code>seleccion</code></td><td>O(n²)</td><td>O(n²)</td><td>O(n²)</td><td>Sí</td></tr>
+      <tr><td><code>insercion</code></td><td>O(n)</td><td>O(n²)</td><td>O(n²)</td><td>Sí</td></tr>
+      <tr><td><code>burbuja</code></td><td>O(n)</td><td>O(n²)</td><td>O(n²)</td><td>Sí</td></tr>
+      <tr><td><code>quicksort</code></td><td>O(n log n)</td><td>O(n log n)</td><td>O(n²)</td><td>Sí</td></tr>
+      <tr><td><code>mergesort</code></td><td>O(n log n)</td><td>O(n log n)</td><td>O(n log n)</td><td>No</td></tr>
+    </tbody>
+  </table>
+  <div class="callout tip"><span class="et">💡 Regla práctica</span>
+    Para arreglos chicos o casi ordenados, <code>insercion</code> es simple y rápida. Para arreglos
+    grandes, conviene un O(n log n): <code>mergesort</code> garantiza el costo siempre, y
+    <code>quicksort</code> suele ser más veloz en la práctica pero tiene un peor caso O(n²).</div>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Límites de los índices</span>
+    Confundir <code>i &lt; n</code> con <code>i &lt;= n</code> hace leer <code>a[n]</code>, que no existe:
+    <code>ArrayIndexOutOfBoundsException</code>. En burbuja, además, el interno va hasta
+    <code>j &lt; n - 1 - i</code>, no hasta <code>n</code>.</div>
+  <div class="callout error"><span class="et">⚠️ Condición de corte mal puesta</span>
+    En inserción, olvidar el <code>j &gt;= 0</code> en el <code>while</code> hace acceder a
+    <code>a[-1]</code>. Cuidado también con el orden: <code>j &gt;= 0 &amp;&amp; a[j] &gt; actual</code>
+    (primero el límite, después la comparación).</div>
+  <div class="callout error"><span class="et">⚠️ Olvidar el caso base</span>
+    En quicksort y mergesort, sin <code>if (desde &gt;= hasta) return;</code> la recursión nunca corta
+    y revienta con <code>StackOverflowError</code>.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Trazá el algoritmo con un arreglo chico (4 o 5 elementos) y anotá el estado tras cada pasada o
+    cada llamada recursiva. Es la forma más segura de detectar un índice o un corte mal puestos.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li>Ordenar = reacomodar los elementos según un criterio (normalmente de menor a mayor).</li>
+    <li>Se basa en <strong>comparar</strong> e <strong>intercambiar</strong>; muchos algoritmos son
+        <strong>in-place</strong>.</li>
+    <li>Cuadráticos O(n²): <code>seleccion</code>, <code>insercion</code>, <code>burbuja</code> —
+        simples, para arreglos chicos.</li>
+    <li>O(n log n) por <em>dividir y vencer</em>: <code>quicksort</code> (promedio O(n log n), peor
+        O(n²)) y <code>mergesort</code> (O(n log n) siempre, pero no in-place).</li>
+    <li>Los recursivos necesitan <strong>caso base</strong>; cuidá los <strong>límites de índices</strong>.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá el ordenamiento y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

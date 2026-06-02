@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cola de Prioridad · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="cola-prioridad">
+<main>
+<article>
+  <h1>Cola de Prioridad</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>Una <strong>cola de prioridad</strong> es como una cola común, pero cada elemento entra
+     con una <strong>prioridad</strong> asociada. La diferencia es que no sale primero el que
+     llegó primero (FIFO), sino el de <strong>mayor prioridad</strong>. Si dos tienen la misma
+     prioridad, entre ellos se respeta el orden de llegada.</p>
+  <p>Analogía: la guardia de un hospital. No te atienden por orden de llegada, sino por gravedad —
+     el caso más urgente pasa primero, aunque haya llegado último.</p>
+  <p>Se usa para: planificación de tareas (scheduling), algoritmos de grafos como Dijkstra,
+     y en general cuando hay que atender pedidos según importancia y no según el orden de llegada.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">primero → (9, p8)</span><span class="flecha">→</span>
+    <span class="nodo">(4, p5)</span><span class="flecha">→</span>
+    <span class="nodo">(7, p2)</span><span class="flecha">→</span>
+    <span class="nodo">null</span>
+  </div>
+  <p class="nota">Cada nodo guarda un <em>valor</em> y su <em>prioridad</em>. En el diagrama,
+     <code>(9, p8)</code> es el de mayor prioridad y por eso quedó primero.</p>
+
+  <h2>2. Interfaz del TDA</h2>
+  <p>Las operaciones del TDA Cola de Prioridad y sus <strong>precondiciones</strong>:</p>
+  <pre><code class="java">public interface ColaPrioridadTDA {
+    void inicializarCola();                       // Sin precondiciones.
+    void acolarPrioridad(int x, int prioridad);   // Cola inicializada.
+    void desacolar();                             // Cola inicializada y no vacía.
+    int primero();                                // Cola inicializada y no vacía.
+    int prioridad();                              // Cola inicializada y no vacía.
+    boolean colaVacia();                          // Cola inicializada.
+}</code></pre>
+  <p><code>acolarPrioridad</code> agrega el valor <code>x</code> con la prioridad indicada.
+     <code>primero()</code> devuelve el valor del elemento de mayor prioridad y
+     <code>prioridad()</code> devuelve su prioridad; ninguno de los dos lo saca de la cola
+     (para eso está <code>desacolar()</code>).</p>
+
+  <h2>3. Implementaciones</h2>
+  <h3>Con lista dinámica ordenada por prioridad (LD)</h3>
+  <p>La lista se mantiene <strong>ordenada por prioridad de mayor a menor</strong>: el nodo de
+     mayor prioridad es siempre el primero. Así, <code>primero()</code>, <code>prioridad()</code>
+     y <code>desacolar()</code> trabajan directamente sobre <code>primero</code> y son O(1). El
+     costo se paga al insertar: hay que recorrer la lista para dejar el nuevo nodo en su lugar.</p>
+  <pre><code class="java">public class ColaPrioridadLD implements ColaPrioridadTDA {
+
+    class NodoPrioridad {   // Cada nodo guarda un valor, su prioridad y la referencia al siguiente.
+        int valor;
+        int prioridad;
+        NodoPrioridad sig;
+    }
+
+    NodoPrioridad primero;  // Referencia al primer nodo: el de MAYOR prioridad de la cola.
+
+    public void inicializarCola() {
+        primero = null;     // Cola vacía = lista vacía (null).
+    }
+
+    public void acolarPrioridad(int x, int prioridad) {
+        NodoPrioridad nuevo = new NodoPrioridad();   // Creación de un nuevo nodo.
+        nuevo.valor = x;
+        nuevo.prioridad = prioridad;
+        if (primero == null || prioridad &gt; primero.prioridad) {
+            // Caso especial: el nuevo va al frente (cola vacía o supera al actual primero).
+            nuevo.sig = primero;
+            primero = nuevo;
+        } else {
+            // Si no, hay que recorrer la cola buscando la posición correcta.
+            NodoPrioridad turista = primero;   // Nodo "turista" que recorre mirando al siguiente.
+            while (turista.sig != null &amp;&amp; turista.sig.prioridad &gt;= prioridad)
+                turista = turista.sig;
+            nuevo.sig = turista.sig;   // Se engancha el nuevo entre "turista" y su siguiente.
+            turista.sig = nuevo;
+        }
+    }
+
+    public void desacolar() {       // Sale el primer elemento (el de mayor prioridad).
+        primero = primero.sig;      // El segundo nodo pasa a ser el primero.
+    }
+
+    public int primero() {
+        return primero.valor;
+    }
+
+    public int prioridad() {
+        return primero.prioridad;
+    }
+
+    public boolean colaVacia() {
+        return (primero == null);
+    }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Cómo leer el <code>acolarPrioridad</code></span>
+    Hay dos situaciones. <strong>(1) Insertar al frente:</strong> si la cola está vacía
+    (<code>primero == null</code>) o el nuevo tiene <em>más</em> prioridad que el primero actual,
+    el nuevo apunta al viejo primero y pasa a ser el primero. <strong>(2) Recorrer:</strong> en
+    cualquier otro caso, el "turista" avanza <em>mientras</em> el siguiente exista y tenga
+    prioridad mayor o igual a la del nuevo; cuando se detiene, el nuevo se engancha justo
+    después del turista. La condición <code>&gt;=</code> (mayor o igual) hace que, ante empate de
+    prioridad, el nuevo quede <em>detrás</em> de los que ya estaban: respeta el orden de llegada.</div>
+
+  <h3>Con dos arreglos en tándem (DA)</h3>
+  <p>Otra opción es usar <strong>dos arreglos paralelos</strong>: uno de <code>valores</code> y
+     otro de <code>prioridades</code>, que se modifican siempre juntos. Se mantiene ordenado por
+     prioridad, y al insertar se hace un <strong>corrimiento</strong> hacia adelante hasta dejar
+     el par en su posición.</p>
+  <pre><code class="java">public class ColaPrioridadDA implements ColaPrioridadTDA {
+
+    int[] valores;       // El arreglo de valores.
+    int[] prioridades;   // El arreglo de prioridades (se mueve en tándem con "valores").
+    int cant;            // Cantidad de elementos; "cant" apunta a la primera posición libre.
+    int max = 40;        // Cantidad máxima de elementos.
+
+    public void inicializarCola() {
+        valores = new int[max];
+        prioridades = new int[max];
+        cant = 0;
+    }
+
+    public void acolarPrioridad(int x, int prioridad) {
+        int i = cant;
+        // Se recorre "prioridades" hacia atrás con corrimiento hasta encontrar la posición.
+        while (i &gt; 0 &amp;&amp; prioridades[i-1] &gt; prioridad) {
+            valores[i] = valores[i-1];
+            prioridades[i] = prioridades[i-1];
+            i--;
+        }
+        valores[i] = x;             // Se inserta el nuevo par en la posición encontrada.
+        prioridades[i] = prioridad;
+        cant++;
+    }
+
+    public void desacolar() {
+        cant--;   // Eliminación lógica: el par de la última posición sale de la cola.
+    }
+
+    public int primero() {
+        return valores[cant-1];     // El de mayor prioridad quedó al final del arreglo.
+    }
+
+    public int prioridad() {
+        return prioridades[cant-1];
+    }
+
+    public boolean colaVacia() {
+        return (cant == 0);
+    }
+}</code></pre>
+
+  <h3>Con arreglo de objetos ordenado (AO)</h3>
+  <p>Variante de la anterior: en vez de dos arreglos, se usa <strong>un solo arreglo de objetos</strong>,
+     donde cada objeto <code>Elemento</code> agrupa el par valor-prioridad. La lógica de inserción
+     con corrimiento es la misma; el de mayor prioridad queda al final.</p>
+  <pre><code class="java">public class ColaPrioridadAO implements ColaPrioridadTDA {
+
+    class Elemento {     // Un "estuche" que agrupa un par valor-prioridad.
+        int valor;
+        int prioridad;
+    }
+
+    Elemento[] pares;    // El elemento de mayor prioridad queda al final del arreglo.
+    int cant;
+
+    public void inicializarCola() {
+        pares = new Elemento[20];
+        cant = 0;
+    }
+
+    public void acolarPrioridad(int x, int prioridad) {
+        int i = cant;
+        // Se recorre el arreglo hacia atrás con corrimiento hasta encontrar la posición.
+        while (i &gt; 0 &amp;&amp; pares[i-1].prioridad &gt; prioridad) {
+            pares[i] = pares[i-1];
+            i--;
+        }
+        pares[i] = new Elemento();   // Se inserta el nuevo par en la posición encontrada.
+        pares[i].valor = x;
+        pares[i].prioridad = prioridad;
+        cant++;
+    }
+
+    public void desacolar() {
+        cant--;   // Eliminación lógica.
+    }
+
+    public int primero() {
+        return pares[cant-1].valor;
+    }
+
+    public int prioridad() {
+        return pares[cant-1].prioridad;
+    }
+
+    public boolean colaVacia() {
+        return (cant == 0);
+    }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 ¿Dónde queda el de mayor prioridad?</span>
+    Ojo con la convención: en la <strong>LD</strong> el de mayor prioridad está <em>al frente</em>
+    (es <code>primero</code>), mientras que en los <strong>arreglos (DA y AO)</strong> queda
+    <em>al final</em> (posición <code>cant-1</code>). En ambos casos sale en O(1), solo cambia de
+    qué punta lo sacás. Estas implementaciones con arreglo ordenado son simples pero ineficientes
+    al insertar; lo ideal para una cola de prioridad de verdad sería un <em>heap</em>.</div>
+
+  <h2>4. Costo</h2>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Lista ordenada (LD)</th><th>Arreglos ordenados (DA / AO)</th></tr></thead>
+    <tbody>
+      <tr><td><code>inicializarCola</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>acolarPrioridad</code></td><td>O(n)</td><td>O(n)</td></tr>
+      <tr><td><code>desacolar</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>primero</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>prioridad</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>colaVacia</code></td><td>O(1)</td><td>O(1)</td></tr>
+    </tbody>
+  </table>
+  <p>El <code>acolarPrioridad</code> es <strong>O(n)</strong> porque, para mantener la estructura
+     ordenada, en el peor caso hay que recorrerla entera buscando dónde va el nuevo elemento (en la
+     LD, avanzando con el "turista"; en los arreglos, corriendo elementos). En cambio
+     <code>desacolar</code>, <code>primero</code>, <code>prioridad</code> y <code>colaVacia</code>
+     son <strong>O(1)</strong>: como el de mayor prioridad ya está en una punta fija, se accede o se
+     saca sin recorrer nada.</p>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Violar la precondición</span>
+    Llamar <code>desacolar()</code>, <code>primero()</code> o <code>prioridad()</code> con la cola
+    vacía rompe el programa: <code>NullPointerException</code> en LD, o índice <code>-1</code> en
+    los arreglos. Verificá siempre <code>if (!colaVacia())</code> antes.</div>
+  <div class="callout error"><span class="et">⚠️ Confundir el criterio</span>
+    No es FIFO: sale primero el de <strong>mayor prioridad</strong>, no el que llegó primero.
+    Cuidado también con qué número significa "más prioritario" (acá, número más grande = más
+    prioridad).</div>
+  <div class="callout error"><span class="et">⚠️ Romper el enganche de <code>sig</code> (en la LD)</span>
+    Al insertar con el "turista" hay que hacer <code>nuevo.sig = turista.sig</code> <em>antes</em>
+    de <code>turista.sig = nuevo</code>. Si invertís el orden, perdés la referencia al resto de la
+    lista y se pierden todos los nodos que venían después.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Repasá el <code>while</code> del <code>acolarPrioridad</code>: la condición incluye
+    <code>turista.sig != null</code> para no caerte del final de la lista, y
+    <code>turista.sig.prioridad &gt;= prioridad</code> para frenar en el lugar correcto.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li>Como una cola, pero cada elemento tiene <strong>prioridad</strong>: sale primero el de <strong>mayor prioridad</strong>.</li>
+    <li>Operaciones: <code>acolarPrioridad</code>, <code>desacolar</code>, <code>primero</code>, <code>prioridad</code>, <code>colaVacia</code>, <code>inicializarCola</code>.</li>
+    <li>Implementaciones vistas: lista dinámica ordenada (LD) y arreglos ordenados (DA / AO).</li>
+    <li>Como se mantiene ordenada, <code>acolarPrioridad</code> es <strong>O(n)</strong> y el resto <strong>O(1)</strong>.</li>
+    <li>Lo más eficiente para una cola de prioridad sería un <em>heap</em>, no un arreglo ordenado.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá la cola de prioridad y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

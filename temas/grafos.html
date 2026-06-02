@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grafos · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="grafos">
+<main>
+<article>
+  <h1>Grafos</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>Un <strong>grafo</strong> es un conjunto de <strong>vértices</strong> (nodos) conectados entre sí
+     por <strong>aristas</strong> (conexiones). Cada arista puede tener un <strong>peso</strong>, un número
+     que representa, por ejemplo, una distancia, un costo o una capacidad.</p>
+  <p>Hay dos variantes según la dirección de las aristas:</p>
+  <ul>
+    <li><strong>No dirigido</strong>: la arista entre A y B vale en los dos sentidos (si A está conectado
+        con B, entonces B está conectado con A). Sirve para modelar relaciones simétricas, como amistades.</li>
+    <li><strong>Dirigido</strong> (o <em>dígrafo</em>): la arista tiene un sentido. Que exista A → B no
+        implica que exista B → A. Sirve para calles de mano única, dependencias entre tareas, etc.</li>
+  </ul>
+  <p>Se usa para: <strong>mapas y rutas</strong> (ciudades = vértices, caminos = aristas con peso = distancia),
+     <strong>redes</strong> (computadoras, redes sociales), dependencias entre tareas y muchos problemas
+     de caminos mínimos.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">A</span><span class="flecha">→5→</span>
+    <span class="nodo">B</span><span class="flecha">→3→</span>
+    <span class="nodo">C</span>
+    <span class="flecha">A→2→</span><span class="nodo">C</span>
+  </div>
+
+  <h2>2. Interfaz del TDA</h2>
+  <p>Las operaciones del TDA Grafo y sus <strong>precondiciones</strong>. Los vértices se identifican con
+     un entero (su etiqueta):</p>
+  <pre><code class="java">public interface GrafoTDA {
+    void inicializarGrafo();                              // Sin precondiciones.
+    void agregarVertice(int v);                           // Grafo inicializado.
+    void eliminarVertice(int v);                          // Grafo inicializado y vértice existente.
+    ConjuntoTDA vertices();                               // Grafo inicializado.
+    void agregarArista(int origen, int destino, int peso);// Grafo inicializado, vértices existentes.
+    void eliminarArista(int origen, int destino);         // Grafo inicializado, arista existente.
+    boolean existeArista(int origen, int destino);        // Grafo inicializado, vértices existentes.
+    int pesoArista(int origen, int destino);              // Grafo inicializado, arista existente.
+}</code></pre>
+  <p><code>vertices()</code> devuelve un <code>ConjuntoTDA</code> con las etiquetas de todos los vértices del
+     grafo: es la puerta de entrada para recorrerlo, porque te dice qué nodos existen.</p>
+
+  <h2>3. Representaciones y recorridos (Java)</h2>
+  <h3>Matriz de adyacencia (MA)</h3>
+  <p>Se usa una matriz <code>mAdy</code> de tamaño <em>n×n</em> (donde <em>n</em> es la cantidad de vértices).
+     La celda <code>mAdy[o][d]</code> guarda el <strong>peso</strong> de la arista del vértice de índice
+     <code>o</code> al de índice <code>d</code>. Un <code>0</code> significa <strong>"sin arista"</strong>.
+     Como los vértices se identifican por etiqueta pero la matriz trabaja con índices (0, 1, 2…), un método
+     auxiliar <code>vertice2indice</code> traduce la etiqueta a su posición.</p>
+  <pre><code class="java">public class GrafoMA implements GrafoTDA {
+    int[][] mAdy;       // Matriz n×n: mAdy[o][d] = peso de la arista o→d (0 = sin arista).
+    int[] etiquetas;    // etiquetas[i] = nombre del vértice que vive en el índice i.
+    int cantidad;       // Cantidad de vértices actuales.
+    int mx = 55;        // Capacidad máxima.
+
+    public void inicializarGrafo() {
+        mAdy = new int[mx][mx];
+        etiquetas = new int[mx];
+        cantidad = 0;
+    }
+
+    public void agregarVertice(int v) {
+        etiquetas[cantidad] = v;            // Guardo la etiqueta en la próxima posición libre.
+        for (int i = 0; i &lt;= cantidad; i++) {
+            mAdy[i][cantidad] = 0;          // Su fila y columna arrancan sin aristas.
+            mAdy[cantidad][i] = 0;
+        }
+        cantidad++;
+    }
+
+    public void agregarArista(int origen, int destino, int peso) {
+        int o = vertice2indice(origen);
+        int d = vertice2indice(destino);
+        mAdy[o][d] = peso;                  // Cargo el peso en la celda correspondiente.
+    }
+
+    public void eliminarArista(int origen, int destino) {
+        int o = vertice2indice(origen);
+        int d = vertice2indice(destino);
+        mAdy[o][d] = 0;                     // 0 vuelve a significar "sin arista".
+    }
+
+    public boolean existeArista(int origen, int destino) {
+        int o = vertice2indice(origen);
+        int d = vertice2indice(destino);
+        return (mAdy[o][d] != 0);           // Hay arista si la celda no es 0.
+    }
+
+    public int pesoArista(int origen, int destino) {
+        int o = vertice2indice(origen);
+        int d = vertice2indice(destino);
+        return mAdy[o][d];
+    }
+
+    private int vertice2indice(int v) {     // Traduce etiqueta → índice (busca linealmente).
+        int i = cantidad - 1;
+        while (i &gt;= 0 &amp;&amp; etiquetas[i] != v)
+            i--;
+        return i;
+    }
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Dirigido vs no dirigido</span>
+    Como está, <code>agregarArista</code> sólo carga <code>mAdy[o][d]</code>: es un grafo
+    <strong>dirigido</strong>. Para uno <strong>no dirigido</strong>, habría que cargar también
+    <code>mAdy[d][o] = peso</code> (la matriz queda simétrica).</div>
+
+  <h3>Lista de adyacencia (alternativa)</h3>
+  <p>En lugar de una matriz, cada vértice guarda una <strong>lista</strong> con sus vecinos (y el peso de
+     cada arista). Conviene cuando el grafo es <strong>ralo</strong> (pocas aristas): ocupa
+     proporcional a la cantidad de aristas y no <em>n²</em>. La contra es que averiguar si existe una arista
+     puntual ya no es instantáneo: hay que recorrer la lista del vértice origen.</p>
+
+  <h3>Recorrido en profundidad (DFS)</h3>
+  <p>DFS (<em>Depth-First Search</em>) avanza por una rama todo lo que puede antes de retroceder. Es natural
+     escribirlo de forma <strong>recursiva</strong>, usando un <code>ConjuntoTDA</code> de
+     <strong>visitados</strong> para no procesar dos veces el mismo vértice:</p>
+  <pre><code class="java">void dfs(GrafoTDA g, int v, ConjuntoTDA visitados) {
+    visitados.agregar(v);                 // Marco v como visitado.
+    procesar(v);                          // Lo "uso" (imprimir, contar, etc.).
+
+    ConjuntoTDA vs = g.vertices();        // Recorro todos los vértices buscando vecinos de v.
+    while (!vs.conjuntoVacio()) {
+        int w = vs.elegir();
+        vs.sacar(w);
+        if (g.existeArista(v, w) &amp;&amp; !visitados.pertenece(w))
+            dfs(g, w, visitados);         // Bajo recursivamente al vecino no visitado.
+    }
+}</code></pre>
+
+  <h3>Recorrido en amplitud (BFS)</h3>
+  <p>BFS (<em>Breadth-First Search</em>) visita primero todos los vecinos directos, después los vecinos de
+     esos, y así por "niveles". Se implementa con una <strong>Cola</strong> (FIFO) y el mismo conjunto de
+     visitados:</p>
+  <pre><code class="java">void bfs(GrafoTDA g, int inicio) {
+    ConjuntoTDA visitados = new ConjuntoLD();
+    visitados.inicializarConjunto();
+    ColaTDA cola = new ColaLD();
+    cola.inicializarCola();
+
+    cola.acolar(inicio);
+    visitados.agregar(inicio);
+
+    while (!cola.colaVacia()) {
+        int v = cola.primero();
+        cola.desacolar();
+        procesar(v);
+
+        ConjuntoTDA vs = g.vertices();    // Encolo los vecinos de v aún no visitados.
+        while (!vs.conjuntoVacio()) {
+            int w = vs.elegir();
+            vs.sacar(w);
+            if (g.existeArista(v, w) &amp;&amp; !visitados.pertenece(w)) {
+                visitados.agregar(w);     // Marco al encolar para no encolarlo dos veces.
+                cola.acolar(w);
+            }
+        }
+    }
+}</code></pre>
+
+  <h2>4. Costo</h2>
+  <p>Con <em>V</em> = cantidad de vértices. La matriz de adyacencia paga espacio para ganar velocidad al
+     consultar una arista:</p>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Matriz de adyacencia</th></tr></thead>
+    <tbody>
+      <tr><td>Espacio</td><td>O(V²)</td></tr>
+      <tr><td><code>existeArista</code> / <code>pesoArista</code></td><td>O(1) tras ubicar el índice</td></tr>
+      <tr><td>Recorrer los vecinos de un vértice</td><td>O(V)</td></tr>
+      <tr><td>DFS (recorrido completo)</td><td>O(V²)</td></tr>
+      <tr><td>BFS (recorrido completo)</td><td>O(V²)</td></tr>
+    </tbody>
+  </table>
+  <p>DFS y BFS cuestan O(V²) con matriz porque por cada uno de los <em>V</em> vértices hay que revisar su
+     fila entera (otros <em>V</em> posibles vecinos). Con lista de adyacencia los recorridos bajan a
+     O(V + A), donde <em>A</em> es la cantidad de aristas.</p>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Olvidar el conjunto de visitados</span>
+    Si DFS o BFS no marcan los vértices ya procesados, ante un ciclo vuelven a entrar a los mismos nodos
+    una y otra vez: <strong>bucle infinito</strong>. El conjunto de visitados es obligatorio.</div>
+  <div class="callout error"><span class="et">⚠️ Operar aristas con vértices inexistentes</span>
+    <code>agregarArista</code>, <code>existeArista</code>, etc. asumen que origen y destino
+    <strong>ya existen</strong>. Si pasás una etiqueta que no está, <code>vertice2indice</code> devuelve
+    <code>-1</code> y se accede a la matriz con índice negativo. Verificá la precondición antes.</div>
+  <div class="callout error"><span class="et">⚠️ Confundir dirigido con no dirigido</span>
+    En un grafo no dirigido hay que cargar <strong>las dos celdas</strong>
+    (<code>mAdy[o][d]</code> y <code>mAdy[d][o]</code>). Cargar sólo una lo convierte sin querer en
+    dirigido y los recorridos "no encuentran" la conexión en el otro sentido.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Recordá que <code>0</code> es el valor centinela de "sin arista". Si en tu problema un peso
+    legítimo puede ser 0, vas a necesitar otro valor (por ejemplo, -1) para marcar la ausencia.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li>Un grafo son <strong>vértices</strong> unidos por <strong>aristas</strong> (con peso), y puede ser
+        <strong>dirigido</strong> o <strong>no dirigido</strong>.</li>
+    <li>Operaciones del TDA: <code>inicializarGrafo</code>, <code>agregarVertice</code>,
+        <code>eliminarVertice</code>, <code>vertices</code>, <code>agregarArista</code>,
+        <code>eliminarArista</code>, <code>existeArista</code>, <code>pesoArista</code>.</li>
+    <li><strong>Matriz de adyacencia</strong>: matriz <em>n×n</em>, celda = peso (0 = sin arista);
+        <code>existeArista</code> O(1) pero O(V²) de espacio. La <strong>lista de adyacencia</strong> conviene
+        para grafos ralos.</li>
+    <li>Recorridos: <strong>DFS</strong> (recursivo, en profundidad) y <strong>BFS</strong> (con cola, en
+        amplitud); ambos necesitan un <strong>conjunto de visitados</strong> y cuestan O(V²) con matriz.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá el recorrido y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

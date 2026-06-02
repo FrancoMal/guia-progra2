@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recursividad · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="recursividad">
+<main>
+<article>
+  <h1>Recursividad</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>La <strong>recursividad</strong> es cuando una función se <strong>llama a sí misma</strong>
+     para resolver un problema. La idea es <strong>descomponer</strong> el problema en una versión
+     más chica del mismo problema, hasta llegar a un caso tan simple que se resuelve directo.</p>
+  <p>Se usa cuando un problema se define naturalmente en términos de sí mismo: factorial, sumas,
+     Fibonacci, recorrer estructuras enlazadas o árboles. Cada llamada resuelve un cachito y delega
+     el resto a otra llamada más chica.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">factorial(3)</span><span class="flecha">→</span>
+    <span class="nodo">factorial(2)</span><span class="flecha">→</span>
+    <span class="nodo">factorial(1)</span><span class="flecha">→</span>
+    <span class="nodo">factorial(0) = 1</span>
+  </div>
+
+  <h2>2. Ideas clave</h2>
+  <p>Toda recursión bien hecha tiene <strong>dos partes</strong>:</p>
+  <ul>
+    <li><strong>Caso base</strong>: la condición que <strong>corta</strong> la recursión. Es el problema
+        más chico, que se resuelve sin volver a llamarse (ej: <code>factorial(0) = 1</code>).</li>
+    <li><strong>Caso recursivo</strong>: la función se llama a sí misma con una entrada
+        <strong>más chica</strong>, acercándose al caso base.</li>
+  </ul>
+  <p>Cada llamada se <strong>apila</strong> en la <em>pila de ejecución</em>: queda "esperando"
+     hasta que la llamada de adentro devuelve su resultado. Cuando se llega al caso base, las
+     llamadas se van <strong>resolviendo al volver</strong> (desapilando), de adentro hacia afuera.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">3 × factorial(2)</span><span class="flecha">→</span>
+    <span class="nodo">2 × factorial(1)</span><span class="flecha">→</span>
+    <span class="nodo">1 × factorial(0)</span><span class="flecha">→</span>
+    <span class="nodo">vuelve: 1 → 1 → 2 → 6</span>
+  </div>
+
+  <h2>3. Ejemplos en Java</h2>
+  <h3>Factorial</h3>
+  <p>El caso base es <code>n == 0</code> (vale 1); el recursivo multiplica <code>n</code> por el
+     factorial de <code>n - 1</code>.</p>
+  <pre><code class="java">public int factorial(int n) {
+    if (n == 0) return 1;            // Caso base: corta la recursión.
+    return n * factorial(n - 1);     // Caso recursivo: problema más chico.
+}</code></pre>
+
+  <h3>Suma de 1 a n</h3>
+  <p>Misma estructura: el caso base devuelve 0; el recursivo suma <code>n</code> a la suma de
+     <code>1..(n-1)</code>.</p>
+  <pre><code class="java">public int suma(int n) {
+    if (n == 0) return 0;            // Caso base.
+    return n + suma(n - 1);          // n + (n-1) + ... + 1.
+}</code></pre>
+
+  <h3>Fibonacci</h3>
+  <p>Tiene <strong>dos casos base</strong> (<code>n == 0</code> y <code>n == 1</code>) y el caso
+     recursivo hace <strong>dos llamadas</strong>: por eso es caro (ver costo).</p>
+  <pre><code class="java">public int fib(int n) {
+    if (n &lt;= 1) return n;            // fib(0)=0, fib(1)=1.
+    return fib(n - 1) + fib(n - 2);  // Dos llamadas por cada nivel.
+}</code></pre>
+
+  <h3>Recorrer y contar una lista enlazada</h3>
+  <p>El caso base es la lista vacía (<code>nodo == null</code> devuelve 0); el recursivo cuenta
+     1 más lo que tenga el resto de la lista.</p>
+  <pre><code class="java">class Nodo { int valor; Nodo sig; }
+
+public int contar(Nodo nodo) {
+    if (nodo == null) return 0;          // Caso base: se acabó la lista.
+    return 1 + contar(nodo.sig);         // 1 (este nodo) + el resto.
+}</code></pre>
+
+  <h2>4. Costo</h2>
+  <p>La recursión <strong>lineal</strong> (una sola llamada por nivel) hace <code>n</code> llamadas:
+     es <strong>O(n)</strong>. Fibonacci recursivo hace <strong>dos llamadas</strong> por nivel, y
+     el árbol de llamadas se duplica en cada paso: <strong>O(2<sup>n</sup>)</strong>.</p>
+  <table class="costo">
+    <thead><tr><th>Algoritmo</th><th>Versión</th><th>Costo</th></tr></thead>
+    <tbody>
+      <tr><td><code>factorial(n)</code></td><td>Recursiva lineal</td><td>O(n)</td></tr>
+      <tr><td><code>suma(n)</code></td><td>Recursiva lineal</td><td>O(n)</td></tr>
+      <tr><td><code>contar(lista)</code></td><td>Recursiva lineal</td><td>O(n)</td></tr>
+      <tr><td><code>fib(n)</code></td><td>Recursiva (2 llamadas)</td><td>O(2<sup>n</sup>)</td></tr>
+      <tr><td><code>fib(n)</code></td><td>Iterativa</td><td>O(n)</td></tr>
+    </tbody>
+  </table>
+  <p>¿Por qué el Fibonacci recursivo es tan caro? Porque <strong>repite cálculos</strong>: para
+     calcular <code>fib(5)</code> calcula <code>fib(3)</code> varias veces desde cero.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">fib(4)</span><span class="flecha">→</span>
+    <span class="nodo">fib(3) + fib(2)</span><span class="flecha">→</span>
+    <span class="nodo">fib(2) se calcula 2 veces</span>
+  </div>
+  <p>La versión iterativa guarda los dos valores anteriores y recorre una sola vez, así que es
+     O(n):</p>
+  <pre><code class="java">public int fibIterativo(int n) {
+    if (n &lt;= 1) return n;
+    int a = 0, b = 1;
+    for (int i = 2; i &lt;= n; i++) {   // Una sola pasada.
+        int sig = a + b;
+        a = b;
+        b = sig;
+    }
+    return b;
+}</code></pre>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Olvidar el caso base</span>
+    Si no hay caso base (o nunca se alcanza), la función se llama infinitas veces, la pila de
+    ejecución se llena y salta <code>StackOverflowError</code>.</div>
+  <div class="callout error"><span class="et">⚠️ No reducir el problema</span>
+    El caso recursivo tiene que llamarse con una entrada <strong>más chica</strong>. Si llamás
+    <code>factorial(n)</code> en lugar de <code>factorial(n - 1)</code>, nunca te acercás al caso
+    base → <code>StackOverflowError</code>.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Antes de dar por buena una recursión, preguntate dos cosas: ¿hay un caso base alcanzable?
+    ¿cada llamada acerca la entrada a ese caso base? Si las dos dan que sí, termina.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li>Una función <strong>recursiva</strong> se llama a sí misma con un problema más chico.</li>
+    <li>Necesita <strong>caso base</strong> (corta) y <strong>caso recursivo</strong> (reduce el problema).</li>
+    <li>Cada llamada se <strong>apila</strong> y se resuelve <strong>al volver</strong> del caso base.</li>
+    <li>Recursión lineal: <strong>O(n)</strong>. Fibonacci recursivo: <strong>O(2<sup>n</sup>)</strong> vs iterativo <strong>O(n)</strong>.</li>
+    <li>Sin caso base alcanzable o sin reducir el problema → <code>StackOverflowError</code>.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá la pila de llamadas y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

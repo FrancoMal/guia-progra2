@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cola · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="cola">
+<main>
+<article>
+  <h1>Cola (Queue)</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>Una <strong>cola</strong> es una colección <strong>FIFO</strong> (<em>First In, First Out</em>):
+     el primer elemento en entrar es el primero en salir. Analogía: la fila del banco —
+     el primero que llega es el primero que lo atienden, y los nuevos se forman atrás.</p>
+  <p>Se usa para: procesar pedidos en el orden en que llegan (impresoras, tareas),
+     buffers de datos productor-consumidor, y recorridos por niveles como
+     <strong>BFS</strong> (búsqueda en anchura) en grafos y árboles.</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">frente → 7</span><span class="flecha">→</span>
+    <span class="nodo">3</span><span class="flecha">→</span>
+    <span class="nodo">5 ← final</span><span class="flecha">→</span>
+    <span class="nodo">null</span>
+  </div>
+
+  <h2>2. Interfaz del TDA</h2>
+  <p>Las operaciones del TDA Cola y sus <strong>precondiciones</strong>:</p>
+  <pre><code class="java">public interface ColaTDA {
+    void inicializarCola();   // Sin precondiciones.
+    void acolar(int x);       // Cola inicializada.
+    void desacolar();         // Cola inicializada y no vacía.
+    int primero();            // Cola inicializada y no vacía.
+    boolean colaVacia();      // Cola inicializada.
+}</code></pre>
+
+  <h2>3. Implementaciones</h2>
+  <h3>Con lista dinámica (LD)</h3>
+  <p>Se guardan <strong>dos referencias</strong>: <code>primero</code> (el frente, de donde se saca) y
+     <code>ultimo</code> (el final, donde se agrega). Acolar inserta al final y desacolar saca del frente,
+     así que <strong>todas las operaciones son O(1)</strong> sin recorrer la lista.</p>
+  <pre><code class="java">public class ColaLD implements ColaTDA {
+    class Nodo { int valor; Nodo sig; }   // Cada nodo guarda un valor y apunta al siguiente.
+    Nodo primero;                         // Frente: de aquí se desacola.
+    Nodo ultimo;                          // Final: aquí se acola.
+
+    public void inicializarCola() { primero = null; ultimo = null; }  // Cola vacía.
+
+    public void acolar(int x) {
+        Nodo nuevo = new Nodo();
+        nuevo.valor = x;
+        nuevo.sig = null;          // El nuevo queda al final, no apunta a nadie.
+        if (colaVacia()) {
+            primero = nuevo;       // Si estaba vacía, el nuevo es frente y final a la vez.
+        } else {
+            ultimo.sig = nuevo;    // El viejo final ahora apunta al nuevo...
+        }
+        ultimo = nuevo;            // ...y el nuevo pasa a ser el final.
+    }
+
+    public void desacolar() {
+        primero = primero.sig;     // El segundo nodo pasa a ser el frente.
+        if (primero == null) {
+            ultimo = null;         // Si la cola quedó vacía, también limpiamos ultimo.
+        }
+    }
+
+    public int primero() { return primero.valor; }
+    public boolean colaVacia() { return primero == null; }
+}</code></pre>
+
+  <h3>Con arreglo circular (A)</h3>
+  <p>Se usa un arreglo y dos índices: <code>frente</code> (dónde está el primero) y
+     <code>fin</code> (próxima posición libre). Para reutilizar las celdas que se van liberando al
+     desacolar, los índices avanzan en <strong>círculo</strong> usando el operador módulo:
+     <code>fin = (fin + 1) % datos.length</code>. Así el arreglo se comporta como un anillo y no
+     se "agota" por un extremo. Se suele llevar también un contador de elementos para distinguir
+     cola vacía de cola llena.</p>
+
+  <h2>4. Costo</h2>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>Lista dinámica (LD)</th><th>Arreglo circular (A)</th></tr></thead>
+    <tbody>
+      <tr><td><code>inicializarCola</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>acolar</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>desacolar</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>primero</code></td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td><code>colaVacia</code></td><td>O(1)</td><td>O(1)</td></tr>
+    </tbody>
+  </table>
+  <p>La cola es eficiente porque trabaja sobre dos extremos fijos (frente y final): teniendo las
+     referencias <code>primero</code> y <code>ultimo</code> no hay que recorrer nada.</p>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Violar la precondición</span>
+    Llamar <code>desacolar()</code> o <code>primero()</code> con la cola vacía rompe el programa:
+    <code>NullPointerException</code> en LD, o índices inválidos en el arreglo.</div>
+  <div class="callout error"><span class="et">⚠️ Olvidar actualizar <code>ultimo</code></span>
+    En lista dinámica, no poner <code>ultimo = nuevo</code> al acolar el <strong>primer elemento</strong>,
+    o no limpiar <code>ultimo = null</code> cuando la cola <strong>queda vacía</strong> tras desacolar.
+    Si <code>ultimo</code> apunta a un nodo viejo, el próximo <code>acolar</code> lo engancha mal.</div>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    Antes de <code>desacolar()</code> o <code>primero()</code>, verificá siempre
+    <code>if (!colaVacia())</code>. Y al programar <code>acolar</code>/<code>desacolar</code> en LD,
+    pensá explícitamente los casos de cola vacía y de un solo elemento.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li><strong>FIFO</strong>: el primero en entrar es el primero en salir.</li>
+    <li>Operaciones: <code>acolar</code>, <code>desacolar</code>, <code>primero</code>, <code>colaVacia</code>, <code>inicializarCola</code>.</li>
+    <li>Se acola por el <strong>final</strong> y se desacola por el <strong>frente</strong>.</li>
+    <li>Todas <strong>O(1)</strong> con punteros <code>primero</code>/<code>ultimo</code> (LD) o con arreglo circular.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá la cola y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

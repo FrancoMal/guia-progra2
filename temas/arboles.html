@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Árboles (Binario, ABB, AVL) · Guía Programación 2</title>
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body data-tema="arboles">
+<main>
+<article>
+  <h1>Árboles (Binario, ABB, AVL)</h1>
+
+  <h2>1. ¿Qué es y cuándo se usa?</h2>
+  <p>Un <strong>árbol</strong> es una estructura <strong>jerárquica</strong>: en vez de una secuencia
+     lineal (como la pila o la lista), los datos se organizan en niveles. Un <strong>árbol binario</strong>
+     es aquel donde cada nodo tiene <strong>a lo sumo dos hijos</strong>: el hijo <strong>izquierdo</strong>
+     y el <strong>derecho</strong>.</p>
+  <p>Términos que tenés que tener claros para el parcial:</p>
+  <ul>
+    <li><strong>Raíz</strong>: el nodo de arriba de todo, el único sin padre.</li>
+    <li><strong>Hoja</strong>: un nodo sin hijos (izquierdo y derecho en <code>null</code>).</li>
+    <li><strong>Altura</strong>: la longitud del camino más largo desde la raíz hasta una hoja.</li>
+    <li><strong>Subárbol</strong>: cualquier nodo junto con todos sus descendientes es, a su vez, un árbol.</li>
+  </ul>
+  <p>Se usan para representar jerarquías (carpetas, organigramas), para búsquedas eficientes
+     (el <strong>ABB</strong>) y como base de estructuras balanceadas (el <strong>AVL</strong>).</p>
+  <div class="diagrama" aria-hidden="true">
+    <span class="nodo">raíz: 8</span><span class="flecha">→</span>
+    <span class="nodo">izq: 3</span><span class="flecha">→</span>
+    <span class="nodo">der: 10</span>
+  </div>
+
+  <h2>2. Ideas clave</h2>
+  <p>Un nodo de árbol binario guarda un valor y <strong>dos referencias</strong> (a sus hijos):</p>
+  <pre><code class="java">class Nodo {
+    int valor;        // El dato que guarda el nodo.
+    Nodo izq, der;    // Hijos izquierdo y derecho (pueden ser null).
+}</code></pre>
+  <p>Tres ideas que aparecen una y otra vez:</p>
+  <ul>
+    <li>Un <strong>árbol vacío es <code>null</code></strong>. La raíz en <code>null</code> significa "no hay nada".</li>
+    <li>La mayoría de las operaciones son <strong>recursivas</strong>: resolvés el nodo actual y
+        delegás en el subárbol izquierdo y el derecho.</li>
+    <li>El <strong>caso base</strong> casi siempre es "el nodo es <code>null</code>": ahí cortás la recursión.</li>
+  </ul>
+
+  <h2>3. Recorridos y operaciones (Java)</h2>
+  <h3>Recorridos</h3>
+  <p>Recorrer es visitar todos los nodos. Según <em>cuándo</em> proceso la raíz respecto de sus hijos,
+     hay tres recorridos. Todos son recursivos y comparten la misma estructura:</p>
+  <pre><code class="java">// Preorden: raíz, luego izquierda, luego derecha.
+void preorden(Nodo nodo) {
+    if (nodo == null) return;        // Caso base: subárbol vacío.
+    System.out.print(nodo.valor + " ");
+    preorden(nodo.izq);
+    preorden(nodo.der);
+}
+
+// Inorden: izquierda, raíz, derecha.
+void inorden(Nodo nodo) {
+    if (nodo == null) return;
+    inorden(nodo.izq);
+    System.out.print(nodo.valor + " ");
+    inorden(nodo.der);
+}
+
+// Postorden: izquierda, derecha, raíz.
+void postorden(Nodo nodo) {
+    if (nodo == null) return;
+    postorden(nodo.izq);
+    postorden(nodo.der);
+    System.out.print(nodo.valor + " ");
+}</code></pre>
+  <div class="callout tip"><span class="et">💡 Tip de parcial</span>
+    En un <strong>ABB</strong>, el recorrido <strong>inorden</strong> imprime los valores
+    <strong>ordenados de menor a mayor</strong>. Es una pregunta clásica.</div>
+
+  <h3>ABB (Árbol Binario de Búsqueda)</h3>
+  <p>Un <strong>ABB</strong> es un árbol binario con una <strong>propiedad de orden</strong>: para cada
+     nodo, todos los valores del subárbol <strong>izquierdo son menores</strong> y todos los del
+     subárbol <strong>derecho son mayores</strong>. Esa propiedad es lo que permite buscar rápido:
+     en cada paso descartás la mitad del árbol.</p>
+  <pre><code class="java">// Insertar respetando la propiedad de orden. Devuelve la (nueva) raíz del subárbol.
+Nodo insertar(Nodo nodo, int x) {
+    if (nodo == null) {              // Llegamos a un lugar vacío: ahí va el nuevo nodo.
+        Nodo nuevo = new Nodo();
+        nuevo.valor = x;
+        return nuevo;
+    }
+    if (x &lt; nodo.valor)              // Menor: va al subárbol izquierdo.
+        nodo.izq = insertar(nodo.izq, x);
+    else if (x &gt; nodo.valor)         // Mayor: va al subárbol derecho.
+        nodo.der = insertar(nodo.der, x);
+    // Si x == nodo.valor no hacemos nada (no repetimos valores).
+    return nodo;
+}
+
+// Buscar: true si x está en el árbol.
+boolean buscar(Nodo nodo, int x) {
+    if (nodo == null) return false;          // Caso base: no está.
+    if (x == nodo.valor) return true;        // Lo encontramos.
+    if (x &lt; nodo.valor)
+        return buscar(nodo.izq, x);          // Menor: seguimos por la izquierda.
+    else
+        return buscar(nodo.der, x);          // Mayor: seguimos por la derecha.
+}</code></pre>
+  <p>Fijate que tanto al insertar como al buscar, en cada nivel comparamos
+     <code>x &amp;&amp; nodo.valor</code> de forma similar y <strong>bajamos por un solo lado</strong>:
+     izquierda si <code>x &lt; nodo.valor</code>, derecha si <code>x &gt; nodo.valor</code>.</p>
+
+  <h3>AVL (ABB balanceado)</h3>
+  <p>El problema del ABB es que su eficiencia <strong>depende de la forma</strong>. Si insertás valores
+     ya ordenados (1, 2, 3, 4, …), cada nodo cuelga a la derecha del anterior y el árbol
+     <strong>degenera en una lista</strong>: buscar pasa a costar O(n).</p>
+  <p>Un <strong>AVL</strong> es un ABB que <strong>se mantiene balanceado automáticamente</strong>. Después
+     de cada inserción (o borrado), comprueba que para cada nodo las alturas de sus subárboles izquierdo
+     y derecho no difieran en más de 1. Si se desbalancea, aplica <strong>rotaciones</strong>: operaciones
+     locales que reacomodan unos pocos nodos para volver a balancear, <strong>sin romper la propiedad de
+     orden del ABB</strong>.</p>
+  <div class="callout tip"><span class="et">💡 Por qué importa el balance</span>
+    Manteniendo la altura cercana a <strong>log n</strong>, el AVL <strong>garantiza</strong> que
+    buscar e insertar sean O(log n) <em>siempre</em>, incluso en el peor caso. Es la diferencia entre
+    descartar la mitad del árbol en cada paso o tener que recorrerlo entero.</div>
+
+  <h2>4. Costo</h2>
+  <table class="costo">
+    <thead><tr><th>Operación</th><th>ABB balanceado / AVL</th><th>ABB peor caso (degenerado)</th></tr></thead>
+    <tbody>
+      <tr><td><code>buscar</code></td><td>O(log n)</td><td>O(n)</td></tr>
+      <tr><td><code>insertar</code></td><td>O(log n)</td><td>O(n)</td></tr>
+      <tr><td>recorridos (pre/in/postorden)</td><td>O(n)</td><td>O(n)</td></tr>
+    </tbody>
+  </table>
+  <p>La clave: en un ABB <strong>balanceado</strong>, buscar e insertar son O(log n) porque en cada nivel
+     descartás la mitad. En el <strong>peor caso</strong> (un ABB degenerado en lista), caen a O(n). El
+     <strong>AVL garantiza O(log n)</strong> justamente porque nunca deja que eso pase. Los recorridos
+     siempre son O(n): visitan todos los nodos sí o sí.</p>
+
+  <h2>5. Errores comunes</h2>
+  <div class="callout error"><span class="et">⚠️ Olvidar el caso base</span>
+    Si no chequeás <code>if (nodo == null) return ...</code> al principio de cada método recursivo,
+    al llegar a una hoja vas a acceder a <code>nodo.izq</code> o <code>nodo.valor</code> sobre
+    <code>null</code> y explota con <code>NullPointerException</code>.</div>
+  <div class="callout error"><span class="et">⚠️ Romper la propiedad del ABB</span>
+    Insertar a mano por el lado equivocado (un menor a la derecha, o un mayor a la izquierda) deja
+    el árbol inconsistente: la búsqueda dejará de encontrar valores que sí están.</div>
+  <div class="callout error"><span class="et">⚠️ Suponer O(log n) en un ABB cualquiera</span>
+    Un ABB <strong>no</strong> es O(log n) por definición. Solo lo es si está balanceado. Si los datos
+    entran ordenados, degenera en lista y buscar cuesta O(n). Esa garantía la da el <strong>AVL</strong>.</div>
+
+  <h2>6. Resumen</h2>
+  <ul>
+    <li><strong>Árbol binario</strong>: estructura jerárquica donde cada nodo tiene a lo sumo dos hijos (<code>izq</code>, <code>der</code>).</li>
+    <li>Un árbol vacío es <code>null</code>; las operaciones son <strong>recursivas</strong> con caso base "nodo <code>null</code>".</li>
+    <li><strong>Recorridos</strong>: preorden, inorden y postorden, todos O(n). El inorden de un ABB sale ordenado.</li>
+    <li><strong>ABB</strong>: propiedad de orden (izquierda menores, derecha mayores) ⇒ buscar e insertar O(log n) si está balanceado, O(n) en el peor caso.</li>
+    <li><strong>AVL</strong>: ABB que se rebalancea con rotaciones ⇒ <strong>garantiza O(log n)</strong>.</li>
+  </ul>
+
+  <section class="actividades" data-actividades>
+    <h2>Actividades</h2>
+    <p class="proximamente">🚧 Próximamente (Fase 2): quiz, ordenar código, corregir errores,
+       trazá el recorrido y análisis de costo.</p>
+  </section>
+</article>
+</main>
+<script src="../assets/data.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
