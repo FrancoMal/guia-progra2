@@ -8,3 +8,6 @@ bin/
 # Artefactos de verificación con navegador (Playwright)
 .playwright-mcp/
 verify-*.png
+
+# Material del curso (PDFs del profesor) — no se publica
+*.pdf
