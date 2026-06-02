@@ -10,6 +10,7 @@
   let root = null;
   let animando = false;
   let modoAVL = false;
+  let resetSeq = 0;   // se incrementa al reiniciar para cancelar animaciones en curso
 
   // ---- ABB ----
   function insertar(v) { root = ins(root, v); }
@@ -94,6 +95,7 @@
         '<button class="btn lab-preset" data-seq="50,30,70,20,40,60,80">Ej. balanceado</button>' +
         '<button class="btn lab-preset" data-seq="1,2,3,4,5,6">Ej. degenerado</button>' +
         '<button class="btn lab-vaciar">Vaciar</button>' +
+        '<button class="btn lab-reiniciar">↺ Reiniciar</button>' +
       '</div>' +
       '<div class="lab-grupo">' +
         '<label class="lab-lbl" style="display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.85rem;">' +
@@ -238,6 +240,10 @@
     mount.querySelectorAll('button, input').forEach(el => { el.disabled = d; });
     // Los botones de rotación solo se habilitan durante una pausa de equilibrado.
     if (!d) rotBtns.forEach(b => { b.disabled = true; });
+    // "Reiniciar" queda SIEMPRE disponible: también sirve para salir de una
+    // animación o de una pausa de rotación AVL a medio resolver.
+    const rb = mount.querySelector('.lab-reiniciar');
+    if (rb) rb.disabled = false;
   }
 
   // ---- Acciones ----
@@ -267,12 +273,14 @@
   // pausa, pide la rotación al usuario y la aplica con animación.
   async function agregarValorAVL(v) {
     if (!Number.isFinite(v)) return;
+    const mi = resetSeq;
     if (existe(root, v)) { render(); flashExiste(v); return; }
     insertar(v);
     mostrarFE = true;
     render(v);
     setSalida('Insertado ' + v + '. Factores de equilibrio (FE = altura der − altura izq) arriba de cada nodo.', []);
     await sleep(650);
+    if (mi !== resetSeq) return;
 
     // Mientras quede algún nodo con |FE| > 1, pedir y aplicar rotaciones
     // (una sola inserción suele necesitar una; el bucle lo hace robusto).
@@ -295,21 +303,25 @@
 
       // Esperar la elección del usuario (con reintentos si se equivoca).
       let caso = await pedirRotacion();
+      if (mi !== resetSeq) return;
       while (caso !== correcto) {
         const explicacion = (caso === 'LL' || caso === 'RR')
           ? 'pediste una rotación simple, pero acá los signos del nodo y su hijo difieren.'
           : 'pediste una rotación doble, pero acá los signos coinciden.';
         setSalida('✗ ' + caso + ' no resuelve este caso: ' + explicacion + ' Probá otra vez ↑', []);
         caso = await pedirRotacion();
+        if (mi !== resetSeq) return;
       }
 
       // Aplicar y animar.
       const doble = caso[0] !== caso[1];
       setSalida('✓ ' + caso + ' es la correcta. Aplicando rotación ' + (doble ? 'doble' : 'simple') + '…', []);
       await sleep(550);
+      if (mi !== resetSeq) return;
       aplicarRotacion(z, caso);
       render(v);
       await sleep(450);
+      if (mi !== resetSeq) return;
       z = primerDesbalanceado(root, v);
     }
     limpiarEstados();
@@ -321,10 +333,13 @@
   async function insertarSecuenciaAVL(seq) {
     if (animando) return;
     setDisabled(true);
+    const mi = resetSeq;
     root = null; mostrarFE = true; render();
     for (const v of seq) {
       await agregarValorAVL(v);
+      if (mi !== resetSeq) return;
       await sleep(360);
+      if (mi !== resetSeq) return;
     }
     setDisabled(false);
   }
@@ -340,10 +355,12 @@
   async function insertarSecuencia(seq) {
     if (animando) return;
     setDisabled(true);
+    const mi = resetSeq;
     root = null; render(); setSalida('Construyendo…', []);
     for (const v of seq) {
       if (!existe(root, v)) { insertar(v); render(v); }
       await sleep(280);
+      if (mi !== resetSeq) return;
     }
     setSalida('Listo: ' + seq.length + ' valores insertados', []);
     setDisabled(false);
@@ -352,6 +369,7 @@
   async function animarRecorrido(tipo) {
     if (animando || !root) return;
     setDisabled(true);
+    const mi = resetSeq;
     limpiarEstados();
     const a = [];
     ({ pre: preorden, in: inorden, post: postorden })[tipo](root, a);
@@ -362,6 +380,7 @@
       nd._el.classList.add('visitando');
       pushVal(nd.v, true);
       await sleep(620);
+      if (mi !== resetSeq) return;
       nd._el.classList.remove('visitando');
       nd._el.classList.add('visitado');
     }
@@ -371,6 +390,7 @@
   async function animarBusqueda(v) {
     if (animando || !root || !Number.isFinite(v)) return;
     setDisabled(true);
+    const mi = resetSeq;
     limpiarEstados();
     setSalida('Buscando ' + v + ':', []);
     let n = root;
@@ -378,12 +398,29 @@
       n._el.classList.add('en-camino');
       pushVal(n.v, true);
       await sleep(560);
+      if (mi !== resetSeq) return;
       if (v === n.v) { n._el.classList.remove('en-camino'); n._el.classList.add('encontrado'); salidaLbl.textContent = '✓ Encontrado: ' + v + ' (comparaciones: ' + (salidaVals.children.length) + ')'; setDisabled(false); return; }
       n._el.classList.add('visitado');
       n = v < n.v ? n.izq : n.der;
     }
     salidaLbl.textContent = '✗ ' + v + ' no está en el árbol (recorrido el camino hasta un hueco)';
     setDisabled(false);
+  }
+
+  // ---- Reiniciar: vuelve al ejemplo inicial; cancela cualquier animación o pausa AVL ----
+  const EJEMPLO_INICIAL = [50, 30, 70, 20, 40, 60];
+  function reiniciar() {
+    resetSeq++;                                      // invalida animaciones en curso
+    if (esperarRotacion) esperarRotacion('cancel');  // destraba una pausa de rotación AVL
+    animando = false;
+    setDisabled(false);
+    modoAVL = avlCheck.checked;                      // respeta el toggle actual de AVL
+    mostrarFE = modoAVL;
+    limpiarEstados();
+    root = null;
+    EJEMPLO_INICIAL.forEach(insertar);
+    render();
+    setSalida(modoAVL ? 'Reiniciado al ejemplo inicial (modo AVL activo).' : 'Reiniciado al ejemplo inicial.', []);
   }
 
   // ---- Eventos ----
@@ -405,6 +442,7 @@
     }
   };
   mount.querySelector('.lab-vaciar').onclick = () => { if (animando) return; root = null; render(); setSalida(modoAVL ? 'Árbol AVL vacío' : 'Árbol vacío', []); };
+  mount.querySelector('.lab-reiniciar').onclick = reiniciar;   // siempre activo (también destraba)
   mount.querySelectorAll('.lab-preset').forEach(b => { b.onclick = () => { if (animando) return; const seq = b.dataset.seq.split(',').map(Number); if (modoAVL) insertarSecuenciaAVL(seq); else insertarSecuencia(seq); }; });
   mount.querySelectorAll('.lab-preset-avl').forEach(b => { b.onclick = () => { if (animando) return; insertarSecuenciaAVL(b.dataset.seq.split(',').map(Number)); }; });
   rotBtns.forEach(b => { b.onclick = () => { if (esperarRotacion) esperarRotacion(b.dataset.rot); }; });
@@ -432,7 +470,7 @@
   };
 
   // arranque con un ejemplo
-  [50, 30, 70, 20, 40, 60].forEach(insertar);
+  EJEMPLO_INICIAL.forEach(insertar);
   render();
   setSalida('Probá los recorridos, o insertá y buscá valores ↑', []);
 })();

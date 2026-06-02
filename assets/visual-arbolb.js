@@ -18,6 +18,8 @@
 
   let root = nodoNuevo(true);
   let animando = false;
+  let resetSeqB = 0;   // se incrementa al reiniciar para cancelar animaciones en curso
+  const EJEMPLO_B = [10, 20, 30, 40, 50];
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -158,6 +160,7 @@
         '<button class="btn bt-insertar">Insertar</button>' +
         '<button class="btn bt-azar">Al azar</button>' +
         '<button class="btn bt-vaciar">Vaciar</button>' +
+        '<button class="btn bt-reiniciar">↺ Reiniciar</button>' +
       '</div>' +
       '<div class="lab-grupo">' +
         '<span class="lab-lbl">Ejemplos:</span>' +
@@ -197,6 +200,33 @@
   function setDisabled(d) {
     animando = d;
     mount.querySelectorAll('button, input').forEach(el => { el.disabled = d; });
+    // "Reiniciar" queda siempre disponible (también corta una animación en curso).
+    const rb = mount.querySelector('.bt-reiniciar');
+    if (rb) rb.disabled = false;
+  }
+
+  // Inserta una clave SIN animación, dividiendo hacia arriba (para el arranque y reinicio).
+  function insertarSync(v) {
+    if (existe(root, v)) return;
+    const camino = caminoHasta(v);
+    insertarEnHoja(camino[camino.length - 1], v);
+    for (let k = camino.length - 1; k >= 0; k--) {
+      const n = camino[k];
+      if (n.claves.length < OVERFLOW) break;
+      const padre = k === 0 ? null : camino[k - 1];
+      dividir(padre, padre ? padre.hijos.indexOf(n) : 0, n);
+    }
+  }
+
+  // Reinicia al ejemplo inicial; corta cualquier animación en curso.
+  function reiniciar() {
+    resetSeqB++;
+    animando = false;
+    setDisabled(false);
+    root = nodoNuevo(true);
+    EJEMPLO_B.forEach(insertarSync);
+    render();
+    setSalida('Reiniciado al ejemplo inicial.', []);
   }
 
   // ---- División de un nodo lleno (overflow de 4 claves) ----
@@ -234,6 +264,7 @@
     if (existe(root, v)) { setSalida('La clave ' + v + ' ya está en el árbol', []); return; }
 
     setDisabled(true);
+    const mi = resetSeqB;
     const camino = caminoHasta(v);
     const hoja = camino[camino.length - 1];
 
@@ -241,12 +272,14 @@
     for (const n of camino) {
       if (n._el) n._el.classList.add('activo');
       await sleep(280);
+      if (mi !== resetSeqB) return;
     }
     // 2) insertar en la hoja y redibujar
     insertarEnHoja(hoja, v);
     setSalida('Insertada ' + v + ' en la hoja', hoja.claves.slice());
     render();
     await sleep(360);
+    if (mi !== resetSeqB) return;
 
     // 3) subir dividiendo mientras haya overflow
     for (let k = camino.length - 1; k >= 0; k--) {
@@ -264,6 +297,7 @@
       render();
       if (n._el) n._el.classList.add('activo');
       await sleep(620);
+      if (mi !== resetSeqB) return;
 
       const padre = k === 0 ? null : camino[k - 1];
       let idxHijo = 0;
@@ -271,6 +305,7 @@
       dividir(padre, idxHijo, n);
       render();
       await sleep(420);
+      if (mi !== resetSeqB) return;
     }
 
     setSalida('Listo: ' + v + ' insertada', []);
@@ -281,25 +316,16 @@
   async function insertarSecuencia(seq) {
     if (animando) return;
     setDisabled(true);
+    const mi = resetSeqB;
     root = nodoNuevo(true);
     render();
     setSalida('Construyendo…', []);
     for (const v of seq) {
-      if (existe(root, v)) continue;
-      const camino = caminoHasta(v);
-      const hoja = camino[camino.length - 1];
-      insertarEnHoja(hoja, v);
-      // subir dividiendo (sin micro-animación por paso, pero sí redibujando)
-      for (let k = camino.length - 1; k >= 0; k--) {
-        const n = camino[k];
-        if (n.claves.length < OVERFLOW) break;
-        const padre = k === 0 ? null : camino[k - 1];
-        const idxHijo = padre ? padre.hijos.indexOf(n) : 0;
-        dividir(padre, idxHijo, n);
-      }
+      insertarSync(v);
       render();
       setSalida('Insertando…', [v]);
       await sleep(420);
+      if (mi !== resetSeqB) return;
     }
     setSalida('Listo: ' + seq.length + ' claves', []);
     setDisabled(false);
@@ -325,24 +351,14 @@
     render();
     setSalida('Árbol vacío', []);
   };
+  mount.querySelector('.bt-reiniciar').onclick = reiniciar;   // siempre activo
   mount.querySelectorAll('.bt-preset').forEach(b => {
     b.onclick = () => insertarSecuencia(b.dataset.seq.split(',').map(Number));
   });
 
   // ---- Arranque con un ejemplo precargado ----
   // Esta secuencia ya provoca una división de raíz, así que arranca con 2 niveles.
-  [10, 20, 30, 40, 50].forEach(v => {
-    const camino = caminoHasta(v);
-    const hoja = camino[camino.length - 1];
-    insertarEnHoja(hoja, v);
-    for (let k = camino.length - 1; k >= 0; k--) {
-      const n = camino[k];
-      if (n.claves.length < OVERFLOW) break;
-      const padre = k === 0 ? null : camino[k - 1];
-      const idxHijo = padre ? padre.hijos.indexOf(n) : 0;
-      dividir(padre, idxHijo, n);
-    }
-  });
+  EJEMPLO_B.forEach(insertarSync);
   render();
   setSalida('Insertá una clave y mirá la división ↑', []);
 })();
