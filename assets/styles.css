@@ -343,6 +343,7 @@ code { font-family: var(--font-mono); }
 /* ===== Laboratorio de árbol (ABB interactivo) ===== */
 .arbol-lab, .grafo-lab { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radio); padding: 1.1rem 1.2rem 1.3rem; margin: 1.3rem 0; box-shadow: var(--shadow-sm); }
 .lab-controles { display: flex; flex-wrap: wrap; gap: .55rem 1rem; align-items: center; margin-bottom: .75rem; }
+.lab-controles[hidden] { display: none; }   /* el atributo hidden debe ganarle a display:flex */
 .lab-grupo { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; }
 .lab-lbl { font-family: var(--font-mono); font-size: .74rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
 .lab-input { width: 6rem; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: .44rem .85rem; font: inherit; font-size: .92rem; color: var(--ink); }

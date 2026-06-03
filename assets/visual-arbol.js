@@ -31,6 +31,8 @@
   // ---- AVL: equilibrio y rotaciones (solo se usan en modo AVL; no afectan al ABB) ----
   // Factor de equilibrio: FE = altura(der) − altura(izq).
   function fe(n) { return n ? altura(n.der) - altura(n.izq) : 0; }
+  // ¿Hay algún nodo en TODO el árbol con |FE| > 1? (recorre el árbol entero).
+  function hayDesbalance(n) { return !!n && (Math.abs(fe(n)) > 1 || hayDesbalance(n.izq) || hayDesbalance(n.der)); }
 
   // Padre de un nodo dentro de un árbol (null si es la raíz o no está).
   function padreDe(raiz, nodo) {
@@ -221,11 +223,18 @@
         const f = fe(nd);
         const badge = document.createElementNS(NS, 'text');
         badge.setAttribute('text-anchor', 'middle');
-        badge.setAttribute('x', R + 2); badge.setAttribute('y', -R + 2);
-        badge.setAttribute('font-size', '12');
+        // Bien arriba del nodo para que el círculo agrandado (al resaltar) no lo tape.
+        badge.setAttribute('x', 0); badge.setAttribute('y', -(R + 8));
+        badge.setAttribute('font-size', '13');
         badge.setAttribute('font-family', 'var(--font-mono)');
         badge.setAttribute('font-weight', '700');
-        badge.setAttribute('fill', Math.abs(f) > 1 ? 'var(--err)' : (f === 0 ? 'var(--muted)' : 'var(--accent-2)'));
+        // El color va por STYLE inline (no por atributo) para ganarle a la regla
+        // ".lab-nodo.encontrado text { fill:#fff }" que, si no, pintaría de blanco el
+        // FE de los nodos resaltados durante una rotación.
+        badge.style.fill = Math.abs(f) > 1 ? 'var(--err)' : (f === 0 ? 'var(--muted)' : 'var(--accent-2)');
+        badge.style.paintOrder = 'stroke';     // halo papel detrás del número (legible sobre aristas)
+        badge.style.stroke = 'var(--surface)';
+        badge.style.strokeWidth = '2px';
         badge.textContent = (f > 0 ? '+' : '') + f;
         g.appendChild(badge);
       }
@@ -291,7 +300,7 @@
     }
     while (z) {
       const feZ = fe(z);
-      const lado = feZ < 0 ? 'izquierdo' : 'derecho';
+      const lado = feZ < 0 ? 'izquierda' : 'derecha';
       const hijo = hijoPesado(z);
       limpiarEstados();
       render(v); // re-render: limpia estados pero mantiene los badges de FE
@@ -450,21 +459,24 @@
   mount.querySelector('.lab-buscar').onclick = () => { const v = leer(buscarInput); if (v != null) animarBusqueda(v); };
   buscarInput.addEventListener('keydown', e => { if (e.key === 'Enter') mount.querySelector('.lab-buscar').click(); });
 
-  // Toggle Modo AVL: muestra los controles de rotación y reconstruye el árbol equilibrando.
+  // Toggle Modo AVL: muestra los controles de rotación y los factores de equilibrio.
+  // NO reconstruye el árbol (eso disparaba rotaciones apenas se tildaba el modo, lo
+  // cual confundía): solo muestra los FE sobre el árbol actual. Las rotaciones
+  // aparecen al INSERTAR valores nuevos o al probar un caso (→ LL/RR/LR/RL).
   avlCheck.onchange = () => {
     if (animando) { avlCheck.checked = modoAVL; return; }
     modoAVL = avlCheck.checked;
     avlFila.hidden = !modoAVL;
     rotEnabled(false);
+    mostrarFE = modoAVL;
+    limpiarEstados();
+    render();
     if (modoAVL) {
-      mostrarFE = true;
-      const vals = []; preorden(root, vals); // mantener el orden de inserción aproximado
-      root = null; render();
-      setSalida('Modo AVL activado. Insertá valores o probá un caso (LL/RR/LR/RL): cuando algún |FE| > 1, vas a elegir la rotación.', []);
-      if (vals.length) { insertarSecuenciaAVL(vals.map(n => n.v)); }
+      const desbalanceado = hayDesbalance(root);
+      setSalida(desbalanceado
+        ? 'Modo AVL activado. Ojo: este árbol ya tiene algún |FE| > 1 (no es AVL válido). Insertá un valor para reequilibrar, o reiniciá.'
+        : 'Modo AVL activado: arriba de cada nodo está su factor de equilibrio (FE = altura der − altura izq). Insertá valores o probá un caso (→ LL/RR/LR/RL); cuando algún |FE| > 1, vas a elegir la rotación.', []);
     } else {
-      mostrarFE = false;
-      render();
       setSalida('Modo AVL desactivado: vuelve a comportarse como un ABB común.', []);
     }
   };
